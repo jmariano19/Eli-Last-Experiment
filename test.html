@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Eli's Last Experiment</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #0A0F0A;
+    color: #e9fff1;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+
+  body {
+    position: fixed;
+    inset: 0;
+  }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    background: #0A0F0A;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .system-message {
+    position: fixed;
+    left: max(20px, env(safe-area-inset-left));
+    right: max(20px, env(safe-area-inset-right));
+    bottom: max(20px, env(safe-area-inset-bottom));
+    z-index: 2;
+    padding: 12px 14px;
+    border: 1px solid rgba(90, 255, 140, 0.2);
+    border-radius: 8px;
+    background: rgba(10, 15, 10, 0.84);
+    color: rgba(233, 255, 241, 0.8);
+    font-size: 13px;
+    line-height: 1.45;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .system-message.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .system-message.error {
+    border-color: rgba(255, 107, 107, 0.4);
+    color: #ffb3b3;
+  }
+
+  .debug-panel {
+    position: fixed;
+    inset: auto 12px max(12px, env(safe-area-inset-bottom)) 12px;
+    z-index: 3;
+    display: none;
+    max-height: 45dvh;
+    overflow: auto;
+    padding: 12px;
+    border: 1px solid rgba(90, 255, 140, 0.24);
+    border-radius: 8px;
+    background: rgba(10, 15, 10, 0.92);
+    color: rgba(233, 255, 241, 0.76);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .debug-panel.visible {
+    display: block;
+  }
+
+  .fade-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    background: #0A0F0A;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 3000ms ease-in-out;
+  }
+
+  .fade-overlay.visible {
+    opacity: 1;
+  }
+
+  .debug-panel strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #53ee86;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .ok {
+    color: #bfff3d;
+  }
+
+  .bad {
+    color: #ff6b6b;
+  }
+</style>
+</head>
+<body>
+  <main class="stage" id="stage" aria-label="Eli's Last Experiment Rive preview">
+    <canvas id="canvas"></canvas>
+  </main>
+
+  <div class="system-message" id="message">Loading Eli...</div>
+  <div class="debug-panel" id="debug"></div>
+  <div class="fade-overlay" id="fade"></div>
+
+  <!-- Pinned to latest @rive-app/webgl2 for full Layer Effect support (blur, drop shadow, feathering). -->
+  <!-- Was 2.21.6 — bumped because Rive blur is a Layer Effect that needs newer Rive Renderer builds. -->
+  <script src="https://unpkg.com/@rive-app/webgl2@latest"></script>
+  <script>
+    if (window.location.protocol === 'file:') {
+      const target = new URL('http://localhost:4177/test.html');
+      const current = new URL(window.location.href);
+      target.search = current.search;
+      window.location.replace(target.href);
+    }
+
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('canvas');
+    const messageEl = document.getElementById('message');
+    const debugEl = document.getElementById('debug');
+    const fadeEl = document.getElementById('fade');
+    const params = new URLSearchParams(window.location.search);
+    const debugEnabled = params.has('debug');
+
+    const profiles = {
+      intro: {
+        label: 'intro.riv',
+        src: './public/rive/intro.riv',
+        artboard: 'Title',
+        stateMachine: 'TitleState',
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Cover,
+        expectedInputs: {
+          stay: 'trigger',
+          start_dot: 'trigger',
+        },
+        textRuns: ['cta_label'],
+        initialize: () => {
+          // Current intro.riv drives its own sequence internally.
+        },
+        onTap: () => {
+          if (tapCount === 0) {
+            playSound('eli_intro_01');
+            fireInput('start_dot');
+          } else {
+            playSound('cta_chime');
+            fireInput('stay');
+            transitionTo('eli');
+          }
+        },
+      },
+      eli: {
+        label: 'eli.riv',
+        src: './public/rive/eli.riv',
+        artboard: 'Eli',
+        stateMachine: 'EliState',
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Contain,
+        expectedInputs: {
+          heart_pulse: 'number',
+          lungs_pulse: 'number',
+          brain_pulse: 'number',
+          eyes_state: 'number',
+          mouth_state: 'number',
+          body_state: 'number',
+          mood: 'number',
+          tap_heart: 'trigger',
+          tap_lungs: 'trigger',
+          tap_brain: 'trigger',
+          cue_speak: 'trigger',
+          listening: 'boolean',
+        },
+        textRuns: ['eli_subtitle'],
+        initialize: () => {
+          setInput('heart_pulse', 35);
+          setInput('lungs_pulse', 20);
+          setInput('brain_pulse', 0);
+          setInput('eyes_state', 1);
+          setInput('mouth_state', 0);
+          setInput('body_state', 0);
+          setInput('mood', 0);
+          setInput('listening', true);
+        },
+        onTap: () => {
+          const mood = tapCount % 5;
+          fireInput('tap_heart');
+          setInput('heart_pulse', Math.min(100, 35 + tapCount * 12));
+          setInput('eyes_state', tapCount % 3);
+          setInput('mouth_state', tapCount % 4);
+          setInput('mood', mood);
+        },
+      },
+    };
+
+    const requestedProfile = params.get('file') || params.get('scene') || 'intro';
+    const profile = profiles[requestedProfile] || profiles.intro;
+    const src = profile.src + '?v=' + Date.now();
+    let riveInstance;
+    let inputByName = new Map();
+    let tapCount = 0;
+    let audioUnlocked = false;
+    let assetBytes = 0;
+
+    const sounds = {
+      heartbeat_loop: makeAudio([
+        './public/audio/sfx/heartbeat_loop.opus',
+        './public/audio/sfx/heartbeat-deceleration-the-foundation-fast-to-slow-2-00-24.mp3',
+      ], true),
+      eli_intro_01: makeAudio('./public/audio/voice/eli/intro_01.opus'),
+      heart_tap: makeAudio('./public/audio/sfx/heart_tap.opus'),
+      cta_chime: makeAudio('./public/audio/sfx/cta_chime.opus'),
+    };
+
+    stage.setAttribute('aria-label', `Eli's Last Experiment ${profile.label} preview`);
+    showMessage(`Loading ${profile.label}...`);
+    fetch(profile.src, { cache: 'no-store', method: 'HEAD' })
+      .then((response) => {
+        assetBytes = Number(response.headers.get('content-length') || 0);
+        renderDebug();
+      })
+      .catch(() => {});
+
+    try {
+      riveInstance = new rive.Rive({
+        src,
+        canvas,
+        artboard: profile.artboard,
+        stateMachines: profile.stateMachine,
+        autoplay: true,
+        fit: profile.fit,
+        alignment: rive.Alignment.Center,
+        useOffscreenRenderer: true,
+        onLoad: () => {
+          inputByName = new Map(
+            (riveInstance.stateMachineInputs(profile.stateMachine) || []).map((input) => [input.name, input]),
+          );
+
+          profile.initialize();
+
+          resizeRive();
+          hideMessage();
+          renderDebug();
+          console.info(`[Eli] ${profile.label} loaded`, {
+            artboard: profile.artboard,
+            stateMachine: profile.stateMachine,
+            inputs: Array.from(inputByName.keys()),
+          });
+        },
+        onLoadError: (error) => {
+          showMessage(`Could not load ${profile.label}. Re-export as Runtime and confirm artboard ${profile.artboard} with state machine ${profile.stateMachine}.`, true);
+          console.error(error);
+        },
+      });
+    } catch (error) {
+      showMessage(error.message || 'Rive runtime failed to start.', true);
+      console.error(error);
+    }
+
+    canvas.addEventListener('pointerup', () => {
+      // Temporary preview flow until the React game shell owns scene timing/audio.
+      unlockAudio();
+      profile.onTap();
+      tapCount += 1;
+    });
+
+    debugEl.addEventListener('pointerup', (event) => {
+      const action = event.target && event.target.dataset ? event.target.dataset.action : '';
+      if (!action) return;
+      event.stopPropagation();
+      if (action === 'fire-tap-heart') {
+        fireInput('tap_heart');
+      }
+    });
+
+    window.addEventListener('resize', resizeRive);
+    window.addEventListener('orientationchange', () => setTimeout(resizeRive, 250));
+
+    function setInput(name, value) {
+      const input = inputByName.get(name);
+      if (input && 'value' in input) input.value = value;
+    }
+
+    function fireInput(name) {
+      const input = inputByName.get(name);
+      if (input && typeof input.fire === 'function') input.fire();
+    }
+
+    function makeAudio(src, loop = false) {
+      const sources = Array.isArray(src) ? src : [src];
+      const audio = new Audio(sources[0]);
+      audio.dataset.sources = JSON.stringify(sources);
+      audio.preload = 'auto';
+      audio.loop = loop;
+      audio.volume = loop ? 0.35 : 1;
+      return audio;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      playSound('heartbeat_loop');
+    }
+
+    function playSound(name) {
+      const sound = sounds[name];
+      if (!sound) return;
+
+      if (!sound.loop) {
+        sound.currentTime = 0;
+      }
+
+      playWithFallback(sound, name, 0);
+    }
+
+    function playWithFallback(sound, name, index) {
+      const sources = JSON.parse(sound.dataset.sources || '[]');
+      if (!sources[index]) return;
+
+      if (sound.src !== new URL(sources[index], window.location.href).href) {
+        sound.src = sources[index];
+      }
+
+      sound.play().catch((error) => {
+        if (sources[index + 1]) {
+          playWithFallback(sound, name, index + 1);
+          return;
+        }
+        console.warn(`[Eli] Audio not played: ${name}`, error.message);
+      });
+    }
+
+    function resizeRive() {
+      if (riveInstance && riveInstance.resizeDrawingSurfaceToCanvas) {
+        riveInstance.resizeDrawingSurfaceToCanvas();
+      }
+    }
+
+    function renderDebug() {
+      if (!debugEnabled) return;
+
+      const rows = Object.entries(profile.expectedInputs).map(([name, expectedType]) => {
+        const input = inputByName.get(name);
+        const actualType = input ? inferInputType(input) : 'missing';
+        const ok = actualType === expectedType;
+        return `<div class="${ok ? 'ok' : 'bad'}">${ok ? 'ok' : 'fix'} ${name}: ${actualType}</div>`;
+      });
+
+      debugEl.innerHTML = `
+        <strong>${profile.label} contract check</strong>
+        ${renderBudget()}
+        ${rows.join('')}
+        <div style="margin-top:8px;">Text runs to verify in Rive: ${profile.textRuns.join(', ')}</div>
+        ${renderDebugActions()}
+      `;
+      debugEl.classList.add('visible');
+    }
+
+    function renderDebugActions() {
+      if (!inputByName.has('tap_heart')) return '';
+      return `
+        <button
+          data-action="fire-tap-heart"
+          style="margin-top:10px;padding:6px 9px;border:1px solid rgba(90,255,140,.35);border-radius:6px;background:rgba(90,255,140,.08);color:#bfff3d;font:inherit;"
+        >
+          Fire tap_heart
+        </button>
+      `;
+    }
+
+    function renderBudget() {
+      if (!assetBytes) return '';
+      const ok = assetBytes <= profile.budgetBytes;
+      return `<div class="${ok ? 'ok' : 'bad'}" style="margin-bottom:8px;">${ok ? 'ok' : 'fix'} size: ${formatBytes(assetBytes)} / ${formatBytes(profile.budgetBytes)}</div>`;
+    }
+
+    function formatBytes(bytes) {
+      if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+      return `${Math.round(bytes / 1024)} KB`;
+    }
+
+    function inferInputType(input) {
+      if (typeof input.fire === 'function') return 'trigger';
+      if (typeof input.value === 'boolean') return 'boolean';
+      if (typeof input.value === 'number') return 'number';
+      return 'unknown';
+    }
+
+    function showMessage(text, isError = false) {
+      messageEl.textContent = text;
+      messageEl.classList.toggle('error', isError);
+      messageEl.classList.add('visible');
+    }
+
+    function hideMessage() {
+      messageEl.classList.remove('visible');
+    }
+
+    function transitionTo(name) {
+      fadeEl.classList.add('visible');
+      window.setTimeout(() => {
+        window.location.href = withProfile(name);
+      }, 3000);
+    }
+
+    function withProfile(name) {
+      const next = new URL(window.location.href);
+      next.searchParams.set('file', name);
+      return next.href;
+    }
+  </script>
+</body>
+</html>
