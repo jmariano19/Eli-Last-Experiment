@@ -104,6 +104,13 @@ heartPulse.value = 72;
 tapHeart.fire();
 ```
 
+**Direction matters.** Two flows cross the contract, and they're not symmetric:
+
+- **App → Rive:** code writes input values to push app state into the animation (`heartPulse.value = 72`, `listening.value = true` on scene mount, initial baselines on load). This is fine and expected.
+- **Rive → App:** code does **not** drive user-input triggers from JS click handlers. Clicks live inside Rive via **Listeners** authored in the Rive editor (hit areas → Input Change actions). When Rive needs to tell the app something happened — a CTA committed, audio should play, the scene should change — it emits either a **Rive Event** (preferred) or flips a Boolean input the app polls (fallback). The app subscribes and reacts (play audio, swap scenes, persist state).
+
+The fallback exists because the current Rive BETA used to author `intro.riv` doesn't expose the Rive Event creator in the expected places. See Appendix B for the workaround pattern.
+
 ---
 
 ## 4. Hot-swap workflow (the thing Jeff cares about)
@@ -352,31 +359,60 @@ Current `intro.riv` exposes:
 ```text
 Artboard: Title
 State machine: TitleState
-Inputs:
+Inputs (in the "Deprecated" section in BETA Rive; still functional):
   start_dot: Trigger
   stay: Trigger
+  nav_eli: Boolean    # host watches this to route to eli.riv
 Listeners:
   dot_heart
   Stay
+    actions:
+      fire: stay                  # drives the state machine transition
+      and set: nav_eli = true     # signals the host to navigate
 ```
 
-The temporary preview flow currently does:
+The temporary preview flow now works like this:
 
 ```text
-first tap:
-  plays eli_intro_01 if present
-  fires start_dot
+clicks: owned entirely by Rive Listeners (dot_heart, Stay, etc.).
+        The host does NOT count taps, fire triggers, or hold any
+        intro-specific tap logic in JS.
 
-next tap on the visible CTA phase:
-  fires stay
-  plays cta_chime if present
-  fades to black over 3000ms
-  navigates to test.html?file=eli
+host responsibilities on tap:
+  1. Unlock mobile audio on the first user gesture (one-time).
+  2. Watch the `nav_eli` Boolean input on a rAF loop and route to
+     eli.riv when it flips true.
+
+flow:
+  tap dot   -> Rive listener fires start_dot -> state machine advances
+  tap STAY  -> Rive listener fires stay AND sets nav_eli = true
+            -> host watcher sees nav_eli flip true
+            -> host fades to black (3000 ms overlay) and navigates
+               to test.html?file=eli
+
+audio: still external (per the no-audio-in-Rive policy). The host plays
+       sounds on load (heartbeat loop) or in response to Rive Events
+       (`handleRiveEvent` in test.html maps event names to sound keys).
+
+fade: owned by the host HTML overlay. The final React app should
+      implement the same goodbye moment via scene routing.
 ```
 
-The fade is only in the temporary HTML harness. The final app should implement the same moment in React scene routing.
+### Why `nav_eli` instead of a Rive Event
 
-Note: the broader written contract in `RIVE_SPEC.md` still describes the older intro input names (`phase`, `tap_waveform`, `tap_cta`, etc.). Either update `RIVE_SPEC.md` to match the new `start_dot`/`stay` intro file, or rename the Rive inputs back to the spec before implementation hardening.
+The cleaner long-term pattern is for the Stay listener to **report a Rive Event** (e.g. `goto_eli`) that the host subscribes to. The host code already supports it — `handleRiveEvent` in `test.html` routes any event named `goto_<profile>` to that profile, and plays any event whose name matches a sound key.
+
+In the current Rive BETA (0.8.x) used to author `intro.riv`, the Event creator UI is not exposed where expected: the `+` next to "Events" inside a transition inspector creates a firing slot but not an event definition, and typing an event name into a Report Event action's dropdown clears the text on commit because no global event with that name exists yet. Events appear to have migrated into the Data Binding system (View Models), which this project does not yet use.
+
+As a workaround, the Stay listener sets a Boolean input `nav_eli = true` on tap. The host polls it each frame and routes when it flips true. When the Rive Event creator becomes reachable (newer BETA, or once Data Binding is adopted), migrate by:
+
+1. Adding a Rive Event named `goto_eli` at the state machine level.
+2. Replacing the listener's "and set: nav_eli = true" action with "report: goto_eli".
+3. Removing the `nav_eli` input from the Inputs section.
+
+No JS changes needed — the host already listens for both paths.
+
+Note: the broader written contract in `RIVE_SPEC.md` still describes the older intro input names (`phase`, `tap_waveform`, `tap_cta`, etc.). Either update `RIVE_SPEC.md` to match the current `start_dot` / `stay` / `nav_eli` set, or rename the Rive inputs back to the spec before implementation hardening.
 
 ### External audio policy
 

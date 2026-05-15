@@ -162,20 +162,16 @@
         expectedInputs: {
           stay: 'trigger',
           start_dot: 'trigger',
+          nav_eli: 'boolean',
         },
+        unlockSound: 'heartbeat_loop',
         textRuns: ['cta_label'],
         initialize: () => {
           // Current intro.riv drives its own sequence internally.
-        },
-        onTap: () => {
-          if (tapCount === 0) {
-            playSound('eli_intro_01');
-            fireInput('start_dot');
-          } else {
-            playSound('cta_chime');
-            fireInput('stay');
-            transitionTo('eli');
-          }
+          // Clicks/triggers are owned by Rive listeners. The app reacts to
+          // Rive Events (audio cues) and watches `nav_eli` for scene routing.
+          setInput('nav_eli', false);
+          watchBoolean('nav_eli', () => transitionTo('eli'));
         },
       },
       eli: {
@@ -199,6 +195,7 @@
           cue_speak: 'trigger',
           listening: 'boolean',
         },
+        unlockSound: null, // audio is authored in Rive Events for this scene
         textRuns: ['eli_subtitle'],
         initialize: () => {
           setInput('heart_pulse', 35);
@@ -209,14 +206,9 @@
           setInput('body_state', 0);
           setInput('mood', 0);
           setInput('listening', true);
-        },
-        onTap: () => {
-          const mood = tapCount % 5;
-          fireInput('tap_heart');
-          setInput('heart_pulse', Math.min(100, 35 + tapCount * 12));
-          setInput('eyes_state', tapCount % 3);
-          setInput('mouth_state', tapCount % 4);
-          setInput('mood', mood);
+          // Tap reactions are owned by Rive listeners (hit_heart, hit_lungs,
+          // hit_brain) and the EliState machine. The app only listens for
+          // Rive Events emitted by Eli (e.g. audio cues).
         },
       },
     };
@@ -226,7 +218,6 @@
     const src = profile.src + '?v=' + Date.now();
     let riveInstance;
     let inputByName = new Map();
-    let tapCount = 0;
     let audioUnlocked = false;
     let assetBytes = 0;
 
@@ -266,6 +257,16 @@
 
           profile.initialize();
 
+          // Subscribe to Rive Events emitted by the state machine.
+          // Convention:
+          //   play_<sound>   -> plays a sound from the `sounds` map
+          //   goto_<profile> -> fades to black and routes to ?file=<profile>
+          // Any event name matching a key in `sounds` also plays that sound,
+          // so authors can name the event after the sound directly.
+          if (riveInstance.on && rive.EventType && rive.EventType.RiveEvent) {
+            riveInstance.on(rive.EventType.RiveEvent, handleRiveEvent);
+          }
+
           resizeRive();
           hideMessage();
           renderDebug();
@@ -285,11 +286,12 @@
       console.error(error);
     }
 
+    // Rive owns clicks/triggers via its own Listeners (hit_dot, hit_cta,
+    // hit_heart, etc.). The only thing the host has to do on first tap is
+    // unlock mobile audio playback. Everything else (which input fires, what
+    // animation plays, when the CTA appears) is authored in Rive.
     canvas.addEventListener('pointerup', () => {
-      // Temporary preview flow until the React game shell owns scene timing/audio.
       unlockAudio();
-      profile.onTap();
-      tapCount += 1;
     });
 
     debugEl.addEventListener('pointerup', (event) => {
@@ -314,6 +316,49 @@
       if (input && typeof input.fire === 'function') input.fire();
     }
 
+    // Polls a boolean state machine input and invokes `onTrue` the moment it
+    // flips false -> true. Used as a Rive Events fallback for scene routing
+    // when the Rive file's BETA UI doesn't expose an event creator.
+    function watchBoolean(name, onTrue) {
+      let previous = false;
+      const tick = () => {
+        const input = inputByName.get(name);
+        if (input && typeof input.value === 'boolean') {
+          const current = input.value;
+          if (current && !previous) {
+            previous = current;
+            onTrue();
+            return; // stop watching after first fire
+          }
+          previous = current;
+        }
+        window.requestAnimationFrame(tick);
+      };
+      window.requestAnimationFrame(tick);
+    }
+
+    function handleRiveEvent(event) {
+      const data = event && event.data;
+      if (!data || !data.name) return;
+      const name = data.name;
+
+      // 1. Audio cues. Either name the Rive Event exactly after a sound key
+      //    (e.g. `eli_intro_01`, `cta_chime`) or prefix it with `play_`.
+      const soundName = name.startsWith('play_') ? name.slice(5) : name;
+      if (sounds[soundName]) {
+        playSound(soundName);
+      }
+
+      // 2. Scene navigation. Author a Rive Event called `goto_eli` (or
+      //    `goto_intro`, etc.) on the state that represents "player committed".
+      if (name.startsWith('goto_')) {
+        const dest = name.slice(5);
+        if (profiles[dest]) {
+          transitionTo(dest);
+        }
+      }
+    }
+
     function makeAudio(src, loop = false) {
       const sources = Array.isArray(src) ? src : [src];
       const audio = new Audio(sources[0]);
@@ -327,7 +372,11 @@
     function unlockAudio() {
       if (audioUnlocked) return;
       audioUnlocked = true;
-      playSound('heartbeat_loop');
+      // Each profile declares its own auto-play sound on first user gesture.
+      // `null` means the scene starts silent and lets Rive Events drive audio.
+      if (profile.unlockSound) {
+        playSound(profile.unlockSound);
+      }
     }
 
     function playSound(name) {
