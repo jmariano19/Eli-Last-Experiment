@@ -549,3 +549,22 @@ single .riv hard ceiling: <= 800 KB
 ```
 
 Do not optimize the artwork until the interaction is locked, but plan a serious Rive cleanup pass before implementation hardening. Likely cleanup areas: embedded/oversized raster assets, duplicate component art, hidden/unused layers, unused timelines, and source/editor artifacts accidentally exported into runtime files.
+
+### Production preview deployment
+
+The production Docker image now runs `local-server.mjs` with Node instead of static Nginx. This is intentional: the same container must serve the Rive prototype and the `/api/eli-chat` endpoint.
+
+Required production environment variable:
+
+```text
+OPENAI_API_KEY=sk-proj-...
+```
+
+Optional production environment variables:
+
+```text
+OPENAI_MODEL=gpt-4.1-mini
+PORT=80
+```
+
+If `OPENAI_API_KEY` is missing or quota is unavailable, the prototype still loads and uses local fallback Eli replies.

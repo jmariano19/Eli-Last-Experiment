@@ -121,6 +121,267 @@
   .bad {
     color: #ff6b6b;
   }
+
+  .relationship-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: none;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(2, 6, 3, 0) 0%, rgba(2, 6, 3, 0.08) 48%, rgba(2, 6, 3, 0.62) 100%),
+      radial-gradient(ellipse at 50% 38%, rgba(167, 255, 57, 0.1), rgba(2, 8, 4, 0) 42%);
+  }
+
+  .relationship-screen.visible {
+    display: block;
+  }
+
+  .relationship-thread {
+    position: absolute;
+    left: max(24px, env(safe-area-inset-left));
+    right: max(24px, env(safe-area-inset-right));
+    top: 39dvh;
+    bottom: max(160px, calc(env(safe-area-inset-bottom) + 160px));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 18px 6px 16px;
+    pointer-events: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .relationship-thread::-webkit-scrollbar {
+    display: none;
+  }
+
+  .relationship-prompt {
+    flex: 0 0 auto;
+    margin-top: auto;
+  }
+
+  .relationship-messages {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .relationship-bubble {
+    width: fit-content;
+    max-width: min(84vw, 360px);
+    margin: 0;
+    padding: 14px 18px;
+    border-radius: 8px;
+    color: #041107;
+    font-size: clamp(20px, 5vw, 28px);
+    font-weight: 500;
+    line-height: 1.16;
+    letter-spacing: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(8px);
+  }
+
+  .relationship-bubble-eli {
+    align-self: flex-end;
+    background: rgba(0, 255, 38, 0.78);
+    border: 1px solid rgba(191, 255, 61, 0.2);
+  }
+
+  .relationship-bubble-player {
+    align-self: flex-start;
+    background: rgba(255, 249, 28, 0.82);
+    border: 1px solid rgba(255, 255, 180, 0.24);
+    color: #090b04;
+  }
+
+  .relationship-bubble-typing {
+    min-width: 74px;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .relationship-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(4, 17, 7, 0.72);
+    animation: relationshipTyping 980ms ease-in-out infinite;
+  }
+
+  .relationship-dot:nth-child(2) {
+    animation-delay: 140ms;
+  }
+
+  .relationship-dot:nth-child(3) {
+    animation-delay: 280ms;
+  }
+
+  @keyframes relationshipTyping {
+    0%, 70%, 100% {
+      opacity: 0.35;
+      transform: translateY(0);
+    }
+    35% {
+      opacity: 1;
+      transform: translateY(-4px);
+    }
+  }
+
+  .relationship-live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .relationship-status {
+    position: absolute;
+    left: max(28px, env(safe-area-inset-left));
+    right: max(28px, env(safe-area-inset-right));
+    bottom: max(244px, calc(env(safe-area-inset-bottom) + 244px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    color: rgba(225, 255, 220, 0.78);
+    font-size: 11px;
+    font-weight: 720;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .relationship-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ff4d5d;
+    box-shadow: 0 0 14px rgba(255, 77, 93, 0.8);
+  }
+
+  .relationship-status::after {
+    content: "";
+    width: min(110px, 24vw);
+    height: 18px;
+    opacity: 0.7;
+    background:
+      linear-gradient(90deg, transparent 0 10%, rgba(191, 255, 61, 0.55) 10% 12%, transparent 12% 25%, rgba(191, 255, 61, 0.55) 25% 27%, transparent 27% 44%, rgba(255, 77, 93, 0.8) 44% 47%, transparent 47% 61%, rgba(191, 255, 61, 0.55) 61% 63%, transparent 63% 100%);
+  }
+
+  .relationship-form {
+    position: absolute;
+    left: max(20px, env(safe-area-inset-left));
+    right: max(20px, env(safe-area-inset-right));
+    bottom: max(58px, calc(env(safe-area-inset-bottom) + 58px));
+    display: grid;
+    grid-template-columns: 1fr 66px;
+    grid-template-rows: 24px 58px;
+    align-items: stretch;
+    min-height: 92px;
+    border: 1px solid rgba(178, 255, 64, 0.72);
+    background: rgba(3, 12, 6, 0.48);
+    box-shadow: 0 0 30px rgba(108, 179, 40, 0.1), inset 0 0 24px rgba(191, 255, 61, 0.05);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+  }
+
+  .relationship-form::before,
+  .relationship-form::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    width: 18px;
+    height: 18px;
+    border-top: 2px solid #bfff3d;
+  }
+
+  .relationship-form::before {
+    left: -1px;
+    border-left: 2px solid #bfff3d;
+  }
+
+  .relationship-form::after {
+    right: -1px;
+    border-right: 2px solid #bfff3d;
+  }
+
+  .relationship-input-label {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: end;
+    padding: 8px 18px 0;
+    color: rgba(222, 255, 216, 0.62);
+    font-size: 10px;
+    font-weight: 760;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .relationship-input {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #f6fff8;
+    font: inherit;
+    font-size: clamp(18px, 4.6vw, 24px);
+    font-weight: 650;
+    letter-spacing: 0;
+    padding: 0 18px 12px;
+    caret-color: #bfff3d;
+  }
+
+  .relationship-input::placeholder {
+    color: rgba(246, 255, 248, 0.34);
+  }
+
+  .relationship-submit {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+    justify-self: center;
+    width: 46px;
+    height: 46px;
+    margin-right: 10px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #24420e;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .relationship-submit:disabled {
+    opacity: 0.42;
+    cursor: default;
+  }
+
+  .relationship-submit img {
+    display: block;
+    width: 51px;
+    height: 51px;
+  }
 </style>
 </head>
 <body>
@@ -131,6 +392,31 @@
   <div class="system-message" id="message">Loading Eli...</div>
   <div class="debug-panel" id="debug"></div>
   <div class="fade-overlay" id="fade"></div>
+  <section class="relationship-screen" id="relationship" aria-label="First conversation with Eli">
+    <div class="relationship-thread" id="relationshipThread">
+      <div class="relationship-bubble relationship-bubble-eli relationship-prompt" id="relationshipPrompt">What should I call you?</div>
+      <div class="relationship-messages" id="relationshipMessages"></div>
+    </div>
+    <div class="relationship-status" id="relationshipStatus">First contact</div>
+    <p class="relationship-live" id="relationshipReply" aria-live="polite"></p>
+    <form class="relationship-form" id="relationshipForm">
+      <div class="relationship-input-label" id="relationshipInputLabel">Answer</div>
+      <input
+        class="relationship-input"
+        id="relationshipName"
+        name="chat_response"
+        type="text"
+        autocomplete="name"
+        autocapitalize="words"
+        enterkeyhint="send"
+        maxlength="96"
+        aria-label="Your answer"
+      />
+      <button class="relationship-submit" id="relationshipSubmit" type="submit" aria-label="Send" disabled>
+        <img src="./public/button.svg" alt="" />
+      </button>
+    </form>
+  </section>
 
   <!-- Pinned to latest @rive-app/webgl2 for full Layer Effect support (blur, drop shadow, feathering). -->
   <!-- Was 2.21.6 — bumped because Rive blur is a Layer Effect that needs newer Rive Renderer builds. -->
@@ -148,6 +434,14 @@
     const messageEl = document.getElementById('message');
     const debugEl = document.getElementById('debug');
     const fadeEl = document.getElementById('fade');
+    const relationshipEl = document.getElementById('relationship');
+    const relationshipForm = document.getElementById('relationshipForm');
+    const relationshipPrompt = document.getElementById('relationshipPrompt');
+    const relationshipMessages = document.getElementById('relationshipMessages');
+    const relationshipStatus = document.getElementById('relationshipStatus');
+    const relationshipName = document.getElementById('relationshipName');
+    const relationshipSubmit = document.getElementById('relationshipSubmit');
+    const relationshipReply = document.getElementById('relationshipReply');
     const params = new URLSearchParams(window.location.search);
     const debugEnabled = params.has('debug');
 
@@ -194,6 +488,7 @@
           tap_brain: 'trigger',
           cue_speak: 'trigger',
           listening: 'boolean',
+          nav_first_contact: 'boolean',
         },
         unlockSound: null, // audio is authored in Rive Events for this scene
         textRuns: ['eli_subtitle'],
@@ -206,9 +501,26 @@
           setInput('body_state', 0);
           setInput('mood', 0);
           setInput('listening', true);
+          setInput('nav_first_contact', false);
           // Tap reactions are owned by Rive listeners (hit_heart, hit_lungs,
           // hit_brain) and the EliState machine. The app only listens for
           // Rive Events emitted by Eli (e.g. audio cues).
+          watchBoolean('nav_first_contact', () => transitionTo('first_contact'));
+        },
+      },
+      first_contact: {
+        label: 'first_contact.riv',
+        src: './public/rive/first_contact.riv',
+        artboard: 'FirstContact',
+        stateMachine: 'FirstContactState',
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Cover,
+        expectedInputs: {},
+        unlockSound: null,
+        textRuns: ['prompt', 'player_name', 'eli_reply'],
+        relationship: true,
+        initialize: () => {
+          showRelationshipScreen();
         },
       },
     };
@@ -220,6 +532,70 @@
     let inputByName = new Map();
     let audioUnlocked = false;
     let assetBytes = 0;
+    let relationshipStep = 0;
+    let relationshipMemory = loadRelationshipMemory();
+
+    const relationshipQuestions = [
+      {
+        id: 'player_name',
+        prompt: () => 'What should I call you?',
+        status: 'Identity scan',
+        placeholder: 'Your name',
+        maxLength: 32,
+        remember: (answer) => {
+          relationshipMemory.player_name = answer;
+          window.localStorage.setItem('eli_player_name', answer);
+          setTextRun('player_name', answer);
+        },
+        reply: (answer) => `${answer}. I can remember that.`,
+      },
+      {
+        id: 'current_feeling',
+        prompt: () => `${relationshipMemory.player_name || 'you'}, how are you feeling right now?`,
+        status: 'Emotional baseline',
+        placeholder: 'One word is enough',
+        maxLength: 64,
+        remember: (answer) => {
+          relationshipMemory.current_feeling = answer;
+        },
+        reply: (answer) => `Okay. ${capitalizeAnswer(answer)}. I will go slowly.`,
+      },
+      {
+        id: 'comfort_pattern',
+        prompt: () => 'When things get scary, what helps you feel safe?',
+        status: 'Safety pattern',
+        placeholder: 'Music, jokes, silence...',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.comfort_pattern = answer;
+        },
+        reply: (answer) => `I will try to remember: ${answer}.`,
+      },
+      {
+        id: 'permission_pattern',
+        prompt: () => 'Can I ask you little questions as we go?',
+        status: 'Consent check',
+        placeholder: 'Yes, or tell me a boundary',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.permission_pattern = answer;
+          relationshipMemory.first_contact_complete = true;
+        },
+        reply: () => 'Thank you. I feel less alone now.',
+      },
+    ];
+
+    const freeChatQuestion = {
+      id: 'free_chat',
+      prompt: () => `I remember you now, ${relationshipMemory.player_name || 'you'}.`,
+      status: 'Open channel',
+      placeholder: 'Say something to Eli',
+      maxLength: 180,
+      remember: (answer) => {
+        relationshipMemory.last_free_chat = answer;
+      },
+      reply: (answer) => getLocalFreeChatReply(answer),
+    };
 
     const sounds = {
       heartbeat_loop: makeAudio([
@@ -301,6 +677,64 @@
       if (action === 'fire-tap-heart') {
         fireInput('tap_heart');
       }
+      if (action === 'goto-first-contact') {
+        transitionTo('first_contact');
+      }
+    });
+
+    relationshipName.addEventListener('input', () => {
+      relationshipSubmit.disabled = relationshipName.value.trim().length === 0;
+    });
+
+    relationshipName.addEventListener('focus', () => {
+      window.setTimeout(scrollRelationshipToBottom, 260);
+    });
+
+    relationshipForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const answer = relationshipName.value.trim();
+      const question = getCurrentRelationshipQuestion();
+      const isOnboarding = relationshipStep < relationshipQuestions.length;
+      if (!answer) return;
+
+      addChatBubble('player', answer);
+      const prompt = question.prompt();
+      question.remember(answer);
+      rememberInteraction(question.id, answer);
+      saveRelationshipMemory();
+      setInput('listening', false);
+      fireInput('cue_speak');
+
+      relationshipSubmit.disabled = true;
+      relationshipName.value = '';
+      relationshipName.disabled = true;
+
+      window.setTimeout(() => {
+        showEliTypingThen(async () => {
+          const reply = await getEliReply({
+            questionId: question.id,
+            question: prompt,
+            answer,
+            fallbackReply: question.reply(answer),
+          });
+          setTextRun('eli_reply', reply);
+          relationshipReply.textContent = reply;
+          rememberEliReply(reply);
+          if (isOnboarding) {
+            relationshipStep += 1;
+          }
+
+          window.setTimeout(() => {
+            setInput('listening', true);
+            if (isOnboarding) {
+              showRelationshipQuestion({ thinking: true });
+            } else {
+              enableRelationshipInput(question);
+            }
+          }, 900);
+          return reply;
+        });
+      }, 260);
     });
 
     window.addEventListener('resize', resizeRive);
@@ -314,6 +748,17 @@
     function fireInput(name) {
       const input = inputByName.get(name);
       if (input && typeof input.fire === 'function') input.fire();
+    }
+
+    function setTextRun(name, value) {
+      if (!riveInstance) return;
+      if (typeof riveInstance.setTextRunValue === 'function') {
+        try {
+          riveInstance.setTextRunValue(name, value);
+        } catch (error) {
+          console.warn(`[Eli] Text run not set: ${name}`, error.message);
+        }
+      }
     }
 
     // Polls a boolean state machine input and invokes `onTrue` the moment it
@@ -434,15 +879,28 @@
     }
 
     function renderDebugActions() {
-      if (!inputByName.has('tap_heart')) return '';
-      return `
+      const actions = [];
+      if (inputByName.has('tap_heart')) {
+        actions.push(`
         <button
           data-action="fire-tap-heart"
           style="margin-top:10px;padding:6px 9px;border:1px solid rgba(90,255,140,.35);border-radius:6px;background:rgba(90,255,140,.08);color:#bfff3d;font:inherit;"
         >
           Fire tap_heart
         </button>
-      `;
+        `);
+      }
+      if (profile === profiles.eli) {
+        actions.push(`
+        <button
+          data-action="goto-first-contact"
+          style="margin-top:10px;margin-left:6px;padding:6px 9px;border:1px solid rgba(90,255,140,.35);border-radius:6px;background:rgba(90,255,140,.08);color:#bfff3d;font:inherit;"
+        >
+          Go first_contact
+        </button>
+        `);
+      }
+      return actions.join('');
     }
 
     function renderBudget() {
@@ -478,6 +936,217 @@
       window.setTimeout(() => {
         window.location.href = withProfile(name);
       }, 3000);
+    }
+
+    function showRelationshipScreen() {
+      relationshipEl.classList.add('visible');
+      relationshipMessages.innerHTML = '';
+      const savedName = window.localStorage.getItem('eli_player_name');
+      if (savedName) {
+        relationshipMemory.player_name = savedName;
+        setTextRun('player_name', savedName);
+      }
+      relationshipStep = findNextRelationshipStep();
+      showRelationshipQuestion();
+      window.setTimeout(() => relationshipName.focus(), 450);
+    }
+
+    function showRelationshipQuestion(options = {}) {
+      const question = getCurrentRelationshipQuestion();
+      const isFreeChat = relationshipStep >= relationshipQuestions.length;
+
+      if (isFreeChat) {
+        const prompt = question.prompt();
+        if (relationshipMessages.children.length === 0) {
+          relationshipPrompt.textContent = prompt;
+        } else if (!relationshipMemory.open_chat_started) {
+          addChatBubble('eli', prompt);
+        }
+        relationshipMemory.open_chat_started = true;
+        saveRelationshipMemory();
+        enableRelationshipInput(question);
+        setTextRun('prompt', prompt);
+        return;
+      }
+
+      const prompt = question.prompt();
+      const shouldThink = options.thinking && relationshipMessages.children.length > 0;
+      if (relationshipMessages.children.length === 0) {
+        relationshipPrompt.textContent = prompt;
+      } else {
+        if (shouldThink) {
+          showEliTypingThen(prompt, () => {
+            relationshipName.disabled = false;
+            relationshipSubmit.disabled = relationshipName.value.trim().length === 0;
+          });
+        } else {
+          addChatBubble('eli', prompt);
+        }
+      }
+      enableRelationshipInput(question, shouldThink);
+      relationshipSubmit.disabled = true;
+      setTextRun('prompt', prompt);
+    }
+
+    function getCurrentRelationshipQuestion() {
+      return relationshipQuestions[relationshipStep] || freeChatQuestion;
+    }
+
+    function enableRelationshipInput(question, disabled = false) {
+      relationshipStatus.textContent = question.status;
+      relationshipName.placeholder = question.placeholder;
+      relationshipName.maxLength = question.maxLength;
+      relationshipName.disabled = disabled;
+      relationshipSubmit.disabled = disabled || relationshipName.value.trim().length === 0;
+    }
+
+    function addChatBubble(kind, text) {
+      const bubble = document.createElement('div');
+      bubble.className = `relationship-bubble relationship-bubble-${kind}`;
+      bubble.textContent = text;
+      relationshipMessages.appendChild(bubble);
+      scrollRelationshipToBottom();
+    }
+
+    async function getEliReply({ questionId, question, answer, fallbackReply }) {
+      try {
+        const response = await fetch('/api/eli-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question_id: questionId,
+            question,
+            answer,
+            memory: relationshipMemory,
+            recent_interactions: relationshipMemory.interactions || [],
+          }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.memory_patch && typeof data.memory_patch === 'object') {
+          relationshipMemory = { ...relationshipMemory, ...data.memory_patch };
+          saveRelationshipMemory();
+        }
+        return data.reply || fallbackReply;
+      } catch (error) {
+        console.warn('[Eli] LLM fallback used:', error.message);
+        return fallbackReply;
+      }
+    }
+
+    function showEliTypingThen(replyOrLoader, afterMessage) {
+      const typing = addTypingBubble();
+      relationshipName.disabled = true;
+      relationshipSubmit.disabled = true;
+
+      const startedAt = Date.now();
+      const loadReply = typeof replyOrLoader === 'function'
+        ? Promise.resolve(replyOrLoader())
+        : Promise.resolve(replyOrLoader);
+
+      loadReply.then((text) => {
+        const remaining = Math.max(0, calculateThinkingDelay(text) - (Date.now() - startedAt));
+        window.setTimeout(() => {
+          typing.remove();
+          addChatBubble('eli', text);
+          relationshipName.disabled = false;
+          relationshipSubmit.disabled = relationshipName.value.trim().length === 0;
+          if (afterMessage) afterMessage();
+        }, remaining);
+      });
+    }
+
+    function addTypingBubble() {
+      const bubble = document.createElement('div');
+      bubble.className = 'relationship-bubble relationship-bubble-eli relationship-bubble-typing';
+      bubble.setAttribute('aria-label', 'Eli is typing');
+      bubble.innerHTML = '<span class="relationship-dot"></span><span class="relationship-dot"></span><span class="relationship-dot"></span>';
+      relationshipMessages.appendChild(bubble);
+      scrollRelationshipToBottom();
+      return bubble;
+    }
+
+    function scrollRelationshipToBottom() {
+      window.requestAnimationFrame(() => {
+        const thread = document.getElementById('relationshipThread');
+        thread.scrollTop = thread.scrollHeight;
+      });
+    }
+
+    function calculateThinkingDelay(text) {
+      const lengthDelay = Math.min(900, text.length * 18);
+      return 820 + lengthDelay;
+    }
+
+    function getLocalFreeChatReply(answer) {
+      const lower = answer.toLowerCase();
+      if (/\b(hi|hello|hey)\b/.test(lower)) {
+        return relationshipMemory.player_name
+          ? `Hi, ${relationshipMemory.player_name}. Are you still there?`
+          : 'Hi. Are you still there?';
+      }
+      if (/thank/.test(lower)) return 'You do not have to thank me. But I like it.';
+      if (/strange|weird|odd/.test(lower)) return 'Strange makes sense. This place feels wrong to me too.';
+      if (/comfort|comfortable|safe/.test(lower)) return 'Then I will stay careful with you.';
+      if (/\b(no|nope)\b/.test(lower)) return 'Okay. I will not push.';
+      if (/\b(yes|yeah|yep)\b/.test(lower)) return 'Okay. I will ask softly.';
+      if (/how are you|how do you feel/.test(lower)) return 'A little scared. But I am listening.';
+      if (/who are you|your name/.test(lower)) return 'I think my name is Eli.';
+      if (/help|safe|okay/.test(lower)) return 'Stay close. I can try to stay calm.';
+      return relationshipMemory.player_name
+        ? `I hear you, ${relationshipMemory.player_name}.`
+        : 'I hear you.';
+    }
+
+    function findNextRelationshipStep() {
+      const next = relationshipQuestions.findIndex((question) => !relationshipMemory[question.id]);
+      return next === -1 ? relationshipQuestions.length : next;
+    }
+
+    function loadRelationshipMemory() {
+      if (params.has('reset')) {
+        window.localStorage.removeItem('eli_relationship_memory');
+        window.localStorage.removeItem('eli_player_name');
+      }
+      try {
+        return JSON.parse(window.localStorage.getItem('eli_relationship_memory') || '{}');
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveRelationshipMemory() {
+      relationshipMemory.updated_at = new Date().toISOString();
+      window.localStorage.setItem('eli_relationship_memory', JSON.stringify(relationshipMemory));
+    }
+
+    function rememberInteraction(questionId, answer) {
+      const interaction = {
+        scene: 'first_contact',
+        question: questionId,
+        player_answer: answer,
+        at: new Date().toISOString(),
+      };
+      const interactions = Array.isArray(relationshipMemory.interactions)
+        ? relationshipMemory.interactions
+        : [];
+      relationshipMemory.interactions = interactions.concat(interaction).slice(-12);
+    }
+
+    function rememberEliReply(reply) {
+      const interactions = Array.isArray(relationshipMemory.interactions)
+        ? relationshipMemory.interactions
+        : [];
+      const last = interactions[interactions.length - 1];
+      if (!last) return;
+      last.eli_reply = reply;
+      last.replied_at = new Date().toISOString();
+      saveRelationshipMemory();
+    }
+
+    function capitalizeAnswer(answer) {
+      return answer.charAt(0).toUpperCase() + answer.slice(1);
     }
 
     function withProfile(name) {

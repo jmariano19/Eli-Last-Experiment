@@ -1,4 +1,12 @@
-FROM nginx:alpine
-COPY . /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+FROM node:22-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=80
+
+COPY . .
+
 EXPOSE 80
+
+CMD ["node", "local-server.mjs"]
