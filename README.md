@@ -568,3 +568,429 @@ PORT=80
 ```
 
 If `OPENAI_API_KEY` is missing or quota is unavailable, the prototype still loads and uses local fallback Eli replies.
+
+### Claude continuation handoff - June 4, 2026
+
+This repo is currently a working standalone Rive/HTML prototype, not the final React app scaffold. Continue work primarily in:
+
+```text
+test.html
+local-server.mjs
+public/rive/*.riv
+public/audio/*
+```
+
+Local server:
+
+```bash
+cd "/Users/jeff/Desktop/Jeff_Main/08_Eli's Last Experiment/Prototype-4"
+OPENAI_API_KEY="..." node local-server.mjs
+```
+
+Safer local launcher:
+
+```bash
+"/Users/jeff/Desktop/Jeff_Main/08_Eli's Last Experiment/Prototype-4/start-ai-server.command"
+```
+
+Current local URLs:
+
+```text
+Entry:          http://localhost:4177/test.html
+Eli:            http://localhost:4177/test.html?file=eli
+First contact:  http://localhost:4177/test.html?file=first_contact
+Reset chat:     http://localhost:4177/test.html?file=first_contact&reset=1
+AI status:      http://localhost:4177/api/openai-status
+```
+
+Mobile review on Jeff's current Wi-Fi:
+
+```text
+Entry:          http://10.0.0.212:4177/test.html
+Eli:            http://10.0.0.212:4177/test.html?file=eli
+First contact:  http://10.0.0.212:4177/test.html?file=first_contact
+Reset chat:     http://10.0.0.212:4177/test.html?file=first_contact&reset=1
+```
+
+Check the IP again with `ipconfig getifaddr en0` if mobile links stop loading.
+
+#### Current scene map
+
+`test.html` has active scene profiles for the Rive scenes plus one video interstitial:
+
+```text
+intro
+  file: public/rive/intro.riv
+  artboard: Title
+  state machine: TitleState
+  route to Eli: Boolean input nav_eli flips true
+
+eli
+  file: public/rive/eli.riv
+  artboard: Eli
+  state machine: EliState
+  route to video: Boolean input nav_first_contact flips true
+
+eli_video
+  file: public/Video/eli_video.mp4
+  plays before first_contact
+  route to first_contact: video ended event
+
+first_contact
+  file: public/rive/first_contact.riv
+  artboard: FirstContact
+  state machine: FirstContactState
+  HTML chat overlay on top of Rive
+```
+
+Scene routing is still handled by the host page. Rive listeners should fire inputs/events; JavaScript should not manually guess tap locations.
+
+#### Current audio behavior
+
+Audio is external. Do not embed audio into `.riv` files.
+
+Current sound keys in `test.html`:
+
+```text
+screen_tap        -> public/audio/sfx/tap.mp3
+screen_enter_loop -> public/audio/sfx/enter.mp3
+xray_loop         -> public/audio/sfx/xray.mp3
+heart_tap         -> public/audio/sfx/heart_tap.opus (optional/missing until added)
+cta_chime         -> public/audio/sfx/cta_chime.opus (optional/missing until added)
+eli_intro_01      -> public/audio/voice/eli/intro_01.opus (optional/missing until added)
+heartbeat_loop    -> opus/mp3 fallback paths from earlier prototype
+```
+
+Entry screen behavior:
+
+```text
+first tap: tap.mp3 plays once
+after 220ms: enter.mp3 starts looping
+transition to Eli: entry loop stops, xray.mp3 starts looping during fade
+```
+
+Eli screen behavior:
+
+```text
+xray.mp3 loops while on Eli when audio has been unlocked.
+If Eli is opened directly in a fresh browser tab, one tap is still needed because mobile browsers block autoplay.
+```
+
+All looping sounds are stopped on scene transition by `stopLoopingSounds()`, except transition sounds explicitly passed through.
+
+#### First contact chat
+
+The first contact screen is an HTML overlay on top of `first_contact.riv`.
+
+Current UX decisions:
+
+```text
+overlay fades in
+input is not auto-focused on entry, so mobile keyboard does not cover Eli's first line
+chat thread scrolls
+new messages auto-scroll to bottom
+mobile typography is enlarged for Pixel-sized screens
+```
+
+First-contact opening is story-first, not user-profile-first. The scripted opening asks the player to help investigate what happened to Eli, then asks for the player's name after a few memory fragments.
+
+Current scripted opening keys:
+
+```text
+help_consent
+first_clue
+heart_sound
+player_name
+permission_pattern
+```
+
+After onboarding, the screen becomes open chat. Memory is stored in `localStorage` under:
+
+```text
+eli_player_name
+eli_relationship_memory
+```
+
+Use `?reset=1` to clear local first-contact memory.
+
+#### AI server
+
+`local-server.mjs` serves both static files and `/api/eli-chat`.
+
+The AI prompt lives in `eliSystemPrompt`. It should keep Eli:
+
+```text
+frightened but curious
+gentle
+short
+relationship-building, not chatbot-like
+non-clinical
+not manipulative
+careful not to invent player emotions
+```
+
+Important guardrail already implemented: `sanitizeEliReply()` catches model replies that invent unsupported player feelings such as sadness after the player says they are okay.
+
+Production requires:
+
+```text
+OPENAI_API_KEY
+```
+
+Optional:
+
+```text
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+If OpenAI is unavailable, `/api/eli-chat` returns local fallback replies so the prototype remains usable.
+
+#### Easypanel / production
+
+The Dockerfile now uses Node:
+
+```text
+FROM node:22-alpine
+CMD ["node", "local-server.mjs"]
+```
+
+This replaced the older static Nginx image so production can serve `/api/eli-chat`. Easypanel should deploy from GitHub `main`.
+
+Set Easypanel environment variables:
+
+```text
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4.1-mini
+PORT=80
+```
+
+Do not commit real API keys. The only key-looking value in the repo should be the README placeholder.
+
+#### Known risks before hardening
+
+```text
+Rive files are still much larger than budget.
+Some referenced audio paths are optional/missing until final assets are added.
+Current prototype is a single test.html; final app architecture is still planned as React/Vite/Capacitor.
+Mobile audio depends on user gesture unlock. Avoid designs that require true autoplay.
+Do not overwrite Jeff's latest .riv changes unless explicitly asked.
+```
+
+---
+
+## Appendix C — Claude working context (read this first in every session)
+
+This section is written for Claude. When Jeff opens this project in VS Code and starts a conversation, Claude should read this appendix before touching any file.
+
+### Who Jeff is
+
+Jeff is a UX designer and technologist building this game as a solo founder project alongside consulting and career transition work. He is fluent in English and Spanish. He thinks in systems and moves fast once direction is clear. He prefers direct, specific input over diplomatic hedging. Do not soften feedback.
+
+### What this project actually is right now
+
+`Prototype-4` is a **working standalone HTML/Node prototype**, not yet the final React/Vite/Capacitor app described in sections 1–8 of this README. The architecture in sections 1–8 is the intended final target. The current working files are:
+
+```text
+test.html           ← the entire frontend (one file, no build step)
+local-server.mjs    ← Node HTTP server + /api/eli-chat endpoint
+public/rive/*.riv   ← Rive animation files (do not overwrite without being asked)
+public/audio/*      ← sound assets
+```
+
+All active development happens in those four locations. Do not scaffold React components, Zustand stores, or Vite configs unless Jeff explicitly asks to migrate to the final architecture.
+
+### How to start the server
+
+```bash
+cd "/Users/jeff/Desktop/Jeff_Main/08_Eli's Last Experiment/Prototype-4"
+OPENAI_API_KEY="..." node local-server.mjs
+```
+
+Or use the safe launcher:
+
+```bash
+"/Users/jeff/Desktop/Jeff_Main/08_Eli's Last Experiment/Prototype-4/start-ai-server.command"
+```
+
+### Live URLs
+
+```text
+Entry:         http://localhost:4177/test.html
+Eli body:      http://localhost:4177/test.html?file=eli
+First contact: http://localhost:4177/test.html?file=first_contact
+Reset chat:    http://localhost:4177/test.html?file=first_contact&reset=1
+AI status:     http://localhost:4177/api/openai-status
+```
+
+Mobile (check IP with `ipconfig getifaddr en0` if links stop working):
+
+```text
+http://10.0.0.212:4177/test.html
+```
+
+### Current state of the codebase — June 4, 2026
+
+These features are **implemented and working**:
+
+```text
+Rive/video scenes: intro → eli → eli_video → first_contact
+Scene routing via Boolean input polling (nav_eli, nav_first_contact)
+HTML chat overlay on first_contact scene
+OpenAI /api/eli-chat endpoint with fallback replies
+Story-first scripted opening: help_consent, first_clue, heart_sound, player_name, permission_pattern
+Memory stored in localStorage: eli_player_name, eli_relationship_memory
+sanitizeEliReply() guardrail — prevents Eli from inventing player emotions
+Rive event handler: goto_<profile> routes scenes, play_<sound> triggers audio
+Hot audio unlock on first user gesture
+```
+
+These features were **added June 4, 2026** (files: `local-server.mjs`, `test.html`):
+
+```text
+vitals in API response: {bpm: number, mood: number} alongside every Eli reply
+heart_pulse and mood Rive inputs written after each chat reply (chat → Rive bridge)
+BPM display overlay (position:fixed, top-right, first_contact scene only)
+session_number tracked in localStorage, incremented on each open
+last_session_at timestamp stored; hours_since_last_session computed and sent to API
+last_absence_hours stored; absenceAwareOpenPrompt() overrides Eli's first free-chat line
+fallbackVitals() provides bpm/mood estimates when OpenAI is offline
+sanitizeVitals() clamps bpm 60-180, mood 0-5 before leaving server
+```
+
+These features are **not yet built**:
+
+```text
+Push notifications / lock screen signal (between-session variable interval mechanic)
+Session arc (Eli's tone shifting across sessions 1-7: stranger → known → trusted → mirror)
+Organ health decay over time (avoidance loop — heart_pulse rises while player is away)
+Extraction run scenes (heart_run.riv, lungs_run.riv, brain_run.riv)
+Memory chip visualization (words Eli has stored, shown in the chat thread)
+React/Vite/Capacitor migration (still on single test.html)
+```
+
+### The eli_relationship_memory schema
+
+Stored in `localStorage` under `eli_relationship_memory`. Current shape after June 4 changes:
+
+```json
+{
+  "help_consent": "yes",
+  "first_clue": "the room",
+  "heart_sound_theory": "a machine",
+  "player_name": "Jeff",
+  "permission_pattern": "yes",
+  "first_contact_complete": true,
+  "open_chat_started": true,
+  "last_free_chat": "...",
+  "interactions": [
+    {
+      "scene": "first_contact",
+      "question": "player_name",
+      "player_answer": "Jeff",
+      "at": "2026-06-04T15:30:00.000Z",
+      "eli_reply": "Jeff. I can remember that.",
+      "replied_at": "2026-06-04T15:30:02.000Z"
+    }
+  ],
+  "session_number": 3,
+  "last_session_at": "2026-06-04T15:30:00.000Z",
+  "last_absence_hours": 4.2,
+  "last_bpm": 118,
+  "last_mood": 3,
+  "updated_at": "2026-06-04T15:30:02.000Z"
+}
+```
+
+### The /api/eli-chat contract
+
+**Request body:**
+
+```json
+{
+  "question": "string — the current prompt Eli is asking",
+  "answer": "string — the player's reply (max 240 chars)",
+  "memory": { ...eli_relationship_memory },
+  "recent_interactions": [ ...last 6 interactions ],
+  "session_number": 3,
+  "absence_hours": 4.2
+}
+```
+
+**Response body:**
+
+```json
+{
+  "mode": "openai | fallback",
+  "reply": "Eli's response text (4-18 words)",
+  "memory_patch": { "key": "value" },
+  "vitals": { "bpm": 118, "mood": 3 }
+}
+```
+
+`vitals` may be `null` in fallback mode if the input is cold/unrecognized. Always null-check before writing to Rive.
+
+### The Rive input bridge
+
+`setInput(name, value)` in `test.html` writes to the active state machine. After each Eli reply, `applyVitals()` is called with the response vitals:
+
+```text
+vitals.bpm  → mapped 60-180 to 0-100 → written to heart_pulse (Number input)
+vitals.mood → written directly to mood (Number input, 0-5)
+```
+
+Initial values on first_contact scene load:
+
+```text
+heart_pulse: derived from memory.last_bpm (default 132 if no prior session)
+mood:        derived from memory.last_mood (default 1 if no prior session)
+```
+
+### Eli's character — do not drift from this
+
+```text
+frightened but curious
+gentle, short replies (4-18 words)
+relationship-building, not chatbot-like
+non-clinical language only
+never manipulates, shames, flatters excessively, or claims to be human
+does not invent or assume player emotions
+uses player's exact words back — not synonyms, not summaries
+has his own interior: afraid of forgetting, curious about the player's life outside the game
+exists between sessions — notices time passing, notices the player's absence
+```
+
+### Rules for Claude when working in this repo
+
+1. **Read before writing.** Always read the file you are about to edit. Never patch from memory.
+2. **Do not overwrite .riv files.** Ever. Only Jeff touches Rive files.
+3. **Do not add npm dependencies** to the prototype without asking. The prototype has no `package.json` — it uses CDN scripts.
+4. **Do not scaffold the React app** unless Jeff explicitly says "migrate to React." The prototype and the final app are separate work streams.
+5. **Minimal diffs.** Change only what is needed for the task. Do not reformat unrelated code.
+6. **Syntax-check before handing back.** Run `node --check local-server.mjs` after any server edit. For `test.html`, verify the script block with `node -e "new Function(...)"`.
+7. **When unsure about a Rive input name**, check `profile.expectedInputs` in `test.html` or ask Jeff to confirm in the Rive editor. Do not guess input names.
+8. **Memory keys must be snake_case, 1-64 chars, alphanumeric plus `_` and `:`**. The `sanitizeMemory()` function on the server enforces this — invalid keys are silently dropped.
+9. **The design north star is attachment, not engagement.** Every feature should make the player feel concern, tenderness, or care for Eli. If a change makes the game feel more like a chatbot or a notification machine, push back.
+
+### Design documents Claude has already read
+
+In the current conversation thread (started June 4, 2026), Claude has full context on:
+
+```text
+Hopson's Behavioral Game Design framework (variable ratio, avoidance, chain schedules, extinction)
+The attachment architecture (4-layer memory system: voice profile, event log, patterns, Eli's interior)
+The wireframe system (3 screens: chat introduction, returning player home, between-session signal)
+The Hopson loop map (which UI element drives which schedule)
+The session arc (sessions 1-7: stranger → known → trusted → mirror)
+```
+
+If starting a new conversation, Jeff should paste this README into the first message or use the VS Code Claude extension with this file open. The context above does not need to be re-explained — just confirm the README was read and proceed.
+
+### What to work on next (as of June 4, 2026)
+
+Priority order:
+
+1. **Test the vitals bridge** — open `?file=first_contact&reset=1`, say something warm, confirm BPM drops and `heart_pulse` input changes in the Rive debug panel.
+2. **Organ decay loop** — `heart_pulse` should drift upward over real time when the player is away. A simple `setInterval` in `test.html` that increments `last_bpm` by ~1 every 5 minutes (capped at 160) and writes it to Rive on next open.
+3. **Session arc prompt injection** — the system prompt in `local-server.mjs` should vary based on `session_number`: sessions 1 = stranger register, 2-3 = first recall moments (use player's exact word back), 4-5 = Eli asks a genuine question from earlier, 6-7 = the mirror (synthesize a behavioral pattern observation).
+4. **Memory chip visualization** — after Eli's reply, show a small row of word chips in the chat thread for the words he just stored. Maps to `memory_patch` keys from the response.
+5. **Rive file size cleanup** — `intro.riv` ~4.4 MB, `eli.riv` ~3.3 MB. Both exceed the 800 KB hard ceiling. Cleanup pass needed before any hardening work.

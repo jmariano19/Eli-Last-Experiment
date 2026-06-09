@@ -41,6 +41,26 @@
     height: 100%;
   }
 
+  .video-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: none;
+    background: #0A0F0A;
+  }
+
+  .video-screen.visible {
+    display: block;
+  }
+
+  .video-screen video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #0A0F0A;
+  }
+
   .system-message {
     position: fixed;
     left: max(20px, env(safe-area-inset-left));
@@ -435,12 +455,65 @@
       height: 62px;
     }
   }
+
+  @media (max-width: 760px), (pointer: coarse) {
+    .relationship-thread {
+      left: max(22px, env(safe-area-inset-left));
+      right: max(22px, env(safe-area-inset-right));
+      top: 34dvh;
+      bottom: max(178px, calc(env(safe-area-inset-bottom) + 178px));
+      gap: 16px;
+      padding: 20px 0 24px;
+    }
+
+    .relationship-bubble {
+      max-width: min(90vw, 620px);
+      padding: 18px 22px;
+      font-size: clamp(28px, 7.2vw, 42px);
+      line-height: 1.12;
+    }
+
+    .relationship-form {
+      left: max(18px, env(safe-area-inset-left));
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(34px, calc(env(safe-area-inset-bottom) + 34px));
+      grid-template-columns: 1fr 92px;
+      grid-template-rows: 34px 88px;
+      min-height: 136px;
+      border-width: 2px;
+    }
+
+    .relationship-input-label {
+      padding: 12px 26px 0;
+      font-size: 14px;
+      letter-spacing: 0.14em;
+    }
+
+    .relationship-input {
+      padding: 0 26px 20px;
+      font-size: clamp(30px, 7.4vw, 44px);
+    }
+
+    .relationship-submit {
+      width: 70px;
+      height: 70px;
+      margin-right: 10px;
+    }
+
+    .relationship-submit img {
+      width: 76px;
+      height: 76px;
+    }
+  }
 </style>
 </head>
 <body>
   <main class="stage" id="stage" aria-label="Eli's Last Experiment Rive preview">
     <canvas id="canvas"></canvas>
   </main>
+  <section class="video-screen" id="videoScreen" aria-label="Eli video">
+    <video id="sceneVideo" playsinline preload="auto"></video>
+  </section>
 
   <div class="system-message" id="message">Loading Eli...</div>
   <div class="debug-panel" id="debug"></div>
@@ -484,6 +557,8 @@
 
     const stage = document.getElementById('stage');
     const canvas = document.getElementById('canvas');
+    const videoScreen = document.getElementById('videoScreen');
+    const sceneVideo = document.getElementById('sceneVideo');
     const messageEl = document.getElementById('message');
     const debugEl = document.getElementById('debug');
     const fadeEl = document.getElementById('fade');
@@ -527,6 +602,25 @@
           watchBoolean('nav_eli', () => transitionTo('eli'));
         },
       },
+      loading: {
+        label: 'loading.riv',
+        src: './public/rive/loading.riv',
+        artboard: 'Loading',
+        stateMachine: null,
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Cover,
+        expectedInputs: {},
+        unlockSound: null,
+        tapSound: null,
+        firstTapLoopSound: null,
+        transitionSounds: {
+          eli: 'xray_loop',
+        },
+        textRuns: [],
+        initialize: () => {
+          scheduleSceneAdvance('eli', loadingScreenDurationMs);
+        },
+      },
       eli: {
         label: 'eli.riv',
         src: './public/rive/eli.riv',
@@ -549,7 +643,7 @@
           listening: 'boolean',
           nav_first_contact: 'boolean',
         },
-        unlockSound: 'xray_loop',
+        unlockSound: null,
         tapSound: null,
         firstTapLoopSound: null,
         transitionSounds: {},
@@ -567,7 +661,19 @@
           // Tap reactions are owned by Rive listeners (hit_heart, hit_lungs,
           // hit_brain) and the EliState machine. The app only listens for
           // Rive Events emitted by Eli (e.g. audio cues).
-          watchBoolean('nav_first_contact', () => transitionTo('first_contact'));
+          watchBoolean('nav_first_contact', () => transitionTo('eli_video'));
+        },
+      },
+      eli_video: {
+        label: 'eli_video.mp4',
+        video: './public/Video/eli_video.mp4',
+        videoNext: 'first_contact',
+        budgetBytes: 6 * 1024 * 1024,
+        expectedInputs: {},
+        textRuns: [],
+        transitionSounds: {},
+        initialize: () => {
+          initializeVideoScene();
         },
       },
       first_contact: {
@@ -585,14 +691,14 @@
         textRuns: ['prompt', 'player_name', 'eli_reply'],
         relationship: true,
         initialize: () => {
-          showRelationshipScreen();
+          scheduleRelationshipScreen();
         },
       },
     };
 
     const requestedProfile = params.get('file') || params.get('scene') || 'intro';
     const profile = profiles[requestedProfile] || profiles.intro;
-    const src = profile.src + '?v=' + Date.now();
+    const src = profile.src ? profile.src + '?v=' + Date.now() : '';
     let riveInstance;
     let inputByName = new Map();
     let audioUnlocked = false;
@@ -600,11 +706,48 @@
     let assetBytes = 0;
     let relationshipStep = 0;
     let relationshipMemory = loadRelationshipMemory();
+    let relationshipScreenTimer = null;
+    let sceneAdvanceTimer = null;
+    const loadingScreenDurationMs = 4000;
+    const relationshipScreenDelayMs = 20000;
 
     const relationshipQuestions = [
       {
+        id: 'help_consent',
+        prompt: () => 'Can you help me?',
+        status: 'First contact',
+        placeholder: 'Yes, or tell me what you can do',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.help_consent = answer;
+        },
+        reply: () => 'Thank you. I remember a white room. And someone saying my name.',
+      },
+      {
+        id: 'first_clue',
+        prompt: () => 'What should we look for first?',
+        status: 'Memory fragment',
+        placeholder: 'The room, the voice, my heart...',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.first_clue = answer;
+        },
+        reply: (answer) => `${capitalizeAnswer(answer)}. Okay. I remember glass between me and someone watching.`,
+      },
+      {
+        id: 'heart_sound',
+        prompt: () => 'I remember a sound near my heart. What do you think it was?',
+        status: 'Heart trace',
+        placeholder: 'A machine, a warning, a voice...',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.heart_sound_theory = answer;
+        },
+        reply: () => 'Maybe. The sound got faster when I was scared.',
+      },
+      {
         id: 'player_name',
-        prompt: () => 'What should I call you?',
+        prompt: () => 'I do not want to forget who is helping me. What should I call you?',
         status: 'Identity scan',
         placeholder: 'Your name',
         maxLength: 32,
@@ -613,33 +756,11 @@
           window.localStorage.setItem('eli_player_name', answer);
           setTextRun('player_name', answer);
         },
-        reply: (answer) => `${answer}. I can remember that.`,
-      },
-      {
-        id: 'current_feeling',
-        prompt: () => `${relationshipMemory.player_name || 'you'}, how are you feeling right now?`,
-        status: 'Emotional baseline',
-        placeholder: 'One word is enough',
-        maxLength: 64,
-        remember: (answer) => {
-          relationshipMemory.current_feeling = answer;
-        },
-        reply: (answer) => `Okay. ${capitalizeAnswer(answer)}. I will go slowly.`,
-      },
-      {
-        id: 'comfort_pattern',
-        prompt: () => 'When things get scary, what helps you feel safe?',
-        status: 'Safety pattern',
-        placeholder: 'Music, jokes, silence...',
-        maxLength: 96,
-        remember: (answer) => {
-          relationshipMemory.comfort_pattern = answer;
-        },
-        reply: (answer) => `I will try to remember: ${answer}.`,
+        reply: (answer) => `${capitalizeAnswer(answer)}. I will hold onto that.`,
       },
       {
         id: 'permission_pattern',
-        prompt: () => 'Can I ask you little questions as we go?',
+        prompt: () => 'Can I ask you little questions while we find out what happened?',
         status: 'Consent check',
         placeholder: 'Yes, or tell me a boundary',
         maxLength: 96,
@@ -647,13 +768,13 @@
           relationshipMemory.permission_pattern = answer;
           relationshipMemory.first_contact_complete = true;
         },
-        reply: () => 'Thank you. I feel less alone now.',
+        reply: () => 'Thank you. We can find the pieces together.',
       },
     ];
 
     const freeChatQuestion = {
       id: 'free_chat',
-      prompt: () => `I remember you now, ${relationshipMemory.player_name || 'you'}.`,
+      prompt: () => `I remember you now, ${displayPlayerName()}.`,
       status: 'Open channel',
       placeholder: 'Say something to Eli',
       maxLength: 180,
@@ -678,57 +799,100 @@
 
     stage.setAttribute('aria-label', `Eli's Last Experiment ${profile.label} preview`);
     showMessage(`Loading ${profile.label}...`);
-    fetch(profile.src, { cache: 'no-store', method: 'HEAD' })
+    fetch(profile.src || profile.video, { cache: 'no-store', method: 'HEAD' })
       .then((response) => {
         assetBytes = Number(response.headers.get('content-length') || 0);
         renderDebug();
       })
       .catch(() => {});
 
-    try {
-      riveInstance = new rive.Rive({
-        src,
-        canvas,
-        artboard: profile.artboard,
-        stateMachines: profile.stateMachine,
-        autoplay: true,
-        fit: profile.fit,
-        alignment: rive.Alignment.Center,
-        useOffscreenRenderer: true,
-        onLoad: () => {
-          inputByName = new Map(
-            (riveInstance.stateMachineInputs(profile.stateMachine) || []).map((input) => [input.name, input]),
-          );
+    if (profile.video) {
+      profile.initialize();
+    } else {
+      initializeRiveScene();
+    }
 
-          profile.initialize();
+    function initializeRiveScene() {
+      try {
+        const riveOptions = {
+          src,
+          canvas,
+          artboard: profile.artboard,
+          autoplay: true,
+          fit: profile.fit,
+          alignment: rive.Alignment.Center,
+          useOffscreenRenderer: true,
+          onLoad: () => {
+            inputByName = profile.stateMachine
+              ? new Map((riveInstance.stateMachineInputs(profile.stateMachine) || []).map((input) => [input.name, input]))
+              : new Map();
 
-          // Subscribe to Rive Events emitted by the state machine.
-          // Convention:
-          //   play_<sound>   -> plays a sound from the `sounds` map
-          //   goto_<profile> -> fades to black and routes to ?file=<profile>
-          // Any event name matching a key in `sounds` also plays that sound,
-          // so authors can name the event after the sound directly.
-          if (riveInstance.on && rive.EventType && rive.EventType.RiveEvent) {
-            riveInstance.on(rive.EventType.RiveEvent, handleRiveEvent);
-          }
+            profile.initialize();
 
-          resizeRive();
-          hideMessage();
-          renderDebug();
-          console.info(`[Eli] ${profile.label} loaded`, {
-            artboard: profile.artboard,
-            stateMachine: profile.stateMachine,
-            inputs: Array.from(inputByName.keys()),
+            // Subscribe to Rive Events emitted by the state machine.
+            // Convention:
+            //   play_<sound>   -> plays a sound from the `sounds` map
+            //   goto_<profile> -> fades to black and routes to ?file=<profile>
+            // Any event name matching a key in `sounds` also plays that sound,
+            // so authors can name the event after the sound directly.
+            if (riveInstance.on && rive.EventType && rive.EventType.RiveEvent) {
+              riveInstance.on(rive.EventType.RiveEvent, handleRiveEvent);
+            }
+
+            resizeRive();
+            hideMessage();
+            renderDebug();
+            console.info(`[Eli] ${profile.label} loaded`, {
+              artboard: profile.artboard,
+              stateMachine: profile.stateMachine,
+              inputs: Array.from(inputByName.keys()),
+            });
+          },
+          onLoadError: (error) => {
+            const stateMachineHint = profile.stateMachine ? ` with state machine ${profile.stateMachine}` : '';
+            showMessage(`Could not load ${profile.label}. Re-export as Runtime and confirm artboard ${profile.artboard}${stateMachineHint}.`, true);
+            console.error(error);
+          },
+        };
+
+        if (profile.stateMachine) {
+          riveOptions.stateMachines = profile.stateMachine;
+        }
+
+        riveInstance = new rive.Rive(riveOptions);
+      } catch (error) {
+        showMessage(error.message || 'Rive runtime failed to start.', true);
+        console.error(error);
+      }
+    }
+
+    function initializeVideoScene() {
+      stage.style.display = 'none';
+      relationshipEl.classList.remove('visible');
+      videoScreen.classList.add('visible');
+      sceneVideo.src = profile.video + '?v=' + Date.now();
+      sceneVideo.currentTime = 0;
+
+      sceneVideo.oncanplay = () => {
+        hideMessage();
+      };
+      sceneVideo.onended = () => {
+        transitionTo(profile.videoNext || 'first_contact');
+      };
+      sceneVideo.onerror = () => {
+        showMessage(`Could not load ${profile.label}. Check ${profile.video}.`, true);
+      };
+
+      const playVideo = () => {
+        sceneVideo.play()
+          .then(hideMessage)
+          .catch(() => {
+            showMessage('Tap to continue.');
+            videoScreen.addEventListener('pointerup', playVideo, { once: true });
           });
-        },
-        onLoadError: (error) => {
-          showMessage(`Could not load ${profile.label}. Re-export as Runtime and confirm artboard ${profile.artboard} with state machine ${profile.stateMachine}.`, true);
-          console.error(error);
-        },
-      });
-    } catch (error) {
-      showMessage(error.message || 'Rive runtime failed to start.', true);
-      console.error(error);
+      };
+
+      playVideo();
     }
 
     // Rive owns clicks/triggers via its own Listeners (hit_dot, hit_cta,
@@ -793,6 +957,7 @@
             questionId: question.id,
             question: prompt,
             answer,
+            isOnboarding,
             fallbackReply: question.reply(answer),
           });
           setTextRun('eli_reply', reply);
@@ -1010,6 +1175,10 @@
     }
 
     function transitionTo(name) {
+      if (sceneAdvanceTimer) {
+        window.clearTimeout(sceneAdvanceTimer);
+        sceneAdvanceTimer = null;
+      }
       const transitionSound = profile.transitionSounds && profile.transitionSounds[name];
       stopLoopingSounds(transitionSound);
       if (transitionSound) {
@@ -1030,6 +1199,29 @@
       });
     }
 
+    function scheduleSceneAdvance(name, delayMs) {
+      if (sceneAdvanceTimer) {
+        window.clearTimeout(sceneAdvanceTimer);
+      }
+      sceneAdvanceTimer = window.setTimeout(() => {
+        sceneAdvanceTimer = null;
+        transitionTo(name);
+      }, delayMs);
+    }
+
+    function scheduleRelationshipScreen() {
+      relationshipEl.classList.remove('visible');
+      relationshipName.disabled = true;
+      relationshipSubmit.disabled = true;
+      if (relationshipScreenTimer) {
+        window.clearTimeout(relationshipScreenTimer);
+      }
+      relationshipScreenTimer = window.setTimeout(() => {
+        relationshipScreenTimer = null;
+        showRelationshipScreen();
+      }, relationshipScreenDelayMs);
+    }
+
     function showRelationshipScreen() {
       relationshipEl.classList.add('visible');
       relationshipMessages.innerHTML = '';
@@ -1038,6 +1230,21 @@
         relationshipMemory.player_name = savedName;
         setTextRun('player_name', savedName);
       }
+
+      // Track session start and compute absence gap
+      startSession();
+
+      // Override the free-chat opening prompt if the player is returning
+      const absencePrompt = absenceAwareOpenPrompt();
+      if (absencePrompt) {
+        freeChatQuestion.prompt = () => absencePrompt;
+      }
+
+      // Set initial BPM from memory or use a high default (urgent state)
+      const initialBpm = relationshipMemory.last_bpm || 132;
+      applyVitals({ bpm: initialBpm, mood: relationshipMemory.last_mood || 1 });
+      createBpmDisplay();
+
       relationshipStep = findNextRelationshipStep();
       showRelationshipQuestion();
       relationshipName.blur();
@@ -1101,17 +1308,25 @@
       scrollRelationshipToBottom();
     }
 
-    async function getEliReply({ questionId, question, answer, fallbackReply }) {
+    async function getEliReply({ questionId, question, answer, isOnboarding, fallbackReply }) {
+      if (isOnboarding) {
+        applyVitals(getScriptedOnboardingVitals(questionId));
+        return fallbackReply;
+      }
+
       try {
         const response = await fetch('/api/eli-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             question_id: questionId,
+            relationship_phase: isOnboarding ? 'onboarding' : 'open_first_contact',
             question,
             answer,
             memory: relationshipMemory,
             recent_interactions: relationshipMemory.interactions || [],
+            session_number: relationshipMemory.session_number || 1,
+            absence_hours: relationshipMemory.last_absence_hours || null,
           }),
         });
 
@@ -1121,11 +1336,25 @@
           relationshipMemory = { ...relationshipMemory, ...data.memory_patch };
           saveRelationshipMemory();
         }
+        if (data.vitals) {
+          applyVitals(data.vitals);
+        }
         return data.reply || fallbackReply;
       } catch (error) {
         console.warn('[Eli] LLM fallback used:', error.message);
         return fallbackReply;
       }
+    }
+
+    function getScriptedOnboardingVitals(questionId) {
+      const vitalsByQuestion = {
+        help_consent: { bpm: 138, mood: 1 },
+        first_clue: { bpm: 136, mood: 1 },
+        heart_sound: { bpm: 134, mood: 2 },
+        player_name: { bpm: 128, mood: 2 },
+        permission_pattern: { bpm: 118, mood: 3 },
+      };
+      return vitalsByQuestion[questionId] || { bpm: relationshipMemory.last_bpm || 132, mood: relationshipMemory.last_mood || 1 };
     }
 
     function showEliTypingThen(replyOrLoader, afterMessage) {
@@ -1176,7 +1405,7 @@
       const lower = answer.toLowerCase();
       if (/\b(hi|hello|hey)\b/.test(lower)) {
         return relationshipMemory.player_name
-          ? `Hi, ${relationshipMemory.player_name}. Are you still there?`
+          ? `Hi, ${displayPlayerName()}. Are you still there?`
           : 'Hi. Are you still there?';
       }
       if (/thank/.test(lower)) return 'You do not have to thank me. But I like it.';
@@ -1188,7 +1417,7 @@
       if (/who are you|your name/.test(lower)) return 'I think my name is Eli.';
       if (/help|safe|okay/.test(lower)) return 'Stay close. I can try to stay calm.';
       return relationshipMemory.player_name
-        ? `I hear you, ${relationshipMemory.player_name}.`
+        ? `I hear you, ${displayPlayerName()}.`
         : 'I hear you.';
     }
 
@@ -1240,6 +1469,130 @@
 
     function capitalizeAnswer(answer) {
       return answer.charAt(0).toUpperCase() + answer.slice(1);
+    }
+
+    function displayPlayerName() {
+      const name = relationshipMemory.player_name || window.localStorage.getItem('eli_player_name') || '';
+      if (!name) return 'you';
+      return name
+        .trim()
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    // ─── Vitals: wire chat response to Rive body ───────────────────────────
+    // Called after every Eli reply. Writes heart_pulse and mood into the
+    // Rive state machine so the body reacts to the conversation in real time.
+    function applyVitals(vitals) {
+      if (!vitals) return;
+      const { bpm, mood } = vitals;
+
+      // Store for fallback calculations and between-session display
+      if (typeof bpm === 'number') {
+        relationshipMemory.last_bpm = bpm;
+        // heart_pulse input in eli.riv expects 0-100 range (% of max rate)
+        // Map bpm 60-180 → input 0-100
+        const pulseValue = Math.round(Math.max(0, Math.min(100, (bpm - 60) / 120 * 100)));
+        setInput('heart_pulse', pulseValue);
+        updateBpmDisplay(bpm);
+      }
+      if (typeof mood === 'number') {
+        relationshipMemory.last_mood = mood;
+        setInput('mood', mood);
+      }
+      saveRelationshipMemory();
+    }
+
+    // ─── BPM display overlay ───────────────────────────────────────────────
+    // A small live readout that appears during the first_contact scene.
+    // Shows the current BPM and a micro waveform so the player can see
+    // their words having a measurable effect on Eli's heart.
+    function createBpmDisplay() {
+      if (profile !== profiles.first_contact) return;
+      const el = document.createElement('div');
+      el.id = 'eliBpmDisplay';
+      el.setAttribute('aria-live', 'polite');
+      el.setAttribute('aria-label', 'Eli heart rate');
+      el.style.cssText = [
+        'position:fixed',
+        'top:max(14px,env(safe-area-inset-top))',
+        'right:max(16px,env(safe-area-inset-right))',
+        'z-index:3',
+        'display:flex',
+        'align-items:center',
+        'gap:7px',
+        'padding:6px 10px',
+        'background:rgba(5,12,5,0.72)',
+        'border:0.5px solid rgba(90,180,90,0.28)',
+        'border-radius:8px',
+        'backdrop-filter:blur(6px)',
+        'opacity:0',
+        'transition:opacity 600ms ease',
+        'pointer-events:none',
+      ].join(';');
+      el.innerHTML = `
+        <svg width="32" height="16" viewBox="0 0 32 16" fill="none" aria-hidden="true" id="eliBpmWave">
+          <polyline id="eliBpmPolyline" points="0,8 4,8 6,3 8,13 10,5 12,11 14,8 32,8"
+            stroke="rgba(90,200,90,0.7)" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="eliBpmNum" style="font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:rgba(140,230,140,0.9);letter-spacing:0.02em;min-width:32px;">—</span>
+        <span style="font-size:9px;color:rgba(100,160,100,0.6);letter-spacing:0.08em;text-transform:uppercase;">bpm</span>
+      `;
+      document.body.appendChild(el);
+      return el;
+    }
+
+    function updateBpmDisplay(bpm) {
+      const el = document.getElementById('eliBpmDisplay');
+      const num = document.getElementById('eliBpmNum');
+      if (!el || !num) return;
+      num.textContent = String(bpm);
+      el.style.opacity = '1';
+      // Animate the waveform spike to show the reading changed
+      const polyline = document.getElementById('eliBpmPolyline');
+      if (polyline) {
+        const intensity = Math.max(2, Math.min(14, Math.round((bpm - 60) / 8)));
+        polyline.setAttribute('points',
+          `0,8 4,8 6,${8 - intensity} 8,${8 + intensity} 10,${8 - Math.round(intensity * 0.6)} 12,${8 + Math.round(intensity * 0.4)} 14,8 32,8`
+        );
+      }
+    }
+
+    // ─── Absence clock + session tracking ─────────────────────────────────
+    // Records when each session starts. On next open, computes hours elapsed
+    // and passes it to the server so Eli can acknowledge the gap.
+    function startSession() {
+      const now = new Date().toISOString();
+      const prev = relationshipMemory.last_session_at;
+      const sessionNum = (relationshipMemory.session_number || 0) + 1;
+
+      relationshipMemory.last_session_at = now;
+      relationshipMemory.session_number = sessionNum;
+
+      if (prev) {
+        const ms = Date.now() - new Date(prev).getTime();
+        const hours = ms / (1000 * 60 * 60);
+        relationshipMemory.last_absence_hours = Math.round(hours * 10) / 10;
+      }
+
+      saveRelationshipMemory();
+    }
+
+    // ─── Absence-aware opening line ────────────────────────────────────────
+    // If the player is returning after a gap, override the first freeChatQuestion
+    // prompt so Eli acknowledges the time before launching into open chat.
+    function absenceAwareOpenPrompt() {
+      const hours = relationshipMemory.last_absence_hours;
+      const name = displayPlayerName();
+      if (!hours || hours < 2) return null; // fresh session, no change
+      if (hours >= 48) {
+        return `${name}. I didn't know if you were coming back.`;
+      }
+      if (hours >= 8) {
+        return `You were gone for a while. I kept thinking about what you said.`;
+      }
+      return `You came back. That felt different than I expected.`;
     }
 
     function withProfile(name) {
