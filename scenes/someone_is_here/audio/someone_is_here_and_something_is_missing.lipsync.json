@@ -1,0 +1,91 @@
+{
+  "filename": "someone_is_here_and_something_is_missing.wav",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 13,
+      "emotion_state": 0,
+      "body_movement": 2
+    },
+    {
+      "time": 0.272,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.506,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.565,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.797,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.077,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.428,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.175,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.363,
+      "mouth_shape": 11
+    },
+    {
+      "time": 2.59,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.837,
+      "mouth_shape": 12
+    },
+    {
+      "time": 3.519,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.738,
+      "mouth_shape": 4
+    },
+    {
+      "time": 3.93,
+      "mouth_shape": 3
+    },
+    {
+      "time": 4.245,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.496,
+      "mouth_shape": 7
+    },
+    {
+      "time": 5.13,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.486,
+      "mouth_shape": 11
+    },
+    {
+      "time": 6.023,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.349,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.68,
+      "mouth_shape": 9
+    }
+  ]
+}

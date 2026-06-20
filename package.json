@@ -1,0 +1,9 @@
+{
+  "name": "elis-last-experiment-prototype-6",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node local-server.mjs",
+    "check": "node --check local-server.mjs && node scripts/check-frontend.mjs"
+  }
+}

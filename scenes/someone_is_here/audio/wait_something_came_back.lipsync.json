@@ -1,0 +1,53 @@
+{
+  "filename": "wait_something_came_back.wav",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 4
+    },
+    {
+      "time": 0.63,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.859,
+      "mouth_shape": 9
+    },
+    {
+      "time": 1.1,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.222,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.669,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.051,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.27,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.451,
+      "mouth_shape": 9
+    },
+    {
+      "time": 2.814,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.035,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.099,
+      "mouth_shape": 2
+    }
+  ]
+}

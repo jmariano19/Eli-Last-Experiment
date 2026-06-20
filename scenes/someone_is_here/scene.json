@@ -1,0 +1,40 @@
+{
+  "id": "someone_is_here",
+  "title": "someone is here",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "heartbeat_199bpm_90hz.wav": "voice",
+    "tap.mp3": "bg",
+    "heartbeat-normal.wav": "voice",
+    "someone_is_here.wav": "voice",
+    "someone_is_here_and_something_is_missing.wav": "voice",
+    "wait_something_came_back.wav": "voice",
+    "arthur_voice_shivering_finally_somone_is_here.wav": "voice"
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "memory"
+  },
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "arthur_voice_shivering_finally_somone_is_here.wav",
+      "trigger": "tap_heart",
+      "bg": "heartbeat_199bpm_90hz.wav",
+      "sfx": "tap.mp3"
+    },
+    {
+      "voice": "someone_is_here_and_something_is_missing.wav",
+      "trigger": "ended",
+      "bg": "heartbeat-normal.wav"
+    },
+    {
+      "voice": "wait_something_came_back.wav",
+      "trigger": "ended",
+      "bg": "heartbeat-normal.wav"
+    }
+  ],
+  "routes": {}
+}

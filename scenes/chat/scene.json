@@ -1,0 +1,15 @@
+{
+  "id": "chat",
+  "title": "chat",
+  "type": "rive",
+  "rive": "chat_intro.riv",
+  "files": {
+    "arthur_voice_shivering_whatever_happenedi_think_the.wav": "voice"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "ctaRoutes": []
+}

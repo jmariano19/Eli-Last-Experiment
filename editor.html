@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Elia Editor</title>
+<link rel="stylesheet" href="./src/editor.css" />
+</head>
+<body>
+  <div class="editor-layout">
+
+    <!-- Header -->
+    <header class="editor-header">
+      <span class="editor-header__title">Elia Editor</span>
+      <div class="editor-header__actions">
+        <button class="btn btn--ghost" id="btnOpenAIStatus" title="Claude AI status">●</button>
+        <button class="btn btn--publish" id="btnPublish">Publish</button>
+      </div>
+    </header>
+
+    <!-- Sidebar: scene list -->
+    <aside class="editor-sidebar">
+      <div class="editor-sidebar__label">SEQUENCE</div>
+      <ol class="scene-list" id="sceneList"></ol>
+      <div class="editor-sidebar__add">
+        <button class="btn btn--add-scene" id="btnAddScene">+ Add Scene</button>
+      </div>
+    </aside>
+
+    <!-- Main panel -->
+    <main class="editor-main" id="editorMain">
+      <div class="editor-empty" id="editorEmpty">
+        <p>Select a scene or add one to get started.</p>
+      </div>
+      <div class="editor-panel" id="editorPanel" hidden></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="editor-footer">
+      <button class="btn btn--save" id="btnSave">Save</button>
+      <button class="btn btn--test" id="btnTestScene">Test This Scene</button>
+      <button class="btn btn--test-all" id="btnTestAll">Test All</button>
+      <button class="btn btn--publish" id="btnPublishFooter">Publish</button>
+    </footer>
+
+  </div>
+
+  <!-- Add scene modal -->
+  <div class="modal-backdrop" id="addSceneModal">
+    <div class="modal">
+      <h2 class="modal__title">New Scene</h2>
+      <label class="modal__label">Scene name
+        <input class="modal__input" id="newSceneName" type="text" placeholder="e.g. Eli Waking" maxlength="64" />
+      </label>
+      <div class="modal__types">
+        <button class="modal-type" data-type="rive">
+          <span class="modal-type__icon">◆</span>
+          <span class="modal-type__name">Rive</span>
+          <span class="modal-type__desc">Animated character + voice + lip sync</span>
+        </button>
+        <button class="modal-type" data-type="video">
+          <span class="modal-type__icon">▶</span>
+          <span class="modal-type__name">Video</span>
+          <span class="modal-type__desc">Full-screen video playback</span>
+        </button>
+        <button class="modal-type" data-type="chat">
+          <span class="modal-type__icon">💬</span>
+          <span class="modal-type__name">Chat</span>
+          <span class="modal-type__desc">AI conversation with Eli</span>
+        </button>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="btnAddSceneCancel">Cancel</button>
+        <button class="btn btn--save" id="btnAddSceneCreate">Create Scene</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/@rive-app/webgl2@latest"></script>
+  <script src="./src/editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "id": "memory",
+  "title": "memory",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "Eli_memory.mp4": "video"
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "chat"
+  },
+  "ctaRoutes": []
+}

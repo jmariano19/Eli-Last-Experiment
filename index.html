@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Eli's Last Experiment</title>
+<link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <main class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </main>
+
+  <section class="video-screen" id="videoScreen">
+    <video id="sceneVideo" playsinline preload="auto"></video>
+  </section>
+
+  <section class="chat-screen" id="chatScreen">
+    <canvas id="chatCanvas"></canvas>
+    <div class="chat-thread" id="chatThread"></div>
+    <form class="chat-form" id="chatForm">
+      <input class="chat-input" id="chatInput" type="text" autocomplete="off" placeholder="Say something…" maxlength="240" />
+      <button class="chat-submit" type="submit">↑</button>
+    </form>
+  </section>
+
+  <div class="segment-chat-overlay" id="segmentChat" style="display:none">
+    <div class="segment-chat__thread" id="segChatThread"></div>
+    <form class="segment-chat__form" id="segChatForm">
+      <input class="chat-input" id="segChatInput" type="text" autocomplete="off" placeholder="Say something to Eli..." maxlength="240" />
+      <button class="chat-submit" type="submit">↑</button>
+    </form>
+    <button class="segment-chat__continue" id="segChatContinue" style="display:none">Continue</button>
+  </div>
+
+  <div class="fade-overlay" id="fade"></div>
+  <div class="message-overlay" id="message"></div>
+
+  <script src="https://unpkg.com/@rive-app/webgl2@latest"></script>
+  <script src="./src/main.js"></script>
+</body>
+</html>

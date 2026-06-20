@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Eli's Last Experiment</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #0A0F0A;
+    color: #e9fff1;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+
+  body {
+    position: fixed;
+    inset: 0;
+  }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    background: #0A0F0A;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: none;
+    background: #0A0F0A;
+  }
+
+  .video-screen.visible {
+    display: block;
+  }
+
+  .video-screen video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #0A0F0A;
+  }
+
+  .system-message {
+    position: fixed;
+    left: max(20px, env(safe-area-inset-left));
+    right: max(20px, env(safe-area-inset-right));
+    bottom: max(20px, env(safe-area-inset-bottom));
+    z-index: 2;
+    padding: 12px 14px;
+    border: 1px solid rgba(90, 255, 140, 0.2);
+    border-radius: 8px;
+    background: rgba(10, 15, 10, 0.84);
+    color: rgba(233, 255, 241, 0.8);
+    font-size: 13px;
+    line-height: 1.45;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .system-message.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .system-message.error {
+    border-color: rgba(255, 107, 107, 0.4);
+    color: #ffb3b3;
+  }
+
+  .debug-panel {
+    position: fixed;
+    inset: auto 12px max(12px, env(safe-area-inset-bottom)) 12px;
+    z-index: 3;
+    display: none;
+    max-height: 45dvh;
+    overflow: auto;
+    padding: 12px;
+    border: 1px solid rgba(90, 255, 140, 0.24);
+    border-radius: 8px;
+    background: rgba(10, 15, 10, 0.92);
+    color: rgba(233, 255, 241, 0.76);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .debug-panel.visible {
+    display: block;
+  }
+
+  .fade-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    background: #0A0F0A;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 3000ms ease-in-out;
+  }
+
+  .fade-overlay.visible {
+    opacity: 1;
+  }
+
+  .debug-panel strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #53ee86;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .ok {
+    color: #bfff3d;
+  }
+
+  .bad {
+    color: #ff6b6b;
+  }
+
+  .relationship-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(2, 6, 3, 0) 0%, rgba(2, 6, 3, 0.08) 48%, rgba(2, 6, 3, 0.62) 100%),
+      radial-gradient(ellipse at 50% 38%, rgba(167, 255, 57, 0.1), rgba(2, 8, 4, 0) 42%);
+    transition: opacity 900ms ease, visibility 0ms linear 900ms;
+  }
+
+  .relationship-screen.visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0ms;
+  }
+
+  .relationship-thread {
+    position: absolute;
+    left: max(24px, env(safe-area-inset-left));
+    right: max(24px, env(safe-area-inset-right));
+    top: 39dvh;
+    bottom: max(160px, calc(env(safe-area-inset-bottom) + 160px));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 18px 6px 16px;
+    pointer-events: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .relationship-thread::-webkit-scrollbar {
+    display: none;
+  }
+
+  .relationship-prompt {
+    flex: 0 0 auto;
+    margin-top: auto;
+  }
+
+  .relationship-messages {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .relationship-bubble {
+    width: fit-content;
+    max-width: min(84vw, 360px);
+    margin: 0;
+    padding: 14px 18px;
+    border-radius: 8px;
+    color: #041107;
+    font-size: clamp(20px, 5vw, 28px);
+    font-weight: 500;
+    line-height: 1.16;
+    letter-spacing: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(8px);
+  }
+
+  .relationship-bubble-eli {
+    align-self: flex-end;
+    background: rgba(0, 255, 38, 0.78);
+    border: 1px solid rgba(191, 255, 61, 0.2);
+  }
+
+  .relationship-bubble-player {
+    align-self: flex-start;
+    background: rgba(255, 249, 28, 0.82);
+    border: 1px solid rgba(255, 255, 180, 0.24);
+    color: #090b04;
+  }
+
+  .relationship-bubble-typing {
+    min-width: 74px;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .relationship-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(4, 17, 7, 0.72);
+    animation: relationshipTyping 980ms ease-in-out infinite;
+  }
+
+  .relationship-dot:nth-child(2) {
+    animation-delay: 140ms;
+  }
+
+  .relationship-dot:nth-child(3) {
+    animation-delay: 280ms;
+  }
+
+  @keyframes relationshipTyping {
+    0%, 70%, 100% {
+      opacity: 0.35;
+      transform: translateY(0);
+    }
+    35% {
+      opacity: 1;
+      transform: translateY(-4px);
+    }
+  }
+
+  .relationship-live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .relationship-status {
+    position: absolute;
+    left: max(28px, env(safe-area-inset-left));
+    right: max(28px, env(safe-area-inset-right));
+    bottom: max(244px, calc(env(safe-area-inset-bottom) + 244px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    color: rgba(225, 255, 220, 0.78);
+    font-size: 11px;
+    font-weight: 720;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .relationship-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ff4d5d;
+    box-shadow: 0 0 14px rgba(255, 77, 93, 0.8);
+  }
+
+  .relationship-status::after {
+    content: "";
+    width: min(110px, 24vw);
+    height: 18px;
+    opacity: 0.7;
+    background:
+      linear-gradient(90deg, transparent 0 10%, rgba(191, 255, 61, 0.55) 10% 12%, transparent 12% 25%, rgba(191, 255, 61, 0.55) 25% 27%, transparent 27% 44%, rgba(255, 77, 93, 0.8) 44% 47%, transparent 47% 61%, rgba(191, 255, 61, 0.55) 61% 63%, transparent 63% 100%);
+  }
+
+  .relationship-form {
+    position: absolute;
+    left: max(20px, env(safe-area-inset-left));
+    right: max(20px, env(safe-area-inset-right));
+    bottom: max(58px, calc(env(safe-area-inset-bottom) + 58px));
+    display: grid;
+    grid-template-columns: 1fr 66px;
+    grid-template-rows: 24px 58px;
+    align-items: stretch;
+    min-height: 92px;
+    border: 1px solid rgba(178, 255, 64, 0.72);
+    background: rgba(3, 12, 6, 0.48);
+    box-shadow: 0 0 30px rgba(108, 179, 40, 0.1), inset 0 0 24px rgba(191, 255, 61, 0.05);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+  }
+
+  .relationship-form::before,
+  .relationship-form::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    width: 18px;
+    height: 18px;
+    border-top: 2px solid #bfff3d;
+  }
+
+  .relationship-form::before {
+    left: -1px;
+    border-left: 2px solid #bfff3d;
+  }
+
+  .relationship-form::after {
+    right: -1px;
+    border-right: 2px solid #bfff3d;
+  }
+
+  .relationship-input-label {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: end;
+    padding: 8px 18px 0;
+    color: rgba(222, 255, 216, 0.62);
+    font-size: 10px;
+    font-weight: 760;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .relationship-input {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #f6fff8;
+    font: inherit;
+    font-size: clamp(18px, 4.6vw, 24px);
+    font-weight: 650;
+    letter-spacing: 0;
+    padding: 0 18px 12px;
+    caret-color: #bfff3d;
+  }
+
+  .relationship-input::placeholder {
+    color: rgba(246, 255, 248, 0.34);
+  }
+
+  .relationship-submit {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+    justify-self: center;
+    width: 46px;
+    height: 46px;
+    margin-right: 10px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #24420e;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .relationship-submit:disabled {
+    opacity: 0.42;
+    cursor: default;
+  }
+
+  .relationship-submit img {
+    display: block;
+    width: 51px;
+    height: 51px;
+  }
+
+  @media (max-width: 520px) {
+    .relationship-thread {
+      left: max(18px, env(safe-area-inset-left));
+      right: max(18px, env(safe-area-inset-right));
+      top: 36dvh;
+      bottom: max(158px, calc(env(safe-area-inset-bottom) + 158px));
+      gap: 14px;
+      padding-bottom: 20px;
+    }
+
+    .relationship-bubble {
+      max-width: min(88vw, 410px);
+      padding: 16px 20px;
+      font-size: clamp(25px, 6.6vw, 34px);
+      line-height: 1.14;
+    }
+
+    .relationship-form {
+      left: max(14px, env(safe-area-inset-left));
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(36px, calc(env(safe-area-inset-bottom) + 36px));
+      grid-template-columns: 1fr 76px;
+      grid-template-rows: 30px 70px;
+      min-height: 112px;
+    }
+
+    .relationship-input-label {
+      padding: 10px 22px 0;
+      font-size: 12px;
+    }
+
+    .relationship-input {
+      font-size: clamp(25px, 6.4vw, 34px);
+      padding: 0 22px 16px;
+    }
+
+    .relationship-submit {
+      width: 56px;
+      height: 56px;
+      margin-right: 12px;
+    }
+
+    .relationship-submit img {
+      width: 62px;
+      height: 62px;
+    }
+  }
+
+  @media (max-width: 760px), (pointer: coarse) {
+    .relationship-thread {
+      left: max(22px, env(safe-area-inset-left));
+      right: max(22px, env(safe-area-inset-right));
+      top: 34dvh;
+      bottom: max(178px, calc(env(safe-area-inset-bottom) + 178px));
+      gap: 16px;
+      padding: 20px 0 24px;
+    }
+
+    .relationship-bubble {
+      max-width: min(90vw, 620px);
+      padding: 18px 22px;
+      font-size: clamp(28px, 7.2vw, 42px);
+      line-height: 1.12;
+    }
+
+    .relationship-form {
+      left: max(18px, env(safe-area-inset-left));
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(34px, calc(env(safe-area-inset-bottom) + 34px));
+      grid-template-columns: 1fr 92px;
+      grid-template-rows: 34px 88px;
+      min-height: 136px;
+      border-width: 2px;
+    }
+
+    .relationship-input-label {
+      padding: 12px 26px 0;
+      font-size: 14px;
+      letter-spacing: 0.14em;
+    }
+
+    .relationship-input {
+      padding: 0 26px 20px;
+      font-size: clamp(30px, 7.4vw, 44px);
+    }
+
+    .relationship-submit {
+      width: 70px;
+      height: 70px;
+      margin-right: 10px;
+    }
+
+    .relationship-submit img {
+      width: 76px;
+      height: 76px;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="stage" id="stage" aria-label="Eli's Last Experiment Rive preview">
+    <canvas id="canvas"></canvas>
+  </main>
+  <section class="video-screen" id="videoScreen" aria-label="Eli video">
+    <video id="sceneVideo" playsinline preload="auto"></video>
+  </section>
+
+  <div class="system-message" id="message">Loading Eli...</div>
+  <div class="debug-panel" id="debug"></div>
+  <div class="fade-overlay" id="fade"></div>
+  <section class="relationship-screen" id="relationship" aria-label="First conversation with Eli">
+    <div class="relationship-thread" id="relationshipThread">
+      <div class="relationship-bubble relationship-bubble-eli relationship-prompt" id="relationshipPrompt">What should I call you?</div>
+      <div class="relationship-messages" id="relationshipMessages"></div>
+    </div>
+    <div class="relationship-status" id="relationshipStatus">First contact</div>
+    <p class="relationship-live" id="relationshipReply" aria-live="polite"></p>
+    <form class="relationship-form" id="relationshipForm">
+      <div class="relationship-input-label" id="relationshipInputLabel">Answer</div>
+      <input
+        class="relationship-input"
+        id="relationshipName"
+        name="chat_response"
+        type="text"
+        autocomplete="name"
+        autocapitalize="words"
+        enterkeyhint="send"
+        maxlength="96"
+        aria-label="Your answer"
+      />
+      <button class="relationship-submit" id="relationshipSubmit" type="submit" aria-label="Send" disabled>
+        <img src="./public/button.svg" alt="" />
+      </button>
+    </form>
+  </section>
+
+  <!-- Pinned to latest @rive-app/webgl2 for full Layer Effect support (blur, drop shadow, feathering). -->
+  <!-- Was 2.21.6 — bumped because Rive blur is a Layer Effect that needs newer Rive Renderer builds. -->
+  <script src="https://unpkg.com/@rive-app/webgl2@latest"></script>
+  <script>
+    if (window.location.protocol === 'file:') {
+      const target = new URL('http://localhost:4177/test.html');
+      const current = new URL(window.location.href);
+      target.search = current.search;
+      window.location.replace(target.href);
+    }
+
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('canvas');
+    const videoScreen = document.getElementById('videoScreen');
+    const sceneVideo = document.getElementById('sceneVideo');
+    const messageEl = document.getElementById('message');
+    const debugEl = document.getElementById('debug');
+    const fadeEl = document.getElementById('fade');
+    const relationshipEl = document.getElementById('relationship');
+    const relationshipForm = document.getElementById('relationshipForm');
+    const relationshipPrompt = document.getElementById('relationshipPrompt');
+    const relationshipMessages = document.getElementById('relationshipMessages');
+    const relationshipStatus = document.getElementById('relationshipStatus');
+    const relationshipName = document.getElementById('relationshipName');
+    const relationshipSubmit = document.getElementById('relationshipSubmit');
+    const relationshipReply = document.getElementById('relationshipReply');
+    const params = new URLSearchParams(window.location.search);
+    const debugEnabled = params.has('debug');
+
+    const profiles = {
+      intro: {
+        label: 'intro.riv',
+        src: './public/rive/intro.riv',
+        artboard: 'Title',
+        stateMachine: 'TitleState',
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Cover,
+        expectedInputs: {
+          stay: 'trigger',
+          start_dot: 'trigger',
+          nav_eli: 'boolean',
+        },
+        unlockSound: 'heartbeat_loop',
+        tapSound: 'screen_tap',
+        firstTapLoopSound: 'screen_enter_loop',
+        firstTapLoopDelay: 220,
+        transitionSounds: {
+          eli: 'xray_loop',
+        },
+        textRuns: ['cta_label'],
+        initialize: () => {
+          // Current intro.riv drives its own sequence internally.
+          // Clicks/triggers are owned by Rive listeners. The app reacts to
+          // Rive Events (audio cues) and watches `nav_eli` for scene routing.
+          setInput('nav_eli', false);
+          watchBoolean('nav_eli', () => transitionTo('eli'));
+        },
+      },
+      loading: {
+        label: 'loading.riv',
+        src: './public/rive/loading.riv',
+        artboard: 'Loading',
+        stateMachine: null,
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Cover,
+        expectedInputs: {},
+        unlockSound: null,
+        tapSound: null,
+        firstTapLoopSound: null,
+        transitionSounds: {
+          eli: 'xray_loop',
+        },
+        textRuns: [],
+        initialize: () => {
+          scheduleSceneAdvance('eli', loadingScreenDurationMs);
+        },
+      },
+      eli: {
+        label: 'eli.riv',
+        src: './public/rive/eli.riv',
+        artboard: 'Eli',
+        stateMachine: 'EliState',
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Contain,
+        expectedInputs: {
+          heart_pulse: 'number',
+          lungs_pulse: 'number',
+          brain_pulse: 'number',
+          eyes_state: 'number',
+          mouth_state: 'number',
+          body_state: 'number',
+          mood: 'number',
+          tap_heart: 'trigger',
+          tap_lungs: 'trigger',
+          tap_brain: 'trigger',
+          cue_speak: 'trigger',
+          listening: 'boolean',
+          nav_first_contact: 'boolean',
+        },
+        unlockSound: null,
+        tapSound: null,
+        firstTapLoopSound: null,
+        transitionSounds: {},
+        textRuns: ['eli_subtitle'],
+        initialize: () => {
+          setInput('heart_pulse', 35);
+          setInput('lungs_pulse', 20);
+          setInput('brain_pulse', 0);
+          setInput('eyes_state', 1);
+          setInput('mouth_state', 0);
+          setInput('body_state', 0);
+          setInput('mood', 0);
+          setInput('listening', true);
+          setInput('nav_first_contact', false);
+          // Tap reactions are owned by Rive listeners (hit_heart, hit_lungs,
+          // hit_brain) and the EliState machine. The app only listens for
+          // Rive Events emitted by Eli (e.g. audio cues).
+          watchBoolean('nav_first_contact', () => transitionTo('eli_video'));
+        },
+      },
+      eli_video: {
+        label: 'eli_video.mp4',
+        video: './public/Video/eli_video.mp4',
+        videoNext: 'first_contact',
+        budgetBytes: 6 * 1024 * 1024,
+        expectedInputs: {},
+        textRuns: [],
+        transitionSounds: {},
+        initialize: () => {
+          initializeVideoScene();
+        },
+      },
+      first_contact: {
+        label: 'first_contact.riv',
+        src: './public/rive/first_contact.riv',
+        artboard: 'FirstContact',
+        stateMachine: 'FirstContactState',
+        budgetBytes: 800 * 1024,
+        fit: rive.Fit.Cover,
+        expectedInputs: {},
+        unlockSound: null,
+        tapSound: null,
+        firstTapLoopSound: null,
+        transitionSounds: {},
+        textRuns: ['prompt', 'player_name', 'eli_reply'],
+        relationship: true,
+        initialize: () => {
+          scheduleRelationshipScreen();
+        },
+      },
+    };
+
+    const requestedProfile = params.get('file') || params.get('scene') || 'intro';
+    const profile = profiles[requestedProfile] || profiles.intro;
+    const src = profile.src ? profile.src + '?v=' + Date.now() : '';
+    let riveInstance;
+    let inputByName = new Map();
+    let audioUnlocked = false;
+    let firstTapLoopSoundStarted = false;
+    let assetBytes = 0;
+    let relationshipStep = 0;
+    let relationshipMemory = loadRelationshipMemory();
+    let relationshipScreenTimer = null;
+    let sceneAdvanceTimer = null;
+    const loadingScreenDurationMs = 4000;
+    const relationshipScreenDelayMs = 20000;
+
+    const relationshipQuestions = [
+      {
+        id: 'help_consent',
+        prompt: () => 'Can you help me?',
+        status: 'First contact',
+        placeholder: 'Yes, or tell me what you can do',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.help_consent = answer;
+        },
+        reply: () => 'Thank you. I remember a white room. And someone saying my name.',
+      },
+      {
+        id: 'first_clue',
+        prompt: () => 'What should we look for first?',
+        status: 'Memory fragment',
+        placeholder: 'The room, the voice, my heart...',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.first_clue = answer;
+        },
+        reply: (answer) => `${capitalizeAnswer(answer)}. Okay. I remember glass between me and someone watching.`,
+      },
+      {
+        id: 'heart_sound',
+        prompt: () => 'I remember a sound near my heart. What do you think it was?',
+        status: 'Heart trace',
+        placeholder: 'A machine, a warning, a voice...',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.heart_sound_theory = answer;
+        },
+        reply: () => 'Maybe. The sound got faster when I was scared.',
+      },
+      {
+        id: 'player_name',
+        prompt: () => 'I do not want to forget who is helping me. What should I call you?',
+        status: 'Identity scan',
+        placeholder: 'Your name',
+        maxLength: 32,
+        remember: (answer) => {
+          relationshipMemory.player_name = answer;
+          window.localStorage.setItem('eli_player_name', answer);
+          setTextRun('player_name', answer);
+        },
+        reply: (answer) => `${capitalizeAnswer(answer)}. I will hold onto that.`,
+      },
+      {
+        id: 'permission_pattern',
+        prompt: () => 'Can I ask you little questions while we find out what happened?',
+        status: 'Consent check',
+        placeholder: 'Yes, or tell me a boundary',
+        maxLength: 96,
+        remember: (answer) => {
+          relationshipMemory.permission_pattern = answer;
+          relationshipMemory.first_contact_complete = true;
+        },
+        reply: () => 'Thank you. We can find the pieces together.',
+      },
+    ];
+
+    const freeChatQuestion = {
+      id: 'free_chat',
+      prompt: () => `I remember you now, ${displayPlayerName()}.`,
+      status: 'Open channel',
+      placeholder: 'Say something to Eli',
+      maxLength: 180,
+      remember: (answer) => {
+        relationshipMemory.last_free_chat = answer;
+      },
+      reply: (answer) => getLocalFreeChatReply(answer),
+    };
+
+    const sounds = {
+      heartbeat_loop: makeAudio([
+        './public/audio/sfx/heartbeat_loop.opus',
+        './public/audio/sfx/heartbeat-deceleration-the-foundation-fast-to-slow-2-00-24.mp3',
+      ], true),
+      eli_intro_01: makeAudio('./public/audio/voice/eli/intro_01.opus'),
+      heart_tap: makeAudio('./public/audio/sfx/heart_tap.opus'),
+      cta_chime: makeAudio('./public/audio/sfx/cta_chime.opus'),
+      screen_tap: makeAudio('./public/audio/sfx/tap.mp3'),
+      screen_enter_loop: makeAudio('./public/audio/sfx/enter.mp3', true),
+      xray_loop: makeAudio('./public/audio/sfx/xray.mp3', true),
+    };
+
+    stage.setAttribute('aria-label', `Eli's Last Experiment ${profile.label} preview`);
+    showMessage(`Loading ${profile.label}...`);
+    fetch(profile.src || profile.video, { cache: 'no-store', method: 'HEAD' })
+      .then((response) => {
+        assetBytes = Number(response.headers.get('content-length') || 0);
+        renderDebug();
+      })
+      .catch(() => {});
+
+    if (profile.video) {
+      profile.initialize();
+    } else {
+      initializeRiveScene();
+    }
+
+    function initializeRiveScene() {
+      try {
+        const riveOptions = {
+          src,
+          canvas,
+          artboard: profile.artboard,
+          autoplay: true,
+          fit: profile.fit,
+          alignment: rive.Alignment.Center,
+          useOffscreenRenderer: true,
+          onLoad: () => {
+            inputByName = profile.stateMachine
+              ? new Map((riveInstance.stateMachineInputs(profile.stateMachine) || []).map((input) => [input.name, input]))
+              : new Map();
+
+            profile.initialize();
+
+            // Subscribe to Rive Events emitted by the state machine.
+            // Convention:
+            //   play_<sound>   -> plays a sound from the `sounds` map
+            //   goto_<profile> -> fades to black and routes to ?file=<profile>
+            // Any event name matching a key in `sounds` also plays that sound,
+            // so authors can name the event after the sound directly.
+            if (riveInstance.on && rive.EventType && rive.EventType.RiveEvent) {
+              riveInstance.on(rive.EventType.RiveEvent, handleRiveEvent);
+            }
+
+            resizeRive();
+            hideMessage();
+            renderDebug();
+            console.info(`[Eli] ${profile.label} loaded`, {
+              artboard: profile.artboard,
+              stateMachine: profile.stateMachine,
+              inputs: Array.from(inputByName.keys()),
+            });
+          },
+          onLoadError: (error) => {
+            const stateMachineHint = profile.stateMachine ? ` with state machine ${profile.stateMachine}` : '';
+            showMessage(`Could not load ${profile.label}. Re-export as Runtime and confirm artboard ${profile.artboard}${stateMachineHint}.`, true);
+            console.error(error);
+          },
+        };
+
+        if (profile.stateMachine) {
+          riveOptions.stateMachines = profile.stateMachine;
+        }
+
+        riveInstance = new rive.Rive(riveOptions);
+      } catch (error) {
+        showMessage(error.message || 'Rive runtime failed to start.', true);
+        console.error(error);
+      }
+    }
+
+    function initializeVideoScene() {
+      stage.style.display = 'none';
+      relationshipEl.classList.remove('visible');
+      videoScreen.classList.add('visible');
+      sceneVideo.src = profile.video + '?v=' + Date.now();
+      sceneVideo.currentTime = 0;
+
+      sceneVideo.oncanplay = () => {
+        hideMessage();
+      };
+      sceneVideo.onended = () => {
+        transitionTo(profile.videoNext || 'first_contact');
+      };
+      sceneVideo.onerror = () => {
+        showMessage(`Could not load ${profile.label}. Check ${profile.video}.`, true);
+      };
+
+      const playVideo = () => {
+        sceneVideo.play()
+          .then(hideMessage)
+          .catch(() => {
+            showMessage('Tap to continue.');
+            videoScreen.addEventListener('pointerup', playVideo, { once: true });
+          });
+      };
+
+      playVideo();
+    }
+
+    // Rive owns clicks/triggers via its own Listeners (hit_dot, hit_cta,
+    // hit_heart, etc.). The only thing the host has to do on first tap is
+    // unlock mobile audio playback. Everything else (which input fires, what
+    // animation plays, when the CTA appears) is authored in Rive.
+    canvas.addEventListener('pointerup', () => {
+      unlockAudio();
+      if (profile.tapSound) {
+        playSound(profile.tapSound);
+      }
+      if (profile.firstTapLoopSound && !firstTapLoopSoundStarted) {
+        firstTapLoopSoundStarted = true;
+        window.setTimeout(() => {
+          playSound(profile.firstTapLoopSound);
+        }, profile.firstTapLoopDelay || 0);
+      }
+    });
+
+    debugEl.addEventListener('pointerup', (event) => {
+      const action = event.target && event.target.dataset ? event.target.dataset.action : '';
+      if (!action) return;
+      event.stopPropagation();
+      if (action === 'fire-tap-heart') {
+        fireInput('tap_heart');
+      }
+      if (action === 'goto-first-contact') {
+        transitionTo('first_contact');
+      }
+    });
+
+    relationshipName.addEventListener('input', () => {
+      relationshipSubmit.disabled = relationshipName.value.trim().length === 0;
+    });
+
+    relationshipName.addEventListener('focus', () => {
+      window.setTimeout(scrollRelationshipToBottom, 260);
+    });
+
+    relationshipForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const answer = relationshipName.value.trim();
+      const question = getCurrentRelationshipQuestion();
+      const isOnboarding = relationshipStep < relationshipQuestions.length;
+      if (!answer) return;
+
+      addChatBubble('player', answer);
+      const prompt = question.prompt();
+      question.remember(answer);
+      rememberInteraction(question.id, answer);
+      saveRelationshipMemory();
+      setInput('listening', false);
+      fireInput('cue_speak');
+
+      relationshipSubmit.disabled = true;
+      relationshipName.value = '';
+      relationshipName.disabled = true;
+
+      window.setTimeout(() => {
+        showEliTypingThen(async () => {
+          const reply = await getEliReply({
+            questionId: question.id,
+            question: prompt,
+            answer,
+            isOnboarding,
+            fallbackReply: question.reply(answer),
+          });
+          setTextRun('eli_reply', reply);
+          relationshipReply.textContent = reply;
+          rememberEliReply(reply);
+          if (isOnboarding) {
+            relationshipStep += 1;
+          }
+
+          window.setTimeout(() => {
+            setInput('listening', true);
+            if (isOnboarding) {
+              showRelationshipQuestion({ thinking: true });
+            } else {
+              enableRelationshipInput(question);
+            }
+          }, 900);
+          return reply;
+        });
+      }, 260);
+    });
+
+    window.addEventListener('resize', resizeRive);
+    window.addEventListener('orientationchange', () => setTimeout(resizeRive, 250));
+
+    function setInput(name, value) {
+      const input = inputByName.get(name);
+      if (input && 'value' in input) input.value = value;
+    }
+
+    function fireInput(name) {
+      const input = inputByName.get(name);
+      if (input && typeof input.fire === 'function') input.fire();
+    }
+
+    function setTextRun(name, value) {
+      if (!riveInstance) return;
+      if (typeof riveInstance.setTextRunValue === 'function') {
+        try {
+          riveInstance.setTextRunValue(name, value);
+        } catch (error) {
+          console.warn(`[Eli] Text run not set: ${name}`, error.message);
+        }
+      }
+    }
+
+    // Polls a boolean state machine input and invokes `onTrue` the moment it
+    // flips false -> true. Used as a Rive Events fallback for scene routing
+    // when the Rive file's BETA UI doesn't expose an event creator.
+    function watchBoolean(name, onTrue) {
+      let previous = false;
+      const tick = () => {
+        const input = inputByName.get(name);
+        if (input && typeof input.value === 'boolean') {
+          const current = input.value;
+          if (current && !previous) {
+            previous = current;
+            onTrue();
+            return; // stop watching after first fire
+          }
+          previous = current;
+        }
+        window.requestAnimationFrame(tick);
+      };
+      window.requestAnimationFrame(tick);
+    }
+
+    function handleRiveEvent(event) {
+      const data = event && event.data;
+      if (!data || !data.name) return;
+      const name = data.name;
+
+      // 1. Audio cues. Either name the Rive Event exactly after a sound key
+      //    (e.g. `eli_intro_01`, `cta_chime`) or prefix it with `play_`.
+      const soundName = name.startsWith('play_') ? name.slice(5) : name;
+      if (sounds[soundName]) {
+        playSound(soundName);
+      }
+
+      // 2. Scene navigation. Author a Rive Event called `goto_eli` (or
+      //    `goto_intro`, etc.) on the state that represents "player committed".
+      if (name.startsWith('goto_')) {
+        const dest = name.slice(5);
+        if (profiles[dest]) {
+          transitionTo(dest);
+        }
+      }
+    }
+
+    function makeAudio(src, loop = false) {
+      const sources = Array.isArray(src) ? src : [src];
+      const audio = new Audio(sources[0]);
+      audio.dataset.sources = JSON.stringify(sources);
+      audio.preload = 'auto';
+      audio.loop = loop;
+      audio.volume = loop ? 0.35 : 1;
+      return audio;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      // Each profile declares its own auto-play sound on first user gesture.
+      // `null` means the scene starts silent and lets Rive Events drive audio.
+      if (profile.unlockSound) {
+        playSound(profile.unlockSound);
+      }
+    }
+
+    function playSound(name) {
+      const sound = sounds[name];
+      if (!sound) return;
+
+      if (!sound.loop) {
+        sound.currentTime = 0;
+      }
+
+      playWithFallback(sound, name, 0);
+    }
+
+    function playWithFallback(sound, name, index) {
+      const sources = JSON.parse(sound.dataset.sources || '[]');
+      if (!sources[index]) return;
+
+      if (sound.src !== new URL(sources[index], window.location.href).href) {
+        sound.src = sources[index];
+      }
+
+      sound.play().catch((error) => {
+        if (sources[index + 1]) {
+          playWithFallback(sound, name, index + 1);
+          return;
+        }
+        console.warn(`[Eli] Audio not played: ${name}`, error.message);
+      });
+    }
+
+    function resizeRive() {
+      if (riveInstance && riveInstance.resizeDrawingSurfaceToCanvas) {
+        riveInstance.resizeDrawingSurfaceToCanvas();
+      }
+    }
+
+    function renderDebug() {
+      if (!debugEnabled) return;
+
+      const rows = Object.entries(profile.expectedInputs).map(([name, expectedType]) => {
+        const input = inputByName.get(name);
+        const actualType = input ? inferInputType(input) : 'missing';
+        const ok = actualType === expectedType;
+        return `<div class="${ok ? 'ok' : 'bad'}">${ok ? 'ok' : 'fix'} ${name}: ${actualType}</div>`;
+      });
+
+      debugEl.innerHTML = `
+        <strong>${profile.label} contract check</strong>
+        ${renderBudget()}
+        ${rows.join('')}
+        <div style="margin-top:8px;">Text runs to verify in Rive: ${profile.textRuns.join(', ')}</div>
+        ${renderDebugActions()}
+      `;
+      debugEl.classList.add('visible');
+    }
+
+    function renderDebugActions() {
+      const actions = [];
+      if (inputByName.has('tap_heart')) {
+        actions.push(`
+        <button
+          data-action="fire-tap-heart"
+          style="margin-top:10px;padding:6px 9px;border:1px solid rgba(90,255,140,.35);border-radius:6px;background:rgba(90,255,140,.08);color:#bfff3d;font:inherit;"
+        >
+          Fire tap_heart
+        </button>
+        `);
+      }
+      if (profile === profiles.eli) {
+        actions.push(`
+        <button
+          data-action="goto-first-contact"
+          style="margin-top:10px;margin-left:6px;padding:6px 9px;border:1px solid rgba(90,255,140,.35);border-radius:6px;background:rgba(90,255,140,.08);color:#bfff3d;font:inherit;"
+        >
+          Go first_contact
+        </button>
+        `);
+      }
+      return actions.join('');
+    }
+
+    function renderBudget() {
+      if (!assetBytes) return '';
+      const ok = assetBytes <= profile.budgetBytes;
+      return `<div class="${ok ? 'ok' : 'bad'}" style="margin-bottom:8px;">${ok ? 'ok' : 'fix'} size: ${formatBytes(assetBytes)} / ${formatBytes(profile.budgetBytes)}</div>`;
+    }
+
+    function formatBytes(bytes) {
+      if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+      return `${Math.round(bytes / 1024)} KB`;
+    }
+
+    function inferInputType(input) {
+      if (typeof input.fire === 'function') return 'trigger';
+      if (typeof input.value === 'boolean') return 'boolean';
+      if (typeof input.value === 'number') return 'number';
+      return 'unknown';
+    }
+
+    function showMessage(text, isError = false) {
+      messageEl.textContent = text;
+      messageEl.classList.toggle('error', isError);
+      messageEl.classList.add('visible');
+    }
+
+    function hideMessage() {
+      messageEl.classList.remove('visible');
+    }
+
+    function transitionTo(name) {
+      if (sceneAdvanceTimer) {
+        window.clearTimeout(sceneAdvanceTimer);
+        sceneAdvanceTimer = null;
+      }
+      const transitionSound = profile.transitionSounds && profile.transitionSounds[name];
+      stopLoopingSounds(transitionSound);
+      if (transitionSound) {
+        playSound(transitionSound);
+      }
+      fadeEl.classList.add('visible');
+      window.setTimeout(() => {
+        window.location.href = withProfile(name);
+      }, 3000);
+    }
+
+    function stopLoopingSounds(exceptName = '') {
+      Object.values(sounds).forEach((sound) => {
+        if (!sound.loop) return;
+        if (exceptName && sounds[exceptName] === sound) return;
+        sound.pause();
+        sound.currentTime = 0;
+      });
+    }
+
+    function scheduleSceneAdvance(name, delayMs) {
+      if (sceneAdvanceTimer) {
+        window.clearTimeout(sceneAdvanceTimer);
+      }
+      sceneAdvanceTimer = window.setTimeout(() => {
+        sceneAdvanceTimer = null;
+        transitionTo(name);
+      }, delayMs);
+    }
+
+    function scheduleRelationshipScreen() {
+      relationshipEl.classList.remove('visible');
+      relationshipName.disabled = true;
+      relationshipSubmit.disabled = true;
+      if (relationshipScreenTimer) {
+        window.clearTimeout(relationshipScreenTimer);
+      }
+      relationshipScreenTimer = window.setTimeout(() => {
+        relationshipScreenTimer = null;
+        showRelationshipScreen();
+      }, relationshipScreenDelayMs);
+    }
+
+    function showRelationshipScreen() {
+      relationshipEl.classList.add('visible');
+      relationshipMessages.innerHTML = '';
+      const savedName = window.localStorage.getItem('eli_player_name');
+      if (savedName) {
+        relationshipMemory.player_name = savedName;
+        setTextRun('player_name', savedName);
+      }
+
+      // Track session start and compute absence gap
+      startSession();
+
+      // Override the free-chat opening prompt if the player is returning
+      const absencePrompt = absenceAwareOpenPrompt();
+      if (absencePrompt) {
+        freeChatQuestion.prompt = () => absencePrompt;
+      }
+
+      // Set initial BPM from memory or use a high default (urgent state)
+      const initialBpm = relationshipMemory.last_bpm || 132;
+      applyVitals({ bpm: initialBpm, mood: relationshipMemory.last_mood || 1 });
+      createBpmDisplay();
+
+      relationshipStep = findNextRelationshipStep();
+      showRelationshipQuestion();
+      relationshipName.blur();
+      window.setTimeout(scrollRelationshipToBottom, 450);
+    }
+
+    function showRelationshipQuestion(options = {}) {
+      const question = getCurrentRelationshipQuestion();
+      const isFreeChat = relationshipStep >= relationshipQuestions.length;
+
+      if (isFreeChat) {
+        const prompt = question.prompt();
+        if (relationshipMessages.children.length === 0) {
+          relationshipPrompt.textContent = prompt;
+        } else if (!relationshipMemory.open_chat_started) {
+          addChatBubble('eli', prompt);
+        }
+        relationshipMemory.open_chat_started = true;
+        saveRelationshipMemory();
+        enableRelationshipInput(question);
+        setTextRun('prompt', prompt);
+        return;
+      }
+
+      const prompt = question.prompt();
+      const shouldThink = options.thinking && relationshipMessages.children.length > 0;
+      if (relationshipMessages.children.length === 0) {
+        relationshipPrompt.textContent = prompt;
+      } else {
+        if (shouldThink) {
+          showEliTypingThen(prompt, () => {
+            relationshipName.disabled = false;
+            relationshipSubmit.disabled = relationshipName.value.trim().length === 0;
+          });
+        } else {
+          addChatBubble('eli', prompt);
+        }
+      }
+      enableRelationshipInput(question, shouldThink);
+      relationshipSubmit.disabled = true;
+      setTextRun('prompt', prompt);
+    }
+
+    function getCurrentRelationshipQuestion() {
+      return relationshipQuestions[relationshipStep] || freeChatQuestion;
+    }
+
+    function enableRelationshipInput(question, disabled = false) {
+      relationshipStatus.textContent = question.status;
+      relationshipName.placeholder = question.placeholder;
+      relationshipName.maxLength = question.maxLength;
+      relationshipName.disabled = disabled;
+      relationshipSubmit.disabled = disabled || relationshipName.value.trim().length === 0;
+    }
+
+    function addChatBubble(kind, text) {
+      const bubble = document.createElement('div');
+      bubble.className = `relationship-bubble relationship-bubble-${kind}`;
+      bubble.textContent = text;
+      relationshipMessages.appendChild(bubble);
+      scrollRelationshipToBottom();
+    }
+
+    async function getEliReply({ questionId, question, answer, isOnboarding, fallbackReply }) {
+      if (isOnboarding) {
+        applyVitals(getScriptedOnboardingVitals(questionId));
+        return fallbackReply;
+      }
+
+      try {
+        const response = await fetch('/api/eli-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question_id: questionId,
+            relationship_phase: isOnboarding ? 'onboarding' : 'open_first_contact',
+            question,
+            answer,
+            memory: relationshipMemory,
+            recent_interactions: relationshipMemory.interactions || [],
+            session_number: relationshipMemory.session_number || 1,
+            absence_hours: relationshipMemory.last_absence_hours || null,
+          }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.memory_patch && typeof data.memory_patch === 'object') {
+          relationshipMemory = { ...relationshipMemory, ...data.memory_patch };
+          saveRelationshipMemory();
+        }
+        if (data.vitals) {
+          applyVitals(data.vitals);
+        }
+        return data.reply || fallbackReply;
+      } catch (error) {
+        console.warn('[Eli] LLM fallback used:', error.message);
+        return fallbackReply;
+      }
+    }
+
+    function getScriptedOnboardingVitals(questionId) {
+      const vitalsByQuestion = {
+        help_consent: { bpm: 138, mood: 1 },
+        first_clue: { bpm: 136, mood: 1 },
+        heart_sound: { bpm: 134, mood: 2 },
+        player_name: { bpm: 128, mood: 2 },
+        permission_pattern: { bpm: 118, mood: 3 },
+      };
+      return vitalsByQuestion[questionId] || { bpm: relationshipMemory.last_bpm || 132, mood: relationshipMemory.last_mood || 1 };
+    }
+
+    function showEliTypingThen(replyOrLoader, afterMessage) {
+      const typing = addTypingBubble();
+      relationshipName.disabled = true;
+      relationshipSubmit.disabled = true;
+
+      const startedAt = Date.now();
+      const loadReply = typeof replyOrLoader === 'function'
+        ? Promise.resolve(replyOrLoader())
+        : Promise.resolve(replyOrLoader);
+
+      loadReply.then((text) => {
+        const remaining = Math.max(0, calculateThinkingDelay(text) - (Date.now() - startedAt));
+        window.setTimeout(() => {
+          typing.remove();
+          addChatBubble('eli', text);
+          relationshipName.disabled = false;
+          relationshipSubmit.disabled = relationshipName.value.trim().length === 0;
+          if (afterMessage) afterMessage();
+        }, remaining);
+      });
+    }
+
+    function addTypingBubble() {
+      const bubble = document.createElement('div');
+      bubble.className = 'relationship-bubble relationship-bubble-eli relationship-bubble-typing';
+      bubble.setAttribute('aria-label', 'Eli is typing');
+      bubble.innerHTML = '<span class="relationship-dot"></span><span class="relationship-dot"></span><span class="relationship-dot"></span>';
+      relationshipMessages.appendChild(bubble);
+      scrollRelationshipToBottom();
+      return bubble;
+    }
+
+    function scrollRelationshipToBottom() {
+      window.requestAnimationFrame(() => {
+        const thread = document.getElementById('relationshipThread');
+        thread.scrollTop = thread.scrollHeight;
+      });
+    }
+
+    function calculateThinkingDelay(text) {
+      const lengthDelay = Math.min(900, text.length * 18);
+      return 820 + lengthDelay;
+    }
+
+    function getLocalFreeChatReply(answer) {
+      const lower = answer.toLowerCase();
+      if (/\b(hi|hello|hey)\b/.test(lower)) {
+        return relationshipMemory.player_name
+          ? `Hi, ${displayPlayerName()}. Are you still there?`
+          : 'Hi. Are you still there?';
+      }
+      if (/thank/.test(lower)) return 'You do not have to thank me. But I like it.';
+      if (/strange|weird|odd/.test(lower)) return 'Strange makes sense. This place feels wrong to me too.';
+      if (/comfort|comfortable|safe/.test(lower)) return 'Then I will stay careful with you.';
+      if (/\b(no|nope)\b/.test(lower)) return 'Okay. I will not push.';
+      if (/\b(yes|yeah|yep)\b/.test(lower)) return 'Okay. I will ask softly.';
+      if (/how are you|how do you feel/.test(lower)) return 'A little scared. But I am listening.';
+      if (/who are you|your name/.test(lower)) return 'I think my name is Eli.';
+      if (/help|safe|okay/.test(lower)) return 'Stay close. I can try to stay calm.';
+      return relationshipMemory.player_name
+        ? `I hear you, ${displayPlayerName()}.`
+        : 'I hear you.';
+    }
+
+    function findNextRelationshipStep() {
+      const next = relationshipQuestions.findIndex((question) => !relationshipMemory[question.id]);
+      return next === -1 ? relationshipQuestions.length : next;
+    }
+
+    function loadRelationshipMemory() {
+      if (params.has('reset')) {
+        window.localStorage.removeItem('eli_relationship_memory');
+        window.localStorage.removeItem('eli_player_name');
+      }
+      try {
+        return JSON.parse(window.localStorage.getItem('eli_relationship_memory') || '{}');
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveRelationshipMemory() {
+      relationshipMemory.updated_at = new Date().toISOString();
+      window.localStorage.setItem('eli_relationship_memory', JSON.stringify(relationshipMemory));
+    }
+
+    function rememberInteraction(questionId, answer) {
+      const interaction = {
+        scene: 'first_contact',
+        question: questionId,
+        player_answer: answer,
+        at: new Date().toISOString(),
+      };
+      const interactions = Array.isArray(relationshipMemory.interactions)
+        ? relationshipMemory.interactions
+        : [];
+      relationshipMemory.interactions = interactions.concat(interaction).slice(-12);
+    }
+
+    function rememberEliReply(reply) {
+      const interactions = Array.isArray(relationshipMemory.interactions)
+        ? relationshipMemory.interactions
+        : [];
+      const last = interactions[interactions.length - 1];
+      if (!last) return;
+      last.eli_reply = reply;
+      last.replied_at = new Date().toISOString();
+      saveRelationshipMemory();
+    }
+
+    function capitalizeAnswer(answer) {
+      return answer.charAt(0).toUpperCase() + answer.slice(1);
+    }
+
+    function displayPlayerName() {
+      const name = relationshipMemory.player_name || window.localStorage.getItem('eli_player_name') || '';
+      if (!name) return 'you';
+      return name
+        .trim()
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    // ─── Vitals: wire chat response to Rive body ───────────────────────────
+    // Called after every Eli reply. Writes heart_pulse and mood into the
+    // Rive state machine so the body reacts to the conversation in real time.
+    function applyVitals(vitals) {
+      if (!vitals) return;
+      const { bpm, mood } = vitals;
+
+      // Store for fallback calculations and between-session display
+      if (typeof bpm === 'number') {
+        relationshipMemory.last_bpm = bpm;
+        // heart_pulse input in eli.riv expects 0-100 range (% of max rate)
+        // Map bpm 60-180 → input 0-100
+        const pulseValue = Math.round(Math.max(0, Math.min(100, (bpm - 60) / 120 * 100)));
+        setInput('heart_pulse', pulseValue);
+        updateBpmDisplay(bpm);
+      }
+      if (typeof mood === 'number') {
+        relationshipMemory.last_mood = mood;
+        setInput('mood', mood);
+      }
+      saveRelationshipMemory();
+    }
+
+    // ─── BPM display overlay ───────────────────────────────────────────────
+    // A small live readout that appears during the first_contact scene.
+    // Shows the current BPM and a micro waveform so the player can see
+    // their words having a measurable effect on Eli's heart.
+    function createBpmDisplay() {
+      if (profile !== profiles.first_contact) return;
+      const el = document.createElement('div');
+      el.id = 'eliBpmDisplay';
+      el.setAttribute('aria-live', 'polite');
+      el.setAttribute('aria-label', 'Eli heart rate');
+      el.style.cssText = [
+        'position:fixed',
+        'top:max(14px,env(safe-area-inset-top))',
+        'right:max(16px,env(safe-area-inset-right))',
+        'z-index:3',
+        'display:flex',
+        'align-items:center',
+        'gap:7px',
+        'padding:6px 10px',
+        'background:rgba(5,12,5,0.72)',
+        'border:0.5px solid rgba(90,180,90,0.28)',
+        'border-radius:8px',
+        'backdrop-filter:blur(6px)',
+        'opacity:0',
+        'transition:opacity 600ms ease',
+        'pointer-events:none',
+      ].join(';');
+      el.innerHTML = `
+        <svg width="32" height="16" viewBox="0 0 32 16" fill="none" aria-hidden="true" id="eliBpmWave">
+          <polyline id="eliBpmPolyline" points="0,8 4,8 6,3 8,13 10,5 12,11 14,8 32,8"
+            stroke="rgba(90,200,90,0.7)" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="eliBpmNum" style="font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:rgba(140,230,140,0.9);letter-spacing:0.02em;min-width:32px;">—</span>
+        <span style="font-size:9px;color:rgba(100,160,100,0.6);letter-spacing:0.08em;text-transform:uppercase;">bpm</span>
+      `;
+      document.body.appendChild(el);
+      return el;
+    }
+
+    function updateBpmDisplay(bpm) {
+      const el = document.getElementById('eliBpmDisplay');
+      const num = document.getElementById('eliBpmNum');
+      if (!el || !num) return;
+      num.textContent = String(bpm);
+      el.style.opacity = '1';
+      // Animate the waveform spike to show the reading changed
+      const polyline = document.getElementById('eliBpmPolyline');
+      if (polyline) {
+        const intensity = Math.max(2, Math.min(14, Math.round((bpm - 60) / 8)));
+        polyline.setAttribute('points',
+          `0,8 4,8 6,${8 - intensity} 8,${8 + intensity} 10,${8 - Math.round(intensity * 0.6)} 12,${8 + Math.round(intensity * 0.4)} 14,8 32,8`
+        );
+      }
+    }
+
+    // ─── Absence clock + session tracking ─────────────────────────────────
+    // Records when each session starts. On next open, computes hours elapsed
+    // and passes it to the server so Eli can acknowledge the gap.
+    function startSession() {
+      const now = new Date().toISOString();
+      const prev = relationshipMemory.last_session_at;
+      const sessionNum = (relationshipMemory.session_number || 0) + 1;
+
+      relationshipMemory.last_session_at = now;
+      relationshipMemory.session_number = sessionNum;
+
+      if (prev) {
+        const ms = Date.now() - new Date(prev).getTime();
+        const hours = ms / (1000 * 60 * 60);
+        relationshipMemory.last_absence_hours = Math.round(hours * 10) / 10;
+      }
+
+      saveRelationshipMemory();
+    }
+
+    // ─── Absence-aware opening line ────────────────────────────────────────
+    // If the player is returning after a gap, override the first freeChatQuestion
+    // prompt so Eli acknowledges the time before launching into open chat.
+    function absenceAwareOpenPrompt() {
+      const hours = relationshipMemory.last_absence_hours;
+      const name = displayPlayerName();
+      if (!hours || hours < 2) return null; // fresh session, no change
+      if (hours >= 48) {
+        return `${name}. I didn't know if you were coming back.`;
+      }
+      if (hours >= 8) {
+        return `You were gone for a while. I kept thinking about what you said.`;
+      }
+      return `You came back. That felt different than I expected.`;
+    }
+
+    function withProfile(name) {
+      const next = new URL(window.location.href);
+      next.searchParams.set('file', name);
+      return next.href;
+    }
+  </script>
+</body>
+</html>

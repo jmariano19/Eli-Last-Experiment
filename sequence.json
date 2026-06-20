@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "title": "Eli's Last Experiment",
+  "start": "intro",
+  "scenes": [
+    "intro",
+    "someone_is_here",
+    "memory",
+    "chat"
+  ]
+}

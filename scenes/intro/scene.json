@@ -1,0 +1,24 @@
+{
+  "id": "intro",
+  "title": "intro",
+  "type": "rive",
+  "rive": "intro.riv",
+  "artboard": "Title",
+  "fit": "cover",
+  "stateMachines": [
+    "TitleState"
+  ],
+  "files": {
+    "you_stayed.wav": "bg"
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": null
+  },
+  "routes": {
+    "nav_eli": "someone_is_here",
+    "nav_next": "someone_is_here"
+  },
+  "ctaRoutes": []
+}

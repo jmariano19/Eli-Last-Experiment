@@ -1,0 +1,11 @@
+{
+  "filename": "test.wav",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 1,
+      "emotion_state": 0,
+      "body_movement": 0
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "filename": "someone_is_here.wav",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 3
+    },
+    {
+      "time": 0.082,
+      "body_movement": 1
+    },
+    {
+      "time": 0.483,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.65,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.9,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.255,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.535,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.928,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.165,
+      "mouth_shape": 12
+    },
+    {
+      "time": 2.417,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.951,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.276,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.005,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.258,
+      "mouth_shape": 12
+    },
+    {
+      "time": 4.541,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.743,
+      "mouth_shape": 11
+    }
+  ]
+}

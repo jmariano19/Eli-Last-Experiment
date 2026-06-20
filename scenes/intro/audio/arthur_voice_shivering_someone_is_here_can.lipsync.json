@@ -1,0 +1,73 @@
+{
+  "filename": "arthur_voice_shivering_someone_is_here_can.wav",
+  "markers": [
+    {
+      "time": 0.341,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.447,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.565,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.739,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.902,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.028,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.238,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.468,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.153,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.398,
+      "mouth_shape": 12
+    },
+    {
+      "time": 2.561,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.823,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.903,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.633,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.958,
+      "mouth_shape": 12
+    },
+    {
+      "time": 4.204,
+      "mouth_shape": 10
+    },
+    {
+      "time": 4.433,
+      "mouth_shape": 1
+    }
+  ]
+}

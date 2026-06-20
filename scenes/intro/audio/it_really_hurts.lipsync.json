@@ -1,0 +1,13 @@
+{
+  "filename": "it_really_hurts.wav",
+  "markers": [
+    {
+      "time": 1.312,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.562,
+      "mouth_shape": 3
+    }
+  ]
+}

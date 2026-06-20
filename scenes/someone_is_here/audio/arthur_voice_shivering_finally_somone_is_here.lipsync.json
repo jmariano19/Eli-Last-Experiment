@@ -1,0 +1,82 @@
+{
+  "filename": "arthur_voice_shivering_finally_somone_is_here.wav",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 1,
+      "body_movement": 1
+    },
+    {
+      "time": 0.604,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.698,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.084,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.255,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.384,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.439,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.593,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.876,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.133,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.312,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.404,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.677,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.964,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.247,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.203,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.284,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.503,
+      "mouth_shape": 12
+    },
+    {
+      "time": 5.761,
+      "mouth_shape": 1
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "filename": "thank_you.wav",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 6,
+      "body_movement": 0
+    },
+    {
+      "time": 0.282,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.555,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.896,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.009,
+      "mouth_shape": 12
+    }
+  ]
+}

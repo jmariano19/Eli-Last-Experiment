@@ -1,0 +1,7 @@
+# Drop exported .riv files here. The watcher (scripts/watch-rive.mjs) will pick them up.
+# Expected files:
+#   intro.riv
+#   eli.riv
+#   extraction/heart_run.riv
+#   extraction/lungs_run.riv
+#   extraction/brain_run.riv

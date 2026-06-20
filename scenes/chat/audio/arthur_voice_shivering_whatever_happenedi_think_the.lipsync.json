@@ -1,0 +1,74 @@
+{
+  "filename": "arthur_voice_shivering_whatever_happenedi_think_the.wav",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 1,
+      "body_movement": 0
+    },
+    {
+      "time": 0.434,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.59,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.814,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.07,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.261,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.462,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.665,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.089,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.342,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.587,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.886,
+      "mouth_shape": 7
+    },
+    {
+      "time": 4.21,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.668,
+      "mouth_shape": 11
+    },
+    {
+      "time": 6.079,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.532,
+      "mouth_shape": 2
+    },
+    {
+      "time": 7.121,
+      "mouth_shape": 6
+    }
+  ]
+}
