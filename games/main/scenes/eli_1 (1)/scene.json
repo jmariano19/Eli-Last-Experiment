@@ -4,14 +4,14 @@
   "type": "rive",
   "rive": "shared",
   "files": {
-    "tts_there_thats_better_13551157.m4a": "voice",
-    "heart_normal.mp3": "voice",
-    "heart_stressed.mp3": "bg"
+    "tts_there_pause_05_thats_better_132207v3.m4a": "voice",
+    "tts_wait_are_you_ha_133148x2.m4a": "voice",
+    "tts_i_cant_i_cant_hear_1345097r.m4a": "voice"
   },
   "after": {
     "trigger": "ended",
     "message": "",
-    "next": "elias_2_video"
+    "next": "elias_video"
   },
   "stateMachines": [
     "EliState",
@@ -42,7 +42,7 @@
   },
   "segments": [
     {
-      "voice": "heart_stressed.mp3",
+      "voice": "",
       "trigger": "ended",
       "pose": {
         "heart_state": 1,
@@ -57,17 +57,23 @@
           "next": "@segment:1",
           "duration": 1.5
         }
-      },
-      "bgs": [
-        "heart_stressed.mp3"
-      ]
+      }
     },
     {
-      "voice": "tts_there_thats_better_13551157.m4a",
+      "voice": "tts_there_pause_05_thats_better_132207v3.m4a",
       "trigger": "ended",
-      "bgs": [
-        "heart_normal.mp3"
-      ]
+      "pose": {
+        "heart_state": 0,
+        "emotion_state": 0
+      }
+    },
+    {
+      "voice": "tts_wait_are_you_ha_133148x2.m4a",
+      "trigger": "ended"
+    },
+    {
+      "voice": "tts_i_cant_i_cant_hear_1345097r.m4a",
+      "trigger": "ended"
     }
   ]
 }
