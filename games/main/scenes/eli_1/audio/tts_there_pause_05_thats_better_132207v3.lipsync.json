@@ -1,0 +1,85 @@
+{
+  "filename": "tts_there_pause_05_thats_better_132207v3.m4a",
+  "markers": [
+    {
+      "time": 0.28,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.41,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.54,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.67,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.8,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.86,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.34,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.47,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.61,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.74,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.88,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.01,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.15,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.19,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.289,
+      "text": "there...",
+      "duration": 2,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 2.409,
+      "text": "that's better",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

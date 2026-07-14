@@ -1,0 +1,23 @@
+{
+  "filename": "arthur_voice_shivering_pause_30ha_pause_45.mp3",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 9,
+      "heart_state": 0
+    },
+    {
+      "time": 3.12,
+      "emotion_state": 11
+    },
+    {
+      "time": 8.226,
+      "emotion_state": 9
+    },
+    {
+      "time": 9.908,
+      "emotion_state": 0
+    }
+  ],
+  "textCues": []
+}

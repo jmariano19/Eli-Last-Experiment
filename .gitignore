@@ -1,2 +1,9 @@
 .DS_Store
-00_Documents/
+.env
+node_modules/
+.npm-cache/
+tts/venv/
+tts/models/
+tmp/
+.claude/
+games/**/.backups/

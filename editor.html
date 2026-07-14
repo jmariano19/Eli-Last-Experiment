@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Elia Editor</title>
+<link rel="icon" type="image/svg+xml" href="./public/Fav.svg" />
+<link rel="stylesheet" href="./src/editor.css" />
+</head>
+<body>
+  <div class="editor-layout">
+
+    <!-- Header -->
+    <header class="editor-header">
+      <div class="editor-header__left">
+        <span class="editor-header__title">Elia Editor</span>
+        <label class="game-switcher-wrap" title="Switch game — ★ is what players get">
+          <span class="game-switcher-label">GAME</span>
+          <select class="game-switcher" id="gameSwitcher"></select>
+        </label>
+        <button class="btn btn--ghost btn--new-game" id="btnNewGame" title="Create a new game">＋ New game</button>
+      </div>
+      <div class="editor-header__actions">
+        <button class="btn btn--ghost" id="btnOpenAIStatus" title="Claude AI status">●</button>
+        <button class="btn btn--danger-ghost" id="btnDeleteGame" title="Delete the current game">Delete game</button>
+        <button class="btn btn--publish" id="btnPublish">Publish</button>
+      </div>
+    </header>
+
+    <!-- Sidebar: scene list -->
+    <aside class="editor-sidebar">
+      <div class="editor-sidebar__label">SEQUENCE</div>
+      <input class="scene-filter" id="sceneFilter" type="search" placeholder="Filter scenes…" autocomplete="off" />
+      <ol class="scene-list" id="sceneList"></ol>
+      <div class="editor-sidebar__add">
+        <button class="btn btn--add-scene" id="btnAddScene">+ Add Scene</button>
+      </div>
+    </aside>
+
+    <!-- Main panel -->
+    <main class="editor-main" id="editorMain">
+      <div class="editor-empty" id="editorEmpty">
+        <div class="editor-empty__inner">
+          <div class="editor-empty__icon" aria-hidden="true">🎬</div>
+          <h2 class="editor-empty__title">No scene selected</h2>
+          <p class="editor-empty__text">Pick a scene from the sidebar, or create a new one to start building your story.</p>
+          <button class="btn btn--save" id="btnEmptyAdd">＋ Create a scene</button>
+        </div>
+      </div>
+      <div class="editor-panel" id="editorPanel" hidden></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="editor-footer">
+      <div class="editor-footer__group">
+        <button class="btn btn--save" id="btnSave" title="Save this scene (⌘S)">Save</button>
+        <span class="footer-hint" aria-hidden="true">⌘S save&ensp;·&ensp;⌘Z undo&ensp;·&ensp;Space hold-to-play</span>
+      </div>
+      <div class="editor-footer__group editor-footer__group--right">
+        <button class="btn btn--test" id="btnTestScene" title="Preview this scene in a new tab">▶ Test scene</button>
+        <button class="btn btn--test" id="btnTestSceneMobile" title="Test this scene on your phone (WiFi)" style="display:none">📱 scene</button>
+        <button class="btn btn--test-all" id="btnTestAll" title="Play the whole game from the start">▶▶ Test game</button>
+        <button class="btn btn--test-all" id="btnTestAllMobile" title="Test the whole game on your phone (WiFi)" style="display:none">📱 game</button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Add scene modal -->
+  <div class="modal-backdrop" id="addSceneModal">
+    <div class="modal">
+      <h2 class="modal__title">New Scene</h2>
+      <label class="modal__label">Scene name
+        <input class="modal__input" id="newSceneName" type="text" placeholder="e.g. Eli Waking" maxlength="64" />
+      </label>
+      <div class="modal__types">
+        <button class="modal-type" data-type="rive">
+          <span class="modal-type__icon">◆</span>
+          <span class="modal-type__name">Rive</span>
+          <span class="modal-type__desc">Animated character + voice + lip sync</span>
+        </button>
+        <button class="modal-type" data-type="video">
+          <span class="modal-type__icon">▶</span>
+          <span class="modal-type__name">Video</span>
+          <span class="modal-type__desc">Full-screen video playback</span>
+        </button>
+        <button class="modal-type" data-type="chat">
+          <span class="modal-type__icon">💬</span>
+          <span class="modal-type__name">Chat</span>
+          <span class="modal-type__desc">AI conversation with Eli</span>
+        </button>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="btnAddSceneCancel">Cancel</button>
+        <button class="btn btn--save" id="btnAddSceneCreate">Create Scene</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete game modal -->
+  <div class="modal-backdrop" id="deleteGameModal">
+    <div class="modal">
+      <h2 class="modal__title modal__title--danger">Delete this game?</h2>
+      <p class="modal__text">You're about to permanently delete <strong id="deleteGameName"></strong> —
+        every scene, audio file, lip sync and chat memory inside it.</p>
+      <p class="modal__text modal__text--warn">This cannot be undone.</p>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="btnDeleteGameCancel">Cancel</button>
+        <button class="btn btn--danger" id="btnDeleteGameConfirm">Delete forever</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/@rive-app/webgl2@2.38.3/rive.js"></script>
+  <script src="./src/editor.js"></script>
+</body>
+</html>

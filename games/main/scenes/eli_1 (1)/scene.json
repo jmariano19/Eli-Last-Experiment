@@ -1,0 +1,73 @@
+{
+  "id": "eli_1",
+  "title": "Eli_1",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_there_thats_better_13551157.m4a": "voice",
+    "heart_normal.mp3": "voice",
+    "heart_stressed.mp3": "bg"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "elias_2_video"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "pose": {
+    "heart_state": 0,
+    "emotion_state": 0,
+    "head_movement": 0
+  },
+  "ctaRoutes": [],
+  "heartZone": {
+    "x": 50,
+    "y": 52,
+    "size": 24,
+    "tap": {
+      "heartState": 0,
+      "next": "@segment:1"
+    },
+    "hold": {
+      "next": "@segment:1",
+      "duration": 0.5
+    }
+  },
+  "segments": [
+    {
+      "voice": "heart_stressed.mp3",
+      "trigger": "ended",
+      "pose": {
+        "heart_state": 1,
+        "emotion_state": 1
+      },
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "hold": {
+          "heartState": 0,
+          "next": "@segment:1",
+          "duration": 1.5
+        }
+      },
+      "bgs": [
+        "heart_stressed.mp3"
+      ]
+    },
+    {
+      "voice": "tts_there_thats_better_13551157.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    }
+  ]
+}

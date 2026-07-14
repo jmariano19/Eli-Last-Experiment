@@ -1,0 +1,57 @@
+{
+  "id": "eli_0_copy_4",
+  "title": "Eli_0 copy",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "arthur_voice_shivering_pause_30ha_pause_45.mp3": "voice",
+    "tts_pause_10_i_thought_i_011214xw.m4a": "voice",
+    "heartbeat_75bpm_20s.mp3": "bg"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "eli_1"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "pose": {
+    "emotion_state": 0,
+    "mouth_shape": 0,
+    "head_movement": 1,
+    "body_movement": 0,
+    "heart_state": 0
+  },
+  "segments": [
+    {
+      "voice": "arthur_voice_shivering_pause_30ha_pause_45.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "heartbeat_75bpm_20s.mp3"
+      ]
+    },
+    {
+      "voice": "tts_pause_10_i_thought_i_011214xw.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heartbeat_75bpm_20s.mp3"
+      ]
+    }
+  ],
+  "heartZone": {
+    "x": 50,
+    "y": 62,
+    "size": 24,
+    "hold": {
+      "next": "eli_2",
+      "duration": 3
+    }
+  }
+}

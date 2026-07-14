@@ -1,0 +1,33 @@
+{
+  "summary": "",
+  "recent_messages": [
+    {
+      "role": "user",
+      "content": "[The player is here, listening.]"
+    },
+    {
+      "role": "assistant",
+      "content": "Are you still there?"
+    },
+    {
+      "role": "user",
+      "content": "yes, i am here"
+    },
+    {
+      "role": "assistant",
+      "content": "Are you still there?"
+    },
+    {
+      "role": "user",
+      "content": "yes, i am here"
+    },
+    {
+      "role": "assistant",
+      "content": "Oh. Good. I wasn't sure you'd stay."
+    },
+    {
+      "role": "user",
+      "content": "i will stay with you"
+    }
+  ]
+}

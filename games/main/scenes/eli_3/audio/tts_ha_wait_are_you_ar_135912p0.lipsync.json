@@ -1,0 +1,113 @@
+{
+  "filename": "tts_ha_wait_are_you_ar_135912p0.m4a",
+  "markers": [
+    {
+      "time": 0.09,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.22,
+      "mouth_shape": 10
+    },
+    {
+      "time": 0.35,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.36,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.13,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.26,
+      "mouth_shape": 11
+    },
+    {
+      "time": 2.34,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.51,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.54,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.93,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.06,
+      "mouth_shape": 11
+    },
+    {
+      "time": 5.1,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.19,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.33,
+      "mouth_shape": 2
+    },
+    {
+      "time": 5.36,
+      "mouth_shape": 0
+    },
+    {
+      "time": 7.11,
+      "mouth_shape": 1
+    },
+    {
+      "time": 7.21,
+      "mouth_shape": 0
+    },
+    {
+      "time": 9.18,
+      "mouth_shape": 8
+    },
+    {
+      "time": 9.31,
+      "mouth_shape": 0
+    },
+    {
+      "time": 10.86,
+      "mouth_shape": 8
+    },
+    {
+      "time": 10.97,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 2.045,
+      "text": "Wait...",
+      "duration": 1.8,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 4.761,
+      "text": "are you...",
+      "duration": 2.2,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

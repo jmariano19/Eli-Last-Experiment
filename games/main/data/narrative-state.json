@@ -1,0 +1,25 @@
+{
+  "bond_level": 2,
+  "chapter": 1,
+  "emotional_state": "uncertain",
+  "memories_unlocked": [],
+  "memories_available": [
+    "cold_feeling",
+    "someone_was_there",
+    "bright_light",
+    "a_voice",
+    "the_experiment",
+    "before_it_happened",
+    "who_i_was"
+  ],
+  "player_name": null,
+  "things_player_shared": [
+    "promised to stay"
+  ],
+  "open_thread": null,
+  "questions_player_asked": [],
+  "things_eli_shared": [
+    "hints that others have left before"
+  ],
+  "conversation_count": 2
+}

@@ -1,0 +1,98 @@
+{
+  "filename": "tts_can_you_help_me_remember_183458wj.m4a",
+  "markers": [
+    {
+      "time": 0.25,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.38,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.51,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.64,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.77,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.9,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.03,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.14,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.22,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.24,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.32,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.46,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.59,
+      "mouth_shape": 9
+    },
+    {
+      "time": 1.77,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.9,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.97,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.09,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.22,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.36,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.41,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.108,
+      "text": "Can you help me remember",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

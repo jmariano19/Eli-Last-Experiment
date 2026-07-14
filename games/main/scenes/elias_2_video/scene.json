@@ -1,0 +1,15 @@
+{
+  "id": "elias_2_video",
+  "title": "elias_2_video",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "losing_voice-1.mp4": "video"
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "eli_3"
+  },
+  "ctaRoutes": []
+}

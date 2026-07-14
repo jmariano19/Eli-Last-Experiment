@@ -1,0 +1,93 @@
+{
+  "filename": "tts_there_thats_better_13551157.m4a",
+  "markers": [
+    {
+      "time": 0.93,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.06,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.2,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.33,
+      "mouth_shape": 9
+    },
+    {
+      "time": 1.47,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.51,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.68,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.82,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.95,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.09,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.22,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.39,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.54,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.68,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.82,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.95,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.793,
+      "text": "there...",
+      "duration": 1.6,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 2.639,
+      "text": "That’s better.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

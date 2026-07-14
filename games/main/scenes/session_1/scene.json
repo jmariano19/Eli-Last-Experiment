@@ -1,0 +1,17 @@
+{
+  "id": "session_1",
+  "title": "Session_1",
+  "type": "rive",
+  "rive": "entrada.riv",
+  "files": {},
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "artboard": "Entri"
+}

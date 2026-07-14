@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Eli's Last Experiment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+
+  <div class="phone-shell" id="phoneShell">
+
+    <!-- Decorative side buttons (outside screen — desktop only) -->
+    <div class="phone-btn phone-btn--mute"     aria-hidden="true"></div>
+    <div class="phone-btn phone-btn--vol-up"   aria-hidden="true"></div>
+    <div class="phone-btn phone-btn--vol-down" aria-hidden="true"></div>
+    <div class="phone-btn phone-btn--power"    aria-hidden="true"></div>
+
+    <!-- ── Phone screen (game lives here) ───────────────────────────────────── -->
+    <div class="phone-screen" id="phoneScreen">
+
+      <!-- Chrome overlays — sit on top of game content -->
+      <div class="phone-island" aria-hidden="true"></div>
+
+      <div class="phone-status" aria-hidden="true">
+        <span class="phone-status__time" id="phoneTime"></span>
+        <div class="phone-status__right">
+          <span class="phone-status__signal">
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span class="phone-status__battery"></span>
+        </div>
+      </div>
+
+      <button class="mute-btn" id="muteBtn" aria-label="Mute sound">🔊</button>
+
+      <!-- ── Game content ─────────────────────────────────────────────────── -->
+      <main class="stage" id="stage">
+        <canvas id="canvas"></canvas>
+      </main>
+
+      <section class="video-screen" id="videoScreen">
+        <video id="sceneVideo" playsinline preload="auto"></video>
+        <img class="video-overlay" id="videoOverlay" alt="" aria-hidden="true" />
+        <button class="video-skip" id="videoSkip">Skip ›</button>
+      </section>
+
+      <section class="chat-screen" id="chatScreen">
+        <canvas id="chatCanvas"></canvas>
+        <div class="chat-thread" id="chatThread"></div>
+        <form class="chat-card" id="chatForm">
+          <input class="chat-card__input" id="chatInput" type="text" autocomplete="off" placeholder="Chat with Eli..." maxlength="240" />
+          <div class="eli-thinking" id="eliThinking">
+            <div class="eli-thinking__dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="chat-card__actions">
+            <button class="chat-card__btn chat-card__btn--add" type="button">+</button>
+            <div class="chat-card__right">
+              <button class="chat-card__btn chat-card__btn--mic" id="chatVoiceBtn" type="button" title="Tap to talk">
+                <img class="voice-btn__icon" src="./public/microphone.svg" alt="mic" />
+                <span class="voice-btn__pulse"></span>
+              </button>
+              <button class="chat-card__btn chat-card__btn--send" type="submit">
+                <span class="chat-card__send-icon">▶</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="memory-screen" id="memoryScreen" aria-label="Memory room">
+        <div class="memory-room" id="memoryRoom">
+          <div class="memory-room__bg" id="memoryRoomBg"></div>
+          <div class="memory-room__shade"></div>
+          <div class="memory-room__caption" id="memoryCaption"></div>
+          <div class="memory-room__objects" id="memoryObjects"></div>
+          <div class="memory-room__eli" id="memoryEli">
+            <div class="memory-room__eli-face"></div>
+            <div class="memory-room__eli-heart" id="memoryHeart"></div>
+            <div class="memory-room__hold-progress" id="memoryHoldProgress"></div>
+          </div>
+          <div class="memory-room__whisper" id="memoryWhisper"></div>
+        </div>
+      </section>
+
+      <div class="segment-chat-overlay" id="segmentChat" style="display:none">
+        <div class="segment-chat__thread" id="segChatThread"></div>
+        <form class="chat-card segment-chat__card" id="segChatForm">
+          <input class="chat-card__input" id="segChatInput" type="text" autocomplete="off" placeholder="Chat with Eli..." maxlength="240" />
+          <div class="eli-thinking" id="eliThinkingSeg">
+            <div class="eli-thinking__dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="chat-card__actions">
+            <button class="chat-card__btn chat-card__btn--add" type="button">+</button>
+            <div class="chat-card__right">
+              <button class="chat-card__btn chat-card__btn--mic" id="segVoiceBtn" type="button" title="Tap to talk">
+                <img class="voice-btn__icon" src="./public/microphone.svg" alt="mic" />
+                <span class="voice-btn__pulse"></span>
+              </button>
+              <button class="chat-card__btn chat-card__btn--send" type="submit">
+                <span class="chat-card__send-icon">▶</span>
+              </button>
+            </div>
+          </div>
+        </form>
+        <button class="segment-chat__continue" id="segChatContinue" style="display:none">Continue</button>
+      </div>
+
+      <div class="heart-prompt" id="heartPrompt" style="display:none">
+        <div class="heart-prompt__ring"></div>
+        <div class="heart-prompt__text">Touch his heart</div>
+      </div>
+      <div class="text-overlay" id="textOverlay"></div>
+      <div class="fade-overlay" id="fade"></div>
+      <div class="message-overlay" id="message"></div>
+
+      <!-- Home indicator bar -->
+      <div class="phone-home-bar" aria-hidden="true"></div>
+
+    </div><!-- /phone-screen -->
+  </div><!-- /phone-shell -->
+
+  <script src="https://unpkg.com/@rive-app/webgl2@2.38.3/rive.js"></script>
+  <script src="./src/main.js"></script>
+</body>
+</html>

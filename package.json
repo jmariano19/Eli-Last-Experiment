@@ -1,0 +1,9 @@
+{
+  "name": "elis-last-experiment-prototype-8",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node start.mjs",
+    "server": "node local-server.mjs"
+  }
+}
