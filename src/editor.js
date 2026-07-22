@@ -1783,9 +1783,30 @@
           <span>Loop</span>
         </label>` : ''}
         ${isLipsyncable ? `<button class="btn btn--edit-lipsync" data-lipsync-load="${esc(filename)}">Edit Lip Sync</button>` : ''}
+        <button class="file-row__rename btn--icon" data-file-rename="${esc(filename)}" title="Rename">✎</button>
         <button class="file-row__delete btn--icon" data-file-delete="${esc(filename)}" title="Remove">×</button>
       </div>
     `;
+  }
+
+  // Mirror of the server-side rename patch: swap every reference to a file
+  // (object keys like files/bgLoops entries, and string values like
+  // segments[].voice) in the in-memory config so it matches scene.json.
+  function renameFileRefs(node, oldName, newName) {
+    if (Array.isArray(node)) {
+      node.forEach((v, i) => {
+        if (v === oldName) node[i] = newName;
+        else renameFileRefs(v, oldName, newName);
+      });
+      return;
+    }
+    if (node && typeof node === 'object') {
+      for (const k of Object.keys(node)) {
+        if (node[k] === oldName) node[k] = newName;
+        else renameFileRefs(node[k], oldName, newName);
+        if (k === oldName) { node[newName] = node[k]; delete node[k]; }
+      }
+    }
   }
 
   // ─── Lip sync section ────────────────────────────────────────────────────────
@@ -3490,6 +3511,58 @@
         if (st.activeVoiceFile === filename) { st.activeVoiceFile = ''; stopAudio(); }
         renderPanel();
         showToast('File removed.');
+      });
+    });
+
+    // File rename — click ✎, edit the base name inline, Enter commits, Esc cancels
+    document.querySelectorAll('[data-file-rename]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const filename = btn.dataset.fileRename;
+        const row  = btn.closest('.file-row');
+        const span = row?.querySelector('.file-row__name');
+        if (!row || !span || row.querySelector('.file-row__rename-input')) return;
+        const ext   = (filename.match(/\.[^.]+$/) || [''])[0];
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'file-row__rename-input';
+        input.value = filename.slice(0, filename.length - ext.length);
+        span.replaceWith(input);
+        input.focus();
+        input.select();
+        let done = false;
+        const cancel = () => { if (done) return; done = true; input.replaceWith(span); };
+        const commit = async () => {
+          if (done) return; done = true;
+          const newBase = input.value.trim();
+          if (!newBase || newBase + ext === filename) { input.replaceWith(span); return; }
+          try {
+            const res  = await fetch('/api/scene/rename-file', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: config.id, filename, newName: newBase, game: st.game }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.ok) {
+              showToast(`Rename failed: ${data.error || `HTTP ${res.status}`}`, true, 6000);
+              input.replaceWith(span);
+              return;
+            }
+            const newName = data.filename;
+            renameFileRefs(config, filename, newName);
+            if (st.activeVoiceFile === filename) st.activeVoiceFile = newName;
+            st.files[config.id] = (st.files[config.id] || []).map(f => f === filename ? newName : f);
+            renderPanel();
+            showToast(`Renamed to "${newName}".`);
+          } catch (err) {
+            showToast(`Rename error: ${err.message}`, true, 6000);
+            input.replaceWith(span);
+          }
+        };
+        input.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter')  { ev.preventDefault(); commit(); }
+          if (ev.key === 'Escape') { ev.stopPropagation(); cancel(); }
+        });
+        input.addEventListener('blur', () => commit());
       });
     });
 

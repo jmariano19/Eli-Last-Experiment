@@ -5,7 +5,8 @@
   "rive": "shared",
   "files": {
     "tts_there_you_are_183922h0.m4a": "voice",
-    "low.mp3": "bg"
+    "low.mp3": "bg",
+    "tts_i_thought_i_was_alone_190421ge.m4a": "voice"
   },
   "after": {
     "trigger": "tap_heart",
@@ -39,6 +40,14 @@
     },
     {
       "voice": "tts_there_you_are_183922h0.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 1.5
+    },
+    {
+      "voice": "tts_i_thought_i_was_alone_190421ge.m4a",
       "trigger": "ended",
       "bgs": [
         "low.mp3"

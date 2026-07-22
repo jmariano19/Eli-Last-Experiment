@@ -683,6 +683,57 @@ async function deleteSceneFile(req, res) {
   sendJson(res, 200, { ok: true });
 }
 
+// Rename an audio/video file and every reference to it — the lipsync sidecar,
+// the files/bgLoops maps, segment voice/video fields, memory voices, etc.
+async function renameSceneFile(req, res) {
+  const body    = await readJsonBody(req);
+  const game    = await resolveGame(body.game);
+  const id      = cleanId(body.id || '');
+  const oldName = basename(String(body.filename || ''));
+  if (!id || !oldName) { sendJson(res, 400, { error: 'id and filename required' }); return; }
+
+  // The extension stays what it was — the user only edits the base name
+  const ext = extname(oldName);
+  let base  = String(body.newName || '').trim();
+  if (ext && base.toLowerCase().endsWith(ext.toLowerCase())) base = base.slice(0, -ext.length);
+  base = base.replace(/[^a-zA-Z0-9 ._-]+/g, '').trim()
+             .replace(/\s+/g, '_').replace(/_{2,}/g, '_').replace(/^[._]+|[._]+$/g, '');
+  if (!base) { sendJson(res, 400, { error: 'That name is empty after removing unsafe characters.' }); return; }
+  const newName = base + ext;
+  if (newName === oldName) { sendJson(res, 200, { ok: true, filename: newName }); return; }
+
+  const audioDir = join(gameDir(game), 'scenes', id, 'audio');
+  const oldPath  = join(audioDir, oldName);
+  const newPath  = join(audioDir, newName);
+  if (!existsSync(oldPath)) { sendJson(res, 404, { error: `"${oldName}" not found on disk.` }); return; }
+  if (existsSync(newPath))  { sendJson(res, 409, { error: `A file named "${newName}" already exists in this scene.` }); return; }
+
+  await rename(oldPath, newPath);
+  const oldSide = oldPath.replace(/\.[^.]+$/, '.lipsync.json');
+  const newSide = newPath.replace(/\.[^.]+$/, '.lipsync.json');
+  if (existsSync(oldSide)) { try { await rename(oldSide, newSide); } catch {} }
+
+  // Patch every reference in scene.json — object keys (files, bgLoops) and
+  // any string value (segments[].voice, segments[].video, memories, marks…)
+  const scenePath = join(gameDir(game), 'scenes', id, 'scene.json');
+  try {
+    const patch = (node) => {
+      if (Array.isArray(node)) return node.map(patch);
+      if (node && typeof node === 'object') {
+        const out = {};
+        for (const [k, v] of Object.entries(node)) out[k === oldName ? newName : k] = patch(v);
+        return out;
+      }
+      return node === oldName ? newName : node;
+    };
+    const cfg = JSON.parse(await readFile(scenePath, 'utf8'));
+    await backupFile(scenePath);
+    await writeFile(scenePath, JSON.stringify(patch(cfg), null, 2), 'utf8');
+  } catch {}
+
+  sendJson(res, 200, { ok: true, filename: newName });
+}
+
 // ─── Lip sync ─────────────────────────────────────────────────────────────────
 
 function sanitizeMarkers(raw) {
@@ -1553,6 +1604,7 @@ createServer(async (req, res) => {
     if (req.method === 'GET'  && p === '/api/scene/riv-names')   { await getRivNames(req, res, url);         return; }
     if (req.method === 'POST' && p === '/api/scene/upload')       { await uploadSceneFile(req, res, url);     return; }
     if (req.method === 'POST' && p === '/api/scene/delete-file')  { await deleteSceneFile(req, res);          return; }
+    if (req.method === 'POST' && p === '/api/scene/rename-file')  { await renameSceneFile(req, res);          return; }
     if (req.method === 'POST' && p === '/api/shared/upload')      { await uploadSharedFile(req, res, url);    return; }
 
     if (req.method === 'POST' && p === '/api/lipsync/save')       { await saveLipSync(req, res);              return; }
