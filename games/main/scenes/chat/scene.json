@@ -1,0 +1,55 @@
+{
+  "id": "chat",
+  "title": "chat",
+  "type": "chat",
+  "rive": "shared",
+  "files": {
+    "tts_ha_142354k4.m4a": "voice"
+  },
+  "system_prompt": "You are Eli. A British boy who's been sick for a long time. make a connection of the memory you got from the previous game play ",
+  "give": {
+    "holdMs": 3200,
+    "hint": "hold it where he still feels.",
+    "retryHint": "it's still with you. try again."
+  },
+  "recoveredLines": {
+    "someone_was_there": "There were shoes by the door. I thought they were mine. They weren't."
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "tts_ha_142354k4.m4a",
+      "trigger": "ended",
+      "delay": 3.5
+    },
+    {
+      "type": "chat",
+      "opening": "There were shoes by the door. I thought they were mine. They weren't.",
+      "max_exchanges": 1,
+      "context_hint": "",
+      "trigger": "ended",
+      "mumble": true,
+      "delay": 3.5
+    },
+    {
+      "voice": "tts_ha_142354k4.m4a",
+      "trigger": "ended",
+      "cta_label": "Remember me",
+      "cta_hold": true,
+      "delay": 4
+    }
+  ]
+}

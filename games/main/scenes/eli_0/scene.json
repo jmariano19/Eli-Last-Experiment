@@ -46,13 +46,5 @@
       ]
     }
   ],
-  "heartZone": {
-    "x": 50,
-    "y": 62,
-    "size": 24,
-    "hold": {
-      "next": "eli_2",
-      "duration": 3
-    }
-  }
+  "heartZone": null
 }

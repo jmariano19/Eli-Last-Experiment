@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "title": "Eli Last Experiment",
+  "start": "0_start",
+  "scenes": [
+    "0_start",
+    "01_meet_eli",
+    "3_mom",
+    "4_hand",
+    "5_words",
+    "6_reciprogracity",
+    "7_the_diary",
+    "8_the_return_hook",
+    "9_last"
+  ]
+}

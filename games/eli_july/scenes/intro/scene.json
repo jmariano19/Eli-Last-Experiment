@@ -1,0 +1,17 @@
+{
+  "id": "intro",
+  "title": "Intro",
+  "type": "rive",
+  "rive": "start_july.riv",
+  "files": {},
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": "1_eli"
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "artboard": "Entri"
+}

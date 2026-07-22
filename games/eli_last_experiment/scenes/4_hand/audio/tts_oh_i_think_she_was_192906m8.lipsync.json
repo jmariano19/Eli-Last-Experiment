@@ -1,0 +1,126 @@
+{
+  "filename": "tts_oh_i_think_she_was_192906m8.m4a",
+  "markers": [
+    {
+      "time": 0.33,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.46,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.6,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.73,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.86,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.98,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.99,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.12,
+      "mouth_shape": 9
+    },
+    {
+      "time": 2.26,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.4,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.53,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.67,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.8,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.94,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.07,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.2,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.29,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.43,
+      "mouth_shape": 9
+    },
+    {
+      "time": 3.57,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.71,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.81,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.89,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.02,
+      "mouth_shape": 10
+    },
+    {
+      "time": 4.13,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.24,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.38,
+      "mouth_shape": 2
+    },
+    {
+      "time": 4.39,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 1.98,
+      "text": "I think she was waiting for me",
+      "duration": 3.3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

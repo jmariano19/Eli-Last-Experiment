@@ -1,0 +1,379 @@
+{
+  "filename": "tts_until_then_ill_hold_onto_2345147r.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 1
+    },
+    {
+      "time": 0.19,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.32,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.45,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.59,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.72,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.85,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.98,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.11,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.25,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.38,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.52,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.65,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.79,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.93,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.06,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.2,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.34,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.47,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.61,
+      "mouth_shape": 11
+    },
+    {
+      "time": 2.74,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.88,
+      "mouth_shape": 3
+    },
+    {
+      "time": 3.01,
+      "mouth_shape": 9
+    },
+    {
+      "time": 3.15,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.28,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.42,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.55,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.69,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.82,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.96,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.1,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.23,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.37,
+      "mouth_shape": 11
+    },
+    {
+      "time": 4.51,
+      "mouth_shape": 6
+    },
+    {
+      "time": 4.65,
+      "mouth_shape": 7
+    },
+    {
+      "time": 4.79,
+      "mouth_shape": 11
+    },
+    {
+      "time": 4.93,
+      "mouth_shape": 2
+    },
+    {
+      "time": 5.06,
+      "mouth_shape": 6
+    },
+    {
+      "time": 5.2,
+      "mouth_shape": 7
+    },
+    {
+      "time": 5.34,
+      "mouth_shape": 6
+    },
+    {
+      "time": 5.48,
+      "mouth_shape": 10
+    },
+    {
+      "time": 5.62,
+      "mouth_shape": 2
+    },
+    {
+      "time": 5.76,
+      "mouth_shape": 9
+    },
+    {
+      "time": 5.9,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.04,
+      "mouth_shape": 10
+    },
+    {
+      "time": 6.18,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.31,
+      "mouth_shape": 2
+    },
+    {
+      "time": 6.45,
+      "mouth_shape": 7
+    },
+    {
+      "time": 6.59,
+      "mouth_shape": 2
+    },
+    {
+      "time": 6.73,
+      "mouth_shape": 6
+    },
+    {
+      "time": 6.87,
+      "mouth_shape": 11
+    },
+    {
+      "time": 7.01,
+      "mouth_shape": 6
+    },
+    {
+      "time": 7.14,
+      "mouth_shape": 5
+    },
+    {
+      "time": 7.28,
+      "mouth_shape": 9
+    },
+    {
+      "time": 7.42,
+      "mouth_shape": 1
+    },
+    {
+      "time": 7.56,
+      "mouth_shape": 5
+    },
+    {
+      "time": 7.7,
+      "mouth_shape": 10
+    },
+    {
+      "time": 7.84,
+      "mouth_shape": 11
+    },
+    {
+      "time": 7.98,
+      "mouth_shape": 7
+    },
+    {
+      "time": 8.12,
+      "mouth_shape": 11
+    },
+    {
+      "time": 8.26,
+      "mouth_shape": 2
+    },
+    {
+      "time": 8.39,
+      "mouth_shape": 6
+    },
+    {
+      "time": 8.53,
+      "mouth_shape": 2
+    },
+    {
+      "time": 8.66,
+      "mouth_shape": 6
+    },
+    {
+      "time": 8.79,
+      "mouth_shape": 1
+    },
+    {
+      "time": 8.93,
+      "mouth_shape": 8
+    },
+    {
+      "time": 9.06,
+      "mouth_shape": 1
+    },
+    {
+      "time": 9.2,
+      "mouth_shape": 8
+    },
+    {
+      "time": 9.34,
+      "mouth_shape": 3
+    },
+    {
+      "time": 9.47,
+      "mouth_shape": 5
+    },
+    {
+      "time": 9.61,
+      "mouth_shape": 10
+    },
+    {
+      "time": 9.74,
+      "mouth_shape": 5
+    },
+    {
+      "time": 9.87,
+      "mouth_shape": 10
+    },
+    {
+      "time": 10.01,
+      "mouth_shape": 7
+    },
+    {
+      "time": 10.14,
+      "mouth_shape": 1
+    },
+    {
+      "time": 10.28,
+      "mouth_shape": 9
+    },
+    {
+      "time": 10.41,
+      "mouth_shape": 11
+    },
+    {
+      "time": 10.54,
+      "mouth_shape": 9
+    },
+    {
+      "time": 10.68,
+      "mouth_shape": 1
+    },
+    {
+      "time": 10.81,
+      "mouth_shape": 11
+    },
+    {
+      "time": 10.95,
+      "mouth_shape": 6
+    },
+    {
+      "time": 11.03,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.191,
+      "text": "Until then, I will hold on to what we found",
+      "duration": 4.6,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 5.082,
+      "text": "your name...",
+      "duration": 2,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 7.249,
+      "text": "her hand...",
+      "duration": 1.5,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 8.896,
+      "text": "the sound of her voice...",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

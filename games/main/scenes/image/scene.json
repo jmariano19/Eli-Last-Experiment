@@ -1,0 +1,22 @@
+{
+  "id": "image",
+  "title": "image",
+  "type": "jigsaw",
+  "rive": null,
+  "files": {
+    "57dda57e-e0e8-47fc-a880-5dfe872c4988.png": "photo"
+  },
+  "jigsaw": {
+    "pieces": 4,
+    "fragment": "Ohh now i see, there was a lab",
+    "intro": "Put it back together...",
+    "winText": "I remember this...",
+    "daily": false
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "remember"
+  },
+  "ctaRoutes": []
+}

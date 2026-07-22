@@ -1,0 +1,48 @@
+{
+  "id": "1_eli",
+  "title": "1_Eli",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_there_you_are_183922h0.m4a": "voice",
+    "low.mp3": "bg"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "bgLoops": {
+    "tts_there_you_are_183922h0.m4a": false,
+    "low.mp3": true
+  },
+  "segments": [
+    {
+      "type": "pause",
+      "duration": 3,
+      "trigger": "ended",
+      "pose": {
+        "emotion_state": 9
+      },
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "voice": "tts_there_you_are_183922h0.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "id": "4_hand",
+  "title": "4_hand",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_i_can_see_a_hand_190246or.m4a": "voice",
+    "heart_normal.mp3": "bg",
+    "tts_what_do_you_notice_190724vr.m4a": "voice",
+    "tts_oh_i_think_she_was_192906m8.m4a": "voice",
+    "tts_i_remembered_her_but_it_193021dd.m4a": "voice",
+    "tts_there_are_words_in_there_193708bk.m4a": "voice",
+    "heart_stressed.mp3": "bg",
+    "ha.mp3": "voice",
+    "tap.mp3": "voice",
+    "tts_could_you_keep_your_hand_153105bw.m4a": "voice",
+    "tts_could_you_keep_your_hand_153242np.m4a": "voice",
+    "tts_you_stayed_1550497d.m4a": "voice",
+    "tts_i_can_see_her_hand_165833wr.m4a": "voice",
+    "tts_that_was_her_my_mother_171804zo.m4a": "voice",
+    "tts_no_this_isnt_our_house_17215151.m4a": "voice",
+    "tts_every_time_i_look_directly_174939wx.m4a": "voice",
+    "stress.mp4": "voice",
+    "arthur_voice_shivering_that_was_hermy_mother.mp3": "voice",
+    "but_that_wasnt_our.mp3": "voice",
+    "the_lightsthe_doors_had.mp3": "voice",
+    "tts_the_words_are_coming_apart_1832013b.m4a": "voice",
+    "tts_help_him_hold_onto_the_183305e8.m4a": "voice",
+    "tts_you_stayed_you_kept_it_18354656.m4a": "voice",
+    "tts_i_can_still_feel_the_1842518l.m4a": "voice",
+    "tts_help_me_hold_onto_the_100839gn.m4a": "voice"
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "tts_every_time_i_look_directly_174939wx.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_what_do_you_notice_190724vr.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 2.5
+    },
+    {
+      "type": "chat",
+      "opening": "What do you notice in the memory?",
+      "max_exchanges": 1,
+      "context_hint": "The player is helping Eli interpret the reconstructed room. Respond to what they notice without inventing the lab reveal before the authored lines that follow.",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 2,
+      "mumble": false
+    },
+    {
+      "voice": "tts_that_was_her_my_mother_171804zo.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 1
+    },
+    {
+      "voice": "tts_could_you_keep_your_hand_153242np.m4a",
+      "trigger": "tap_heart",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 2,
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "hold": {
+          "next": "@segment:next",
+          "duration": 3
+        }
+      }
+    },
+    {
+      "type": "video",
+      "video": "stress.mp4",
+      "trigger": "ended"
+    },
+    {
+      "voice": "but_that_wasnt_our.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "the_lightsthe_doors_had.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_the_words_are_coming_apart_1832013b.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_help_me_hold_onto_the_100839gn.m4a",
+      "trigger": "tap_heart",
+      "bgs": [
+        "heart_stressed.mp3"
+      ],
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "hold": {
+          "heartState": 0,
+          "next": "@segment:10",
+          "duration": 3
+        }
+      }
+    },
+    {
+      "voice": "tts_you_stayed_you_kept_it_18354656.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_i_can_still_feel_the_1842518l.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "cta_hold": true,
+      "cta_label": "Memory",
+      "cta_next": "5_words",
+      "sfx": "tap.mp3",
+      "delay": 1.5
+    }
+  ]
+}

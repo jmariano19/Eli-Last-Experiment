@@ -1,0 +1,141 @@
+{
+  "filename": "arthur_voice_shivering_that_was_hermy_mother.mp3",
+  "markers": [
+    {
+      "time": 0.37,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.5,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.64,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.77,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.9,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.03,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.17,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.29,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.15,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.28,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.42,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.55,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.69,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.83,
+      "mouth_shape": 9
+    },
+    {
+      "time": 2.97,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.11,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.24,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.38,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.51,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.65,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.8,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.94,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.99,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.08,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.29,
+      "mouth_shape": 3
+    },
+    {
+      "time": 4.43,
+      "mouth_shape": 10
+    },
+    {
+      "time": 4.56,
+      "mouth_shape": 11
+    },
+    {
+      "time": 4.57,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.347,
+      "text": "That was her.",
+      "duration": 1.7,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 2.162,
+      "text": "My mother was trying to take me with her.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

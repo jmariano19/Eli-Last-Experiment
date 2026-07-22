@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "title": "Eli_July",
+  "start": "intro",
+  "scenes": [
+    "intro",
+    "1_eli"
+  ]
+}

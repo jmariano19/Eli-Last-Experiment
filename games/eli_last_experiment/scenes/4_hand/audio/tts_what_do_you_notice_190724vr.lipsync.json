@@ -1,0 +1,66 @@
+{
+  "filename": "tts_what_do_you_notice_190724vr.m4a",
+  "markers": [
+    {
+      "time": 0.44,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.58,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.6,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.81,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.85,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.31,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.46,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.62,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.64,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.93,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.06,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.19,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.424,
+      "text": "What did you noticed?",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

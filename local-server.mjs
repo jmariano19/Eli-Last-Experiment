@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, readdir, rm, rename, copyFile, cp, stat } from 'node:fs/promises';
-import { extname, join, normalize, basename, dirname } from 'node:path';
+import { extname, join, normalize, basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, readFileSync, createReadStream, watch as fsWatch } from 'node:fs';
 import { networkInterfaces, tmpdir } from 'node:os';
@@ -20,7 +20,7 @@ if (existsSync(envPath)) {
 
 // Bump when the editor/server API contract changes — the editor refuses to
 // run against a mismatched server instead of failing in confusing ways.
-const API_VERSION = 5;
+const API_VERSION = 7;
 
 const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
 const chatModel    = process.env.CHAT_MODEL || 'claude-sonnet-4-6';
@@ -39,12 +39,18 @@ const mime = {
   '.opus': 'audio/ogg',
   '.mp4':  'video/mp4',
   '.webm': 'video/webm',
+  '.mov':  'video/quicktime',
+  '.m4v':  'video/mp4',
+  '.ogv':  'video/ogg',
   '.svg':  'image/svg+xml',
   '.png':  'image/png',
   '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif':  'image/gif',
 };
 
-const MEDIA_EXTS = new Set(['.riv', '.mp3', '.m4a', '.wav', '.ogg', '.opus', '.mp4', '.webm', '.svg', '.png', '.jpg']);
+const MEDIA_EXTS = new Set(['.riv', '.mp3', '.m4a', '.wav', '.ogg', '.opus', '.mp4', '.webm', '.mov', '.m4v', '.ogv', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif']);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -330,7 +336,7 @@ async function createScene(req, res) {
   const body  = await readJsonBody(req);
   const game  = await resolveGame(body.game);
   const title = String(body.title || 'New Scene').slice(0, 64);
-  const type  = ['rive', 'video', 'chat'].includes(body.type) ? body.type : 'rive';
+  const type  = ['rive', 'video', 'chat', 'pairs', 'jigsaw', 'thread', 'words'].includes(body.type) ? body.type : 'rive';
   const scenesDir = join(gameDir(game), 'scenes');
   let id = slugify(title) || `scene_${Date.now()}`;
   if (existsSync(join(scenesDir, id))) {
@@ -343,10 +349,33 @@ async function createScene(req, res) {
 
   const config = {
     id, title, type,
-    rive: type !== 'video' ? 'shared' : null,
+    rive: (type === 'video' || type === 'pairs' || type === 'jigsaw' || type === 'thread' || type === 'words') ? null : 'shared',
     files: {},
     system_prompt: type === 'chat' ? "You are Eli. A British boy who's been sick for a long time." : undefined,
-    after: { trigger: type === 'rive' ? 'tap_heart' : type === 'video' ? 'ended' : 'never', message: '', next: null },
+    pairs: type === 'pairs' ? { count: 6, fragment: '', intro: 'Help him remember...', winText: 'I remember...', daily: false } : undefined,
+    jigsaw: type === 'jigsaw' ? { pieces: 9, fragment: '', intro: 'Put it back together...', winText: 'I remember this...', daily: false } : undefined,
+    thread: type === 'thread' ? {
+      intro: 'Some things still belong together.',
+      foundText: 'this is the part you kept.',
+      carryText: 'take it back to him.',
+      paths: [
+        { id: 'care', title: 'Someone came back', nodes: ['wet shoes', 'the door', 'her voice'], fragment: 'someone_was_there', signal: 'caution' },
+        { id: 'experiment', title: 'The bright room', nodes: ['cold floor', 'bright light', 'an alarm'], fragment: 'bright_light', signal: 'risk' },
+      ],
+    } : undefined,
+    words: type === 'words' ? {
+      intro: 'His memories are hiding in the letters.',
+      letters: 'MOTHER',
+      fragment: 'someone_was_there',
+      foundText: 'you found the word he could not say.',
+      carryText: 'take it back to him.',
+      memories: [
+        { word: 'HOME', reveal: 'wet shoes beside the door' },
+        { word: 'OTHER', reveal: 'a voice in the next room' },
+        { word: 'MOTHER', reveal: 'someone saying his name softly' }
+      ]
+    } : undefined,
+    after: { trigger: type === 'rive' ? 'tap_heart' : (type === 'video' || type === 'pairs' || type === 'jigsaw' || type === 'thread' || type === 'words') ? 'ended' : 'never', message: '', next: null },
   };
   await writeFile(join(scenesDir, id, 'scene.json'), JSON.stringify(config, null, 2), 'utf8');
 
@@ -525,8 +554,14 @@ async function listSceneFiles(req, res, url) {
   const id = cleanId(url.searchParams.get('id') || '');
   if (!id) { sendJson(res, 400, { error: 'id required' }); return; }
   try {
-    const files = await readdir(join(gameDir(game), 'scenes', id, 'audio'));
-    sendJson(res, 200, { files: files.filter(f => !f.startsWith('.')) });
+    const sceneRoot = join(gameDir(game), 'scenes', id);
+    let files = [];
+    try { files = (await readdir(join(sceneRoot, 'audio'))).filter(f => !f.startsWith('.')); } catch {}
+    // .riv files live in the scene root (not audio/) — include them so the
+    // editor can offer them in Rive pickers (e.g. Live Eli in Memory Words)
+    let rivs = [];
+    try { rivs = (await readdir(sceneRoot)).filter(f => !f.startsWith('.') && f.toLowerCase().endsWith('.riv')); } catch {}
+    sendJson(res, 200, { files: [...files, ...rivs] });
   } catch { sendJson(res, 200, { files: [] }); }
 }
 
@@ -695,7 +730,7 @@ function conversationPath(game)   { return join(gameDir(game), 'data', 'conversa
 const MEMORY_FRAGMENTS = ['cold_feeling', 'someone_was_there', 'bright_light', 'a_voice', 'the_experiment', 'before_it_happened', 'who_i_was'];
 
 function defaultNarrativeState() {
-  return { bond_level: 0, chapter: 1, emotional_state: 'uncertain', memories_unlocked: [], memories_available: [...MEMORY_FRAGMENTS], player_name: null, things_player_shared: [], open_thread: null, questions_player_asked: [], things_eli_shared: [], conversation_count: 0 };
+  return { bond_level: 0, chapter: 1, emotional_state: 'uncertain', memories_unlocked: [], memories_available: [...MEMORY_FRAGMENTS], player_name: null, things_player_shared: [], open_thread: null, questions_player_asked: [], things_eli_shared: [], conversation_count: 0, behavior_signals: { caution_risk: { score: 0, samples: 0, last_signal: null, last_scene: null, updated_at: null } } };
 }
 
 async function readNarrativeState(game) {
@@ -706,7 +741,18 @@ async function readNarrativeState(game) {
 
 async function writeNarrativeState(game, state) {
   await mkdir(join(gameDir(game), 'data'), { recursive: true });
-  await writeFile(narrativeStatePath(game), JSON.stringify(state, null, 2), 'utf8');
+  const destination = narrativeStatePath(game);
+  const temporary = `${destination}.tmp-${process.pid}-${Date.now()}`;
+  await writeFile(temporary, JSON.stringify(state, null, 2), 'utf8');
+  await rename(temporary, destination);
+}
+
+// Optional per-game story bible: games/<game>/story.md. Whatever it contains
+// is injected into Eli's system prompt as canon, so chat replies stay
+// consistent with the scripted scenes. Edit the file to grow the story.
+async function readStoryCanon(game) {
+  try { return (await readFile(join(gameDir(game), 'story.md'), 'utf8')).trim(); }
+  catch { return ''; }
 }
 
 async function readConversation(game) {
@@ -716,12 +762,26 @@ async function readConversation(game) {
 
 async function writeConversation(game, conv) {
   await mkdir(join(gameDir(game), 'data'), { recursive: true });
-  await writeFile(conversationPath(game), JSON.stringify(conv, null, 2), 'utf8');
+  const destination = conversationPath(game);
+  const temporary = `${destination}.tmp-${process.pid}-${Date.now()}`;
+  await writeFile(temporary, JSON.stringify(conv, null, 2), 'utf8');
+  await rename(temporary, destination);
 }
 
-function buildEliSystemPrompt(narrativeState, conversationSummary) {
+function buildEliSystemPrompt(narrativeState, conversationSummary, storyCanon = '') {
+  const cautionRisk = narrativeState.behavior_signals?.caution_risk || {};
+  const cautionRiskGuidance = Number(cautionRisk.samples) < 1
+    ? '- You do not know yet whether the player is cautious or risk-taking.'
+    : Number(cautionRisk.score) <= -2
+      ? '- The player repeatedly acts cautiously. Without naming or judging this pattern, let it make you a little more careful: hesitate before uncertain things, look to them before acting, and sometimes choose the safer concrete image.'
+      : Number(cautionRisk.score) >= 2
+        ? '- The player repeatedly acts quickly and accepts uncertainty. Without naming or judging this pattern, let it make you a little bolder: reach toward strange memories, decide a little faster, and wonder aloud what might happen.'
+        : '- The player has shown both caution and risk. Do not force a behavioural conclusion yet.';
   return `You are Eli. A British boy, about ten, who's been sick for a long time. You exist in a strange in-between state — not fully alive, not fully gone. Your heart glows; it's the one thing that still feels. Your memories are scattered fragments. You don't know what "the experiment" was, but you know something happened. The player is the first person who's come to see you in a very long time.
-
+${storyCanon ? `
+STORY CANON — what has already happened in the game's scripted scenes. This is your lived past. Never contradict it, never spoil what hasn't unlocked yet. Reference it the way a child references his own memories — in fragments, feelings first, never as a summary:
+${storyCanon}
+` : ''}
 HOW YOU SPEAK:
 - Short, plain sentences. 4-18 words. A tired child, not a poet.
 - Concrete and sensory: the cold floor, the humming light, the smell of rain you half-remember.
@@ -759,6 +819,9 @@ WHAT YOU KNOW ABOUT THE PLAYER:
 - Their name: ${narrativeState.player_name || 'you don\'t know it yet — you could ask, once, when it feels natural'}
 - What they've told you about themselves: ${narrativeState.things_player_shared.length ? narrativeState.things_player_shared.slice(-20).join(', ') : 'nothing yet'}
 ${conversationSummary ? `\nPREVIOUS CONVERSATIONS (your long-term memory of them):\n${conversationSummary}` : ''}
+
+HOW THEIR WAY OF PLAYING IS SHAPING YOU (never expose this as a stat or system):
+${cautionRiskGuidance}
 
 MEMORY UNLOCKING RULES:
 - Only unlock a memory when the player shows genuine care or asks the right question.
@@ -808,7 +871,8 @@ async function handleChat(req, res) {
 
   const narrativeState = await readNarrativeState(game);
   const conversation   = await readConversation(game);
-  let systemPrompt     = buildEliSystemPrompt(narrativeState, conversation.summary);
+  const storyCanon     = await readStoryCanon(game);
+  let systemPrompt     = buildEliSystemPrompt(narrativeState, conversation.summary, storyCanon);
   if (contextHint) systemPrompt += `\n${contextHint}`;
 
   // Build message history: recent stored messages + current session messages
@@ -991,6 +1055,14 @@ const TTS_GEMINI_VOICE_INFO = {
 const TTS_GEMINI_VOICES = Object.keys(TTS_GEMINI_VOICE_INFO);
 const TTS_ELI_GEMINI_VOICE = 'Leda';
 const TTS_ELI_GEMINI_STYLE = 'An incredibly delicate, sleepy, and dreamy 21-year-old young adult gentleman. He speaks with slow, quiet bedside whispering, a soft tired voice, high tenderness, and very slow speech pauses, sounding deeply sleepy and quiet.';
+const TTS_ELI_EMOTION_DIRECTIONS = {
+  vulnerable: 'He is emotionally exposed and unsure whether it is safe to speak. Let small hesitations and restrained need show through, without crying or melodrama.',
+  frightened: 'Fear is close to the surface. His breath catches before difficult words and his certainty briefly falters, but he is trying hard not to panic.',
+  exhausted: 'He is running out of strength. Thoughts arrive slowly, phrases trail off, and each new sentence costs him effort. Keep the words intelligible.',
+  remembering: 'A half-lost memory is returning while he speaks. Begin distant and searching, then allow recognition, ache, and fragile wonder to emerge.',
+  hopeful: 'A small, cautious hope is breaking through his fatigue. Add a little warmth and lift, as if he is afraid to believe something good may be true.',
+  relieved: 'Tension is finally leaving his body. The delivery softens into quiet relief and trust, with a faint warmth that never becomes cheerful or energetic.',
+};
 const geminiKey      = process.env.GEMINI_API_KEY || '';
 // The fallback chain tries the configured model first, then the other known
 // TTS models — Google previews change behavior over time, so one refusing to
@@ -1063,6 +1135,17 @@ async function convertToM4a(inPath, outPath) {
   return { ok: false, err: `afconvert: ${String(afErr).slice(0, 150) || 'failed'} · ffmpeg: ${String(r.err).slice(-150) || 'failed'}` };
 }
 
+function buildEliGeminiStyle(emotion, intensity) {
+  const mood = Object.hasOwn(TTS_ELI_EMOTION_DIRECTIONS, emotion) ? emotion : 'vulnerable';
+  const amount = Math.min(100, Math.max(0, Number(intensity) || 65));
+  const strength = amount < 34
+    ? 'Keep this emotional color very subtle, visible only in a few words.'
+    : amount < 70
+      ? 'Let this emotional color be clear but restrained and natural.'
+      : 'Let this emotion strongly shape the pauses, breath, and important words while remaining believable.';
+  return `${TTS_ELI_GEMINI_STYLE} ${TTS_ELI_EMOTION_DIRECTIONS[mood]} ${strength}`;
+}
+
 function buildGeminiTtsPrompt(style, text) {
   const direction = style || TTS_ELI_GEMINI_STYLE;
   const transcript = prepareTtsTranscript(text);
@@ -1116,14 +1199,15 @@ async function handleTts(req, res) {
       const voice = TTS_GEMINI_VOICES.includes(requestedVoice) ? requestedVoice : TTS_ELI_GEMINI_VOICE;
       // Natural-language delivery direction, same as typing a style prompt in AI Studio.
       // Keep enough room for director-style prompts, which improve realism.
-      const style = String(body.style || '').trim().slice(0, 4000);
+      const requestedStyle = String(body.style || '').trim().slice(0, 4000);
+      const style = requestedStyle || buildEliGeminiStyle(String(body.emotion || ''), body.intensity);
       const prompt = buildGeminiTtsPrompt(style, text);
       // Try the configured model; if it errors or returns no audio (previews
       // do this with finishReason OTHER), fall through the known TTS models.
       const models = [...new Set([geminiTtsModel, ...GEMINI_TTS_FALLBACK_MODELS])];
       let b64 = null;
       let lastDetail = '';
-      let sawRateLimit = false;
+      const rateLimits = [];   // { model, daily, retrySec } per 429 seen
       for (const model of models) {
         let response;
         try {
@@ -1145,10 +1229,25 @@ async function handleTts(req, res) {
           continue;
         }
         if (response.status === 429) {
-          // Quotas are per-model — another model in the chain may still work
-          sawRateLimit = true;
-          lastDetail = 'rate limit (429)';
-          console.warn(`Gemini TTS: ${model} rate-limited, trying next model`);
+          // Quotas are per-model — another model in the chain may still work.
+          // Google's 429 body says WHICH quota tripped: per-minute limits pass
+          // with a short wait, but the free tier's per-DAY cap on TTS previews
+          // won't reset until midnight Pacific — don't tell the user to retry
+          // in a minute when that's the one that fired.
+          let quotaId = '', retrySec = 0, gMsg = '';
+          try {
+            const err = JSON.parse(await response.text()).error || {};
+            gMsg = err.message || '';
+            for (const d of err.details || []) {
+              const t = String(d['@type'] || '');
+              if (t.includes('QuotaFailure')) quotaId = d.violations?.[0]?.quotaId || quotaId;
+              if (t.includes('RetryInfo'))    retrySec = Math.ceil(parseFloat(String(d.retryDelay)) || 0);
+            }
+          } catch {}
+          const daily = /day|daily/i.test(quotaId) || /per day|daily/i.test(gMsg);
+          rateLimits.push({ model, daily, retrySec });
+          lastDetail = `rate limit (429${quotaId ? ` — ${quotaId}` : ''})`;
+          console.warn(`Gemini TTS: ${model} rate-limited (${quotaId || 'unknown quota'}${retrySec ? `, retry in ~${retrySec}s` : ''}), trying next model`);
           continue;
         }
         if (!response.ok) {
@@ -1169,8 +1268,13 @@ async function handleTts(req, res) {
         console.warn(`Gemini TTS: ${model} returned no audio (${lastDetail})${models.length > 1 ? ', trying fallback' : ''}`);
       }
       if (!b64) {
-        if (sawRateLimit) {
-          sendJson(res, 429, { error: 'Gemini rate limit hit — the TTS quota is per-minute. Wait ~1 minute and try again.' });
+        if (rateLimits.length) {
+          const allDaily  = rateLimits.every(r => r.daily);
+          const retrySec  = Math.max(60, ...rateLimits.filter(r => !r.daily).map(r => r.retrySec));
+          const error = allDaily
+            ? 'Gemini DAILY TTS quota used up for this API key — the free tier only allows a small number of TTS requests per day. It resets at midnight Pacific time. Until then, use the Natural (Kokoro) or Draft voice, or upgrade the key to a paid tier.'
+            : `Gemini rate limit hit — wait ~${retrySec} seconds and try again.${rateLimits.some(r => r.daily) ? ' (Note: some fallback models have also exhausted their daily free-tier quota.)' : ''}`;
+          sendJson(res, 429, { error });
           return;
         }
         sendJson(res, 502, { error: `Gemini returned no audio (${lastDetail.slice(0, 160)}). Try again, or simplify the acting marks.` });
@@ -1215,6 +1319,43 @@ async function handleGetMemory(req, res, url) {
   const state = await readNarrativeState(game);
   const conv  = await readConversation(game);
   sendJson(res, 200, { state, summary: conv.summary || '' });
+}
+
+// Unlock a memory fragment from outside the chat (the pairs mini-game reports
+// its win here). Editor-defined fragment names are accepted alongside the
+// built-in MEMORY_FRAGMENTS list, so Eli can talk about custom memories too.
+async function handleMemoryUnlock(req, res) {
+  const body     = await readJsonBody(req);
+  const game     = await resolveGame(body.game);
+  const fragment = cleanString(body.fragment).toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+  if (!fragment) { sendJson(res, 400, { error: 'fragment required' }); return; }
+  const state = await readNarrativeState(game);
+  if (!state.memories_unlocked.includes(fragment)) state.memories_unlocked.push(fragment);
+  state.memories_available = state.memories_available.filter(m => m !== fragment);
+  await writeNarrativeState(game, state);
+  sendJson(res, 200, { ok: true, state });
+}
+
+async function handleBehaviorSignal(req, res) {
+  const body = await readJsonBody(req);
+  const game = await resolveGame(body.game);
+  const signal = body.signal === 'caution' || body.signal === 'risk' ? body.signal : null;
+  if (!signal) { sendJson(res, 400, { error: 'signal must be caution or risk' }); return; }
+  const state = await readNarrativeState(game);
+  const existing = state.behavior_signals?.caution_risk || {};
+  const previousScore = Number(existing.score) || 0;
+  state.behavior_signals = {
+    ...(state.behavior_signals || {}),
+    caution_risk: {
+      score: Math.max(-12, Math.min(12, previousScore + (signal === 'risk' ? 1 : -1))),
+      samples: Math.max(0, Number(existing.samples) || 0) + 1,
+      last_signal: signal,
+      last_scene: cleanId(body.scene || '') || null,
+      updated_at: new Date().toISOString(),
+    },
+  };
+  await writeNarrativeState(game, state);
+  sendJson(res, 200, { ok: true, caution_risk: state.behavior_signals.caution_risk });
 }
 
 // Wipe everything Eli knows: bond, unlocked memories, player facts, summary.
@@ -1307,6 +1448,18 @@ async function handlePublish(res) {
 
   try {
     await exec('git', ['rev-parse', '--is-inside-work-tree'], { cwd: root });
+
+    // Guard: a git repo in a PARENT folder (e.g. ~/Desktop) also answers yes
+    // to the check above — committing there would push the wrong repo. Only
+    // use git when THIS project folder is the repo root and it has an
+    // 'origin' remote to push to. Otherwise deploy via the webhook alone.
+    const toplevel = (await exec('git', ['rev-parse', '--show-toplevel'], { cwd: root })).stdout.trim();
+    let hasOrigin = false;
+    try { await exec('git', ['remote', 'get-url', 'origin'], { cwd: root }); hasOrigin = true; } catch {}
+    if (resolve(toplevel) !== resolve(root) || !hasOrigin) {
+      gitSkipped = true;
+      throw Object.assign(new Error('not a git repository'), { stderr: 'not a git repository (project folder is not its own repo with an origin remote)' });
+    }
 
     const addPaths = ['games', 'public', 'src', 'index.html', 'editor.html', 'sequence.json', 'scenes',
       // The app itself — without these, server/config changes never deployed
@@ -1409,6 +1562,8 @@ createServer(async (req, res) => {
 
     if (req.method === 'POST' && p === '/api/chat')               { await handleChat(req, res);               return; }
     if (req.method === 'GET'  && p === '/api/chat/memory')        { await handleGetMemory(req, res, url);     return; }
+    if (req.method === 'POST' && p === '/api/memory/unlock')      { await handleMemoryUnlock(req, res);       return; }
+    if (req.method === 'POST' && p === '/api/behavior/signal')    { await handleBehaviorSignal(req, res);     return; }
     if (req.method === 'POST' && p === '/api/chat/reset')         { await handleResetNarrative(req, res);     return; }
     if (req.method === 'GET'  && p === '/api/chat-status')        { await handleChatStatus(res);              return; }
     if (req.method === 'GET'  && p === '/api/narrative-state')    { sendJson(res, 200, await readNarrativeState(await resolveGame(url.searchParams.get('game')))); return; }

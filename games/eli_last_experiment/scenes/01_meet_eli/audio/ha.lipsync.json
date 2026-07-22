@@ -1,0 +1,22 @@
+{
+  "filename": "ha.mp3",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 9
+    },
+    {
+      "time": 0.186,
+      "emotion_state": 1
+    },
+    {
+      "time": 0.43,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.758,
+      "emotion_state": 9
+    }
+  ],
+  "textCues": []
+}

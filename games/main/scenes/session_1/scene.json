@@ -7,11 +7,14 @@
   "after": {
     "trigger": "tap_heart",
     "message": "",
-    "next": null
+    "next": "eli_0"
   },
   "stateMachines": [
     "State Machine 1"
   ],
   "ctaRoutes": [],
-  "artboard": "Entri"
+  "artboard": "Entri",
+  "pose": {
+    "heart_state": 5
+  }
 }

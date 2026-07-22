@@ -1,0 +1,146 @@
+{
+  "id": "01_meet_eli",
+  "title": "01_meet Eli",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_pause_05_there_you_are_124843yl.m4a": "voice",
+    "heart_normal.mp3": "bg",
+    "tts_i_thought_i_was_alone_131031nb.m4a": "voice",
+    "tts_can_you_keep_your_hand_131300r5.m4a": "voice",
+    "heart_stressed.mp3": "bg",
+    "ha.mp3": "voice",
+    "tts_thats_better_i_can_hear_143442if.m4a": "voice",
+    "tts_wait_theres_another_voice_beneath_102853gc.m4a": "voice",
+    "tts_i_think_she_was_my_103226cy.m4a": "voice",
+    "tts_maybe_you_can_help_me_103636t7.m4a": "voice",
+    "soundshelfstudio-ui-tap-light-513023.mp3": "voice",
+    "tts_my_thoughts_keep_slipping_away_16332822.m4a": "voice",
+    "tts_ha_you_stayed_163927db.m4a": "voice",
+    "tts_i_know_that_voice_i_164520ya.m4a": "voice",
+    "tts_but_every_time_i_reach_1647005x.m4a": "voice",
+    "tts_maybe_you_can_see_what_165042yf.m4a": "voice"
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": "2_something_is_missing"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "pose": {
+    "emotion_state": 0,
+    "head_movement": 0,
+    "heart_state": 0
+  },
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "type": "pause",
+      "duration": 2,
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "pose": {
+        "emotion_state": 9
+      },
+      "marks": [
+        {
+          "t": 0,
+          "emotion_state": 9
+        }
+      ]
+    },
+    {
+      "voice": "tts_pause_05_there_you_are_124843yl.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 1
+    },
+    {
+      "voice": "tts_i_thought_i_was_alone_131031nb.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 2.5
+    },
+    {
+      "voice": "tts_my_thoughts_keep_slipping_away_16332822.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_stressed.mp3"
+      ]
+    },
+    {
+      "voice": "tts_can_you_keep_your_hand_131300r5.m4a",
+      "trigger": "tap_heart",
+      "bgs": [
+        "heart_stressed.mp3"
+      ],
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "hold": {
+          "heartState": 0,
+          "next": "@segment:next",
+          "duration": 2
+        }
+      },
+      "delay": 1
+    },
+    {
+      "voice": "tts_ha_you_stayed_163927db.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 3
+    },
+    {
+      "voice": "tts_wait_theres_another_voice_beneath_102853gc.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 2
+    },
+    {
+      "voice": "tts_i_know_that_voice_i_164520ya.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_but_every_time_i_reach_1647005x.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 3.5
+    },
+    {
+      "voice": "tts_maybe_you_can_see_what_165042yf.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "cta_label": "Remember",
+      "cta_next": "3_mom",
+      "cta_hold": true,
+      "delay": 2,
+      "sfx": "soundshelfstudio-ui-tap-light-513023.mp3"
+    }
+  ]
+}

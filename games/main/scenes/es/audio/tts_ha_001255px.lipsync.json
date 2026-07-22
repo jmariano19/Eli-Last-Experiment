@@ -1,0 +1,42 @@
+{
+  "filename": "tts_ha_001255px.m4a",
+  "markers": [
+    {
+      "time": 0.92,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.05,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.19,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.32,
+      "mouth_shape": 9
+    },
+    {
+      "time": 1.46,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.56,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.415,
+      "text": "Something about my mother.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

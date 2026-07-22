@@ -50,6 +50,15 @@
 
       <section class="chat-screen" id="chatScreen">
         <canvas id="chatCanvas"></canvas>
+        <div class="give-ritual" id="giveRitual" aria-hidden="true">
+          <div class="give-ritual__shade"></div>
+          <div class="give-ritual__thread" aria-hidden="true"></div>
+          <div class="give-ritual__ember" id="giveEmber"></div>
+          <button class="give-ritual__heart" id="giveHeart" type="button" aria-label="Hold Eli's heart">
+            <span class="give-ritual__glow" id="giveGlow"></span>
+          </button>
+          <div class="give-ritual__whisper" id="giveWhisper"></div>
+        </div>
         <div class="chat-thread" id="chatThread"></div>
         <form class="chat-card" id="chatForm">
           <input class="chat-card__input" id="chatInput" type="text" autocomplete="off" placeholder="Chat with Eli..." maxlength="240" />
@@ -84,6 +93,45 @@
           </div>
           <div class="memory-room__whisper" id="memoryWhisper"></div>
         </div>
+      </section>
+
+      <section class="thread-screen" id="threadScreen" aria-label="Memory thread">
+        <div class="thread-screen__caption" id="threadCaption"></div>
+        <div class="thread-field" id="threadField">
+          <svg class="thread-lines" id="threadLines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <polyline id="threadPath" points=""></polyline>
+          </svg>
+          <div class="thread-nodes" id="threadNodes"></div>
+          <div class="thread-recovered" id="threadRecovered" aria-hidden="true"></div>
+        </div>
+        <div class="thread-screen__whisper" id="threadWhisper"></div>
+      </section>
+
+      <section class="words-screen" id="wordsScreen" aria-label="Memory words">
+        <div class="words-eli" id="wordsEli" aria-hidden="true"><img id="wordsEliImg" alt="" draggable="false" /></div>
+        <div class="words-screen__caption" id="wordsCaption"></div>
+        <div class="words-memories" id="wordsMemories"></div>
+        <div class="words-current" id="wordsCurrent" aria-live="polite"></div>
+        <div class="words-wheel" id="wordsWheel">
+          <svg class="words-wheel__lines" id="wordsLines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <polyline id="wordsPath" points=""></polyline>
+          </svg>
+          <div id="wordsLetters"></div>
+        </div>
+        <div class="words-screen__memory" id="wordsReveal"></div>
+        <div class="words-recovered" id="wordsRecovered" aria-hidden="true"></div>
+      </section>
+
+      <section class="pairs-screen" id="pairsScreen" aria-label="Memory pairs">
+        <div class="pairs-screen__caption" id="pairsCaption"></div>
+        <div class="pairs-board" id="pairsBoard"></div>
+        <div class="pairs-screen__found" id="pairsFound"></div>
+      </section>
+
+      <section class="jigsaw-screen" id="jigsawScreen" aria-label="Photo jigsaw">
+        <div class="jigsaw-screen__caption" id="jigsawCaption"></div>
+        <div class="jigsaw-board" id="jigsawBoard"></div>
+        <div class="jigsaw-screen__placed" id="jigsawPlaced"></div>
       </section>
 
       <div class="segment-chat-overlay" id="segmentChat" style="display:none">

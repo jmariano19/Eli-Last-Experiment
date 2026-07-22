@@ -1,0 +1,34 @@
+{
+  "id": "lol",
+  "title": "lol",
+  "type": "words",
+  "rive": null,
+  "files": {},
+  "words": {
+    "intro": "His memories are hiding in the letters.",
+    "letters": "LOVEESTTRCA",
+    "fragment": "someone_was_there",
+    "foundText": "you found the word he could not say.",
+    "carryText": "take it back to him.",
+    "memories": [
+      {
+        "word": "LOVE",
+        "reveal": "wet shoes beside the door"
+      },
+      {
+        "word": "STREET",
+        "reveal": "a voice in the next room"
+      },
+      {
+        "word": "CAR",
+        "reveal": "someone saying his name softly"
+      }
+    ]
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "es"
+  },
+  "ctaRoutes": []
+}

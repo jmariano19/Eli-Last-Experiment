@@ -1,0 +1,35 @@
+{
+  "filename": "tts_ha_142354k4.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 14,
+      "emotion_state": 1
+    },
+    {
+      "time": 0.25,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.38,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.48,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.474,
+      "text": "i think i remember something",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

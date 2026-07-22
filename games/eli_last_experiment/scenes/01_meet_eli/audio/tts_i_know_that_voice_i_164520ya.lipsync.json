@@ -1,0 +1,145 @@
+{
+  "filename": "tts_i_know_that_voice_i_164520ya.m4a",
+  "markers": [
+    {
+      "time": 0.34,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.45,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.69,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.82,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.85,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.04,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.18,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.21,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.37,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.51,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.64,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.83,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.97,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.04,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.59,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.7,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.22,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.35,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.44,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.64,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.77,
+      "mouth_shape": 7
+    },
+    {
+      "time": 4.87,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.96,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.09,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.27,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.41,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.49,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.63,
+      "mouth_shape": 11
+    },
+    {
+      "time": 5.72,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.313,
+      "text": "I know that voice.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 3.488,
+      "text": "I think she was my mother.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

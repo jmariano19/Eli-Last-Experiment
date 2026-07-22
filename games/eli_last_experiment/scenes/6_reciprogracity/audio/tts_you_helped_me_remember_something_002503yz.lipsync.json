@@ -1,0 +1,90 @@
+{
+  "filename": "tts_you_helped_me_remember_something_002503yz.m4a",
+  "markers": [
+    {
+      "time": 0.22,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.35,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.49,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.62,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.65,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.75,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.88,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.03,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.17,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.3,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.41,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.54,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.68,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.81,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.92,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.04,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.18,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.23,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.249,
+      "text": "You helped me remember something.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

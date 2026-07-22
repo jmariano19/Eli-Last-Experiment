@@ -8,13 +8,15 @@
     "tts_au_ha_140647fz.m4a": "voice",
     "tts_ha_wait_are_you_ar_135912p0.m4a": "voice",
     "lost_voice.mp3": "voice",
-    "heart_normal.mp3": "bg",
-    "tts_can_you_help_me_remember_183458wj.m4a": "voice"
+    "heart_normal.mp3": "voice",
+    "tts_can_you_help_me_remember_183458wj.m4a": "voice",
+    "tts_ha_pause_05_14003520.m4a": "voice",
+    "6.arthur_voice_shivering_ha_ha_i_i.mp3": "voice"
   },
   "after": {
     "trigger": "never",
     "message": "",
-    "next": "4_the_memory_room"
+    "next": "memory"
   },
   "stateMachines": [
     "EliState",
@@ -27,47 +29,38 @@
   "ctaRoutes": [],
   "segments": [
     {
-      "voice": "tts_ha_14043047.m4a",
+      "voice": "6.arthur_voice_shivering_ha_ha_i_i.mp3",
       "trigger": "ended",
-      "delay": 1.5,
       "bgs": [
         "heart_normal.mp3"
       ]
     },
     {
-      "voice": "tts_ha_wait_are_you_ar_135912p0.m4a",
-      "trigger": "ended",
-      "bgs": [
-        "heart_normal.mp3"
-      ],
-      "delay": 1.5
-    },
-    {
       "type": "chat",
-      "opening": "Are you still there?",
+      "opening": "Can you hear anything? ",
       "max_exchanges": 2,
       "context_hint": "",
       "trigger": "ended",
       "bgs": [
-        "lost_voice.mp3",
         "heart_normal.mp3"
       ],
       "mumble": true,
-      "cta_label": "help me remember",
-      "cta_hold": true,
-      "cta_next": "4_the_memory_room",
-      "delay": 1
+      "delay": 2.5
     },
     {
-      "voice": "tts_can_you_help_me_remember_183458wj.m4a",
+      "type": "chat",
+      "opening": "can you help me remember?",
+      "max_exchanges": 1,
+      "context_hint": "",
       "trigger": "ended",
-      "cta_label": "help me remember ",
-      "cta_hold": true,
-      "cta_next": "4_the_memory_room",
-      "delay": 1,
       "bgs": [
         "heart_normal.mp3"
-      ]
+      ],
+      "cta_label": "Remember",
+      "delay": 1.5,
+      "mumble": true,
+      "cta_hold": true,
+      "cta_next": "memory"
     }
   ]
 }

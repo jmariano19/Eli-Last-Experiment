@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "title": "Prototype 8",
+  "title": "Prototype 9",
   "start": "session_1",
   "scenes": [
     "session_1",
@@ -8,12 +8,17 @@
     "eli_1",
     "elias_2_video",
     "eli_3",
-    "4_the_memory_room"
+    "memory",
+    "chat",
+    "image",
+    "remember",
+    "lol",
+    "es"
   ],
   "mumble": {
     "volume": 10,
     "pitch": 88,
     "expression": 62,
-    "variation": 92
+    "variation": 113
   }
 }

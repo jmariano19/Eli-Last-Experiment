@@ -1,0 +1,23 @@
+{
+  "id": "es",
+  "title": "es",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_ha_001255px.m4a": "voice"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": []
+}

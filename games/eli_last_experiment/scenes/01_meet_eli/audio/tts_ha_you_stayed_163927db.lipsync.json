@@ -1,0 +1,62 @@
+{
+  "filename": "tts_ha_you_stayed_163927db.m4a",
+  "markers": [
+    {
+      "time": 0.25,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.38,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.24,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.37,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.51,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.69,
+      "mouth_shape": 9
+    },
+    {
+      "time": 1.82,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.96,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.07,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.27,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.29,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 1.218,
+      "text": "You stayed.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "filename": "tts_i_would_have_lost_that_191545o1.m4a",
+  "markers": [],
+  "textCues": [
+    {
+      "time": 0.219,
+      "text": "I would have lost that memory without you.",
+      "duration": 3.7,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 4.185,
+      "text": "You didn’t just find it.",
+      "duration": 2.2,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 6.535,
+      "text": "You helped me keep it.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "filename": "tts_help_him_hold_onto_the_183305e8.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "heart_state": 2
+    },
+    {
+      "time": 0.35,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.49,
+      "mouth_shape": 10
+    },
+    {
+      "time": 0.62,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.64,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.74,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.87,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.05,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.19,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.32,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.46,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.59,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.76,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.89,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.03,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.17,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.32,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.45,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.59,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.7,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.294,
+      "text": "Help him hold onto the memory.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

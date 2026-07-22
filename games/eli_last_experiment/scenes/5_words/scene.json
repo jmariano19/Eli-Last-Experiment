@@ -1,0 +1,49 @@
+{
+  "id": "5_words",
+  "title": "5_words",
+  "type": "words",
+  "rive": null,
+  "files": {
+    "heart_normal.mp3": "bg"
+  },
+  "words": {
+    "intro": "His memories are hiding in the letters.",
+    "letters": "LABOTHERM",
+    "fragment": "someone_was_there",
+    "foundText": "Take the memory back to Eli.",
+    "carryText": "It was a lab. There were other children. My mother was there.",
+    "memories": [
+      {
+        "word": "LAB",
+        "reveal": "cold white lights reflected on a metal table",
+        "voice": "i_thought_it_was.mp3",
+        "line": "I thought it was our house… but those lights were too bright. It was a lab."
+      },
+      {
+        "word": "OTHER",
+        "reveal": "small beds behind curtains, each marked with a number",
+        "voice": "there_were_other_children.mp3",
+        "line": "There were other children there. I could hear them breathing, but I never saw their faces."
+      },
+      {
+        "word": "MOTHER",
+        "reveal": "a woman holding his hand and whispering his name",
+        "voice": "my_mother_was_there.mp3",
+        "line": "My mother was there. She was holding my hand… and she wouldn’t let go."
+      }
+    ],
+    "eliRive": "eli-square.riv"
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "6_reciprogracity"
+  },
+  "ctaRoutes": [],
+  "bgLoops": {
+    "heart_normal.mp3": true,
+    "i_thought_it_was.mp3": false,
+    "my_mother_was_there.mp3": false,
+    "there_were_other_children.mp3": false
+  }
+}

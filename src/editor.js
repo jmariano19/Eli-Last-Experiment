@@ -298,6 +298,15 @@
     else input.value = Number(value);
   }
 
+  // Apply a single pose field (and its paired inputs) to the Rive preview
+  function previewPoseField(key, value) {
+    if (key === 'mouth_shape')   { setPreviewInput('mouth_shape', value); setPreviewInput('is_speaking', value > 0); return; }
+    if (key === 'emotion_state') { setPreviewInput('emotion_state', value); setPreviewInput('eyes_state', value); return; }
+    if (key === 'body_movement') { setPreviewInput('body_movement', value); setPreviewInput('nav_heart', value); return; }
+    if (key === 'head_movement') { setPreviewInput('head_movement', value); setPreviewInput('head_state', value); return; }
+    if (key === 'heart_state')   setPreviewInput('heart_state', value);
+  }
+
   function applyPoseToPreview(config) {
     const segment = Array.isArray(config?.segments) ? config.segments[st.activeSegmentIndex] : null;
     const pose = { ...(config?.pose || {}), ...(segment?.pose || {}) };
@@ -412,6 +421,7 @@
     selectedMarkerIdx:   -1,
     pauseAfterMark:      false,
     activeSegmentIndex:  0,
+    activePauseMark:     null,   // selected expression mark in a Silence segment's timeline
     dirty:               false,
 
     // Text cues
@@ -471,15 +481,22 @@
   const btnNewGame      = document.getElementById('btnNewGame');
   const btnDeleteGame   = document.getElementById('btnDeleteGame');
   const deleteGameModal = document.getElementById('deleteGameModal');
+  const captionModal     = document.getElementById('captionModal');
+  const captionModalInput = document.getElementById('captionModalInput');
+  const captionModalTitle = document.getElementById('captionModalTitle');
+  const captionModalSubtitle = document.getElementById('captionModalSubtitle');
+  const captionModalTime = document.getElementById('captionModalTime');
+  const btnCaptionConfirm = document.getElementById('btnCaptionConfirm');
 
   let selectedModalType = 'rive';
+  let captionModalResolve = null;
 
   // Append the active game to an API query string
   function gq() { return `game=${encodeURIComponent(st.game)}`; }
 
   // The server must speak the same API version — otherwise a stale server
   // process is running and everything would fail in confusing ways.
-  const REQUIRED_SERVER_VERSION = 5;
+  const REQUIRED_SERVER_VERSION = 7;
 
   async function ensureServerVersion() {
     let version = null;
@@ -630,6 +647,38 @@
     if (deleteGameModal) deleteGameModal.classList.remove('is-open');
   }
 
+  function closeCaptionModal(value = null) {
+    if (!captionModal?.classList.contains('is-open')) return;
+    captionModal.classList.remove('is-open');
+    const resolve = captionModalResolve;
+    captionModalResolve = null;
+    resolve?.(value);
+  }
+
+  function openCaptionModal({ value = '', time = 0, editing = false } = {}) {
+    if (!captionModal) return Promise.resolve(null);
+    if (captionModalResolve) closeCaptionModal(null);
+    captionModalTitle.textContent = editing ? 'Edit Caption' : 'Add Caption';
+    captionModalSubtitle.textContent = editing
+      ? 'Update the on-screen dialogue without changing its timing.'
+      : 'Add on-screen dialogue at this point in the timeline.';
+    btnCaptionConfirm.textContent = editing ? 'Save Changes' : 'Add Caption';
+    captionModalInput.value = value;
+    captionModalTime.textContent = fmtTime(Math.max(0, Number(time) || 0));
+    captionModal.classList.add('is-open');
+    setTimeout(() => {
+      captionModalInput.focus();
+      if (editing) captionModalInput.select();
+    }, 50);
+    return new Promise(resolve => { captionModalResolve = resolve; });
+  }
+
+  function confirmCaptionModal() {
+    const value = captionModalInput?.value.trim();
+    if (!value) { captionModalInput?.focus(); return; }
+    closeCaptionModal(value);
+  }
+
   async function confirmDeleteGame() {
     closeDeleteGameModal();
     const deletedId = st.game;
@@ -734,6 +783,16 @@
       });
     }
 
+    document.getElementById('btnCaptionCancel')?.addEventListener('click', () => closeCaptionModal(null));
+    btnCaptionConfirm?.addEventListener('click', () => confirmCaptionModal());
+    captionModal?.addEventListener('click', (e) => {
+      if (e.target === captionModal) closeCaptionModal(null);
+    });
+    captionModalInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); closeCaptionModal(null); return; }
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); confirmCaptionModal(); }
+    });
+
     // Unsaved-changes indicator on the Save button — only touch the DOM when
     // the dirty state actually flips (this ticks forever, keep it free).
     let lastDirtyShown = null;
@@ -770,7 +829,11 @@
     // Keyboard shortcuts
     document.addEventListener('keydown', e => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); saveAll().catch(() => {}); }
-      if (e.key === 'Escape') { closeAddSceneModal(); closeDeleteGameModal(); }
+      if (e.key === 'Escape') {
+        if (captionModal?.classList.contains('is-open')) { closeCaptionModal(null); return; }
+        if (previewExpanded) { setPreviewExpanded(false); return; }
+        closeAddSceneModal(); closeDeleteGameModal();
+      }
     });
   }
 
@@ -943,12 +1006,17 @@
     const removed = [];
 
     for (const f of Object.keys(config.files || {})) {
-      if (!disk.has(f)) { removed.push(f); delete config.files[f]; }
+      if (!disk.has(f)) {
+        removed.push(f);
+        delete config.files[f];
+        if (config.bgLoops) delete config.bgLoops[f];
+      }
     }
     if (Array.isArray(config.segments)) {
       for (const seg of config.segments) {
         if (!seg || seg.type === 'chat') continue;
         if (seg.voice && !disk.has(seg.voice)) { removed.push(seg.voice); seg.voice = ''; }
+        if (seg.video && !disk.has(seg.video)) { removed.push(seg.video); seg.video = ''; }
         if (Array.isArray(seg.bgs)) seg.bgs = seg.bgs.filter(f => disk.has(f));
         if (seg.sfx && !disk.has(seg.sfx)) seg.sfx = '';
       }
@@ -1046,7 +1114,7 @@
   // The scene-building path at a glance: Voice → Lip sync → Fallback.
   // Each step shows its completion state and clicks scroll to its section.
   function renderWorkflowStrip(config) {
-    if (config.type === 'video') return '';
+    if (config.type === 'video' || config.type === 'pairs' || config.type === 'jigsaw' || config.type === 'thread' || config.type === 'words') return '';
     const files = st.files[config.id] || [];
     const hasSegments = Array.isArray(config.segments) && config.segments.length;
     const voiceFiles = hasSegments
@@ -1111,7 +1179,7 @@
             : '<button class="btn btn--ghost btn--small" id="btnSetStart" title="Make the game begin at this scene">▶ Set as start</button>'}
           <button class="btn btn--ghost btn--small" id="btnRestoreBackup" title="Restore the previous saved version of this scene" style="margin-left:auto">↺ Restore previous save</button>
         </div>
-        ${type !== 'video' ? `
+        ${(type === 'rive' || type === 'chat') ? `
         <details class="rive-setup" id="riveSetupDetails" ${st.riveSetupOpen ? 'open' : ''}>
         <summary class="rive-setup__summary">
           <span class="rive-setup__chev" aria-hidden="true">▸</span>
@@ -1194,6 +1262,18 @@
             ${renderMemorySection()}
           </div>
         </div>
+      ` : type === 'pairs' ? `
+        ${renderFilesSection(config)}
+        ${renderPairsSection(config)}
+      ` : type === 'jigsaw' ? `
+        ${renderFilesSection(config)}
+        ${renderJigsawSection(config)}
+      ` : type === 'thread' ? `
+        ${renderFilesSection(config)}
+        ${renderThreadSection(config)}
+      ` : type === 'words' ? `
+        ${renderFilesSection(config)}
+        ${renderWordsSection(config)}
       ` : `
         ${renderFilesSection(config)}
       `}
@@ -1375,11 +1455,18 @@
     const type  = config.type;
     const files = st.files[config.id] || [];
     const roles = config.files || {};
-    const audioFiles = files.filter(f => !f.endsWith('.lipsync.json'));
-    const label = type === 'video' ? 'VIDEO FILE' : 'AUDIO FILES';
-    const accept = type === 'video' ? 'video/*' : 'audio/*';
+    const audioFiles = files.filter(f => !f.endsWith('.lipsync.json') && !/\.riv$/i.test(f));
+    const label = type === 'video' ? 'VIDEO FILE' : type === 'pairs' ? 'CARD IMAGES & AUDIO' : type === 'jigsaw' ? 'PHOTO & AUDIO' : (type === 'thread' || type === 'words') ? 'BACKGROUND AUDIO' : 'AUDIO & VIDEO FILES';
+    const accept = type === 'video' ? 'video/*' : (type === 'pairs' || type === 'jigsaw') ? 'image/*,audio/*' : 'audio/*,video/*';
 
-    const rowsHtml = audioFiles.map(f => renderFileRow(f, roles[f] || 'unset', type, config.id)).join('');
+    const rowsHtml = audioFiles.map(f => renderFileRow(
+      f,
+      roles[f] || 'unset',
+      type,
+      config.id,
+      backgroundLoopsByDefault(config),
+      config.bgLoops
+    )).join('');
 
     // With more than two files, tuck the list into an accordion so the panel
     // stays scannable. A summary line shows what's inside at a glance.
@@ -1412,10 +1499,10 @@
         <div class="panel-section__header">${label}</div>
         ${listHtml}
         <label class="upload-zone" id="uploadZone">
-          <span class="upload-zone__text">↑ Upload ${type === 'video' ? 'video' : 'audio'}</span>
+          <span class="upload-zone__text">↑ Upload ${type === 'video' ? 'video' : (type === 'pairs' || type === 'jigsaw') ? 'images or audio' : 'audio or video'}</span>
           <input type="file" id="fileUpload" accept="${accept}" multiple hidden />
         </label>
-        ${type !== 'video' ? renderTtsBlock() : ''}
+        ${(type !== 'video' && type !== 'pairs' && type !== 'jigsaw' && type !== 'thread' && type !== 'words') ? renderTtsBlock() : ''}
         <div class="upload-status" id="uploadStatus"></div>
       </div>
     `;
@@ -1438,6 +1525,23 @@
         </div>
         <textarea class="field-textarea tts-block__text" id="ttsText" rows="2" maxlength="500"
           placeholder="Type the line Eli should say..."></textarea>
+        <div class="tts-performance">
+          <label class="tts-performance__field">
+            <span>Emotional performance</span>
+            <select class="field-select" id="ttsEmotion">
+              <option value="vulnerable">Vulnerable</option>
+              <option value="frightened">Frightened</option>
+              <option value="exhausted">Exhausted</option>
+              <option value="remembering">Remembering</option>
+              <option value="hopeful">Cautiously hopeful</option>
+              <option value="relieved">Quietly relieved</option>
+            </select>
+          </label>
+          <label class="tts-performance__field tts-performance__field--intensity">
+            <span>Emotion strength <output id="ttsIntensityValue">65%</output></span>
+            <input id="ttsIntensity" type="range" min="0" max="100" step="5" value="65" />
+          </label>
+        </div>
         <div class="tts-director__header">
           <span>Acting controls</span>
           <span class="tts-director__hint">Targets the selected words or cursor position</span>
@@ -1476,6 +1580,13 @@
       if (msg && msg.textContent === 'GEMINI_API_KEY is required for Eli voice.') setTtsStatus('', '');
     }
     updateTtsPreview();
+    updateTtsIntensityReadout();
+  }
+
+  function updateTtsIntensityReadout() {
+    const slider = document.getElementById('ttsIntensity');
+    const value = document.getElementById('ttsIntensityValue');
+    if (slider && value) value.textContent = `${Math.round(Number(slider.value || 65))}%`;
   }
 
   function updateTtsPauseReadout() {
@@ -1553,7 +1664,7 @@
     }
     config.files[filename] = 'voice';
     const seg = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
-    if (seg && seg.type !== 'chat' && !seg.voice) seg.voice = filename;
+    if (seg && seg.type !== 'chat' && seg.type !== 'video' && !seg.voice) seg.voice = filename;
     st.dirty = true;
   }
 
@@ -1606,6 +1717,8 @@
           game: st.game, id: config.id, text,
           engine: 'gemini',
           voice:  'eli',
+          emotion: document.getElementById('ttsEmotion')?.value || 'vulnerable',
+          intensity: Number(document.getElementById('ttsIntensity')?.value || 65),
         }),
       });
       const data = await readJsonResponse(res);
@@ -1633,14 +1746,30 @@
 
   document.addEventListener('input', (e) => {
     if (e.target instanceof Element && e.target.id === 'ttsPauseSlider') updateTtsPauseReadout();
+    if (e.target instanceof Element && e.target.id === 'ttsIntensity') updateTtsIntensityReadout();
     if (e.target instanceof Element && e.target.id === 'ttsText') updateTtsPreview();
   });
 
-  function renderFileRow(filename, role, sceneType, sceneId) {
+  function backgroundLoopsByDefault(config) {
+    return ['pairs', 'jigsaw', 'thread', 'words'].includes(config?.type)
+      || (Array.isArray(config?.segments) && config.segments.length > 0);
+  }
+
+  function renderFileRow(filename, role, sceneType, sceneId, defaultBgLoop = false, bgLoops = {}) {
     const isLipsyncable = sceneType === 'rive' && role === 'voice';
+    const hasLoopSetting = Object.prototype.hasOwnProperty.call(bgLoops || {}, filename);
+    const bgLoopsEnabled = hasLoopSetting ? bgLoops[filename] === true : defaultBgLoop;
     const roleOptions = sceneType === 'video'
       ? [['video', 'Video']]
-      : [['voice', 'Voice'], ['bg', 'Background']];
+      : sceneType === 'pairs'
+      ? [['card', 'Card image'], ['bg', 'Background']]
+      : sceneType === 'jigsaw'
+      ? [['photo', 'Photo'], ['bg', 'Background']]
+      : sceneType === 'thread'
+      ? [['bg', 'Background']]
+      : sceneType === 'words'
+      ? [['bg', 'Background']]
+      : [['voice', 'Voice'], ['bg', 'Background'], ['video', 'Video']];
 
     return `
       <div class="file-row" data-filename="${esc(filename)}">
@@ -1649,6 +1778,10 @@
           <option value="unset">— Role —</option>
           ${roleOptions.map(([v, l]) => `<option value="${v}" ${role === v ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
+        ${role === 'bg' ? `<label class="file-row__loop" title="Restart this background track when it reaches the end">
+          <input type="checkbox" data-bg-loop="${esc(filename)}" ${bgLoopsEnabled ? 'checked' : ''} />
+          <span>Loop</span>
+        </label>` : ''}
         ${isLipsyncable ? `<button class="btn btn--edit-lipsync" data-lipsync-load="${esc(filename)}">Edit Lip Sync</button>` : ''}
         <button class="file-row__delete btn--icon" data-file-delete="${esc(filename)}" title="Remove">×</button>
       </div>
@@ -1658,18 +1791,21 @@
   // ─── Lip sync section ────────────────────────────────────────────────────────
   // ─── Preview section ─────────────────────────────────────────────────────────
   function renderPreviewSection(config) {
+    const h = previewHeight ? ` style="height:${previewHeight}px;max-height:none"` : '';
     return `
-      <div class="panel-section panel-section--preview">
+      <div class="panel-section panel-section--preview" id="previewSection">
         <div class="panel-section__header">PREVIEW
           <span class="preview-mode" id="previewModeCtl" role="group" aria-label="Preview mode">
             <button type="button" class="preview-mode__btn is-active" data-pmode="canvas" title="Pose & scrub the character directly">Canvas</button>
             <button type="button" class="preview-mode__btn" data-pmode="player" title="Run this scene exactly like the game player">Player</button>
           </span>
+          <button type="button" class="preview-expand-btn" id="btnPreviewExpand" title="Expand preview — Esc to close">⤢</button>
         </div>
-        <div class="scene-preview" id="scenePreviewWrap">
+        <div class="scene-preview" id="scenePreviewWrap"${h}>
           <canvas id="previewCanvas"></canvas>
           <div class="lipsync-preview__hint" id="previewHint">Loading…</div>
         </div>
+        <div class="preview-resize-handle" id="previewResizeHandle" title="Drag to resize the preview"></div>
       </div>
     `;
   }
@@ -1756,10 +1892,13 @@
     if (hasSegments) {
       segmentPickerHtml = `<div class="segment-picker">
         ${segments.map((seg, i) => {
-          const isChat = seg.type === 'chat';
-          const label  = isChat ? 'Chat' : (seg.voice ? seg.voice.replace(/\.[^.]+$/, '').slice(0, 16) : '(no audio)');
-          const trig   = seg.trigger || 'ended';
-          return `<button class="segment-tab ${i === st.activeSegmentIndex ? 'is-active' : ''} ${isChat ? 'segment-tab--chat' : ''}" data-seg-idx="${i}">
+          const isChat  = seg.type === 'chat';
+          const isPause = seg.type === 'pause';
+          const isVideo = seg.type === 'video';
+          const label   = isChat ? 'Chat' : isPause ? `Silence ${Number(seg.duration) || 0}s` : isVideo ? (seg.video ? seg.video.replace(/\.[^.]+$/, '').slice(0, 16) : '(no video)') : (seg.voice ? seg.voice.replace(/\.[^.]+$/, '').slice(0, 16) : '(no audio)');
+          const trig    = seg.trigger || 'ended';
+          return `<button class="segment-tab ${i === st.activeSegmentIndex ? 'is-active' : ''} ${isChat ? 'segment-tab--chat' : ''} ${isPause ? 'segment-tab--pause' : ''} ${isVideo ? 'segment-tab--video' : ''}" data-seg-idx="${i}" draggable="true" title="Drag to reorder">
+            <span class="segment-tab__play" data-seg-play="${i}" title="Test from this segment in the player">▶</span>
             <span class="segment-tab__num">${i + 1}</span>
             <span class="segment-tab__file">${esc(label)}</span>
             <span class="segment-tab__trigger">${esc(trig)}</span>
@@ -1768,6 +1907,8 @@
         }).join('')}
         <button class="segment-tab segment-tab--add" data-action="add-segment">+ Voice</button>
         <button class="segment-tab segment-tab--add segment-tab--chat-add" data-action="add-chat-segment">+ Chat</button>
+        <button class="segment-tab segment-tab--add segment-tab--pause-add" data-action="add-pause-segment" title="A silent beat — Eli animates over background sound only">+ Silence</button>
+        <button class="segment-tab segment-tab--add segment-tab--video-add" data-action="add-video-segment" title="A full-screen video clip — Eli returns when it ends">+ Video</button>
       </div>`;
     }
 
@@ -1778,8 +1919,122 @@
       const isLast = st.activeSegmentIndex === segments.length - 1;
       const allFiles = st.files[config.id] || [];
       const isChat = seg.type === 'chat';
+      const isPause = seg.type === 'pause';
+      const isVideo = seg.type === 'video';
 
-      if (isChat) {
+      if (isVideo) {
+        const videoFiles = allFiles.filter(f => f.match(/\.(mp4|webm|mov|m4v|ogv)$/i));
+        segmentConfigHtml = `<div class="segment-editor segment-editor--video">
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Video</label>
+            <select class="field-select" data-seg-field="video">
+              <option value="">— none —</option>
+              ${videoFiles.map(f => `<option value="${esc(f)}" ${seg.video === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+            </select>
+          </div>
+          ${videoFiles.length ? '' : `<div class="segment-editor__row segment-editor__row--full">
+            <span class="connections-hint-inline">No video files in this scene yet — upload an .mp4 / .webm in the files section above.</span>
+          </div>`}
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Skip button</label>
+            <input type="checkbox" data-seg-field="skippable" ${seg.skippable === false ? '' : 'checked'} title="Show a Skip button over the video" />
+          </div>
+          <div class="segment-editor__row segment-editor__row--full">
+            <label class="segment-editor__label">BG music <span style="opacity:.5;font-size:11px">(pick multiple — keeps playing under the video)</span></label>
+            <div class="bg-checklist" data-seg-bgs="1">
+              ${allFiles.filter(f => f.match(/\.(wav|mp3|ogg|m4a)$/i)).map(f => {
+                const checked = (Array.isArray(seg.bgs) ? seg.bgs : (seg.bg ? [seg.bg] : [])).includes(f);
+                return `<label class="bg-check-item"><input type="checkbox" class="bg-check" value="${esc(f)}" ${checked ? 'checked' : ''} />${esc(f)}</label>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Trigger</label>
+            <select class="field-select" data-seg-field="trigger" ${isLast ? 'disabled title="Last segment uses scene FALLBACK"' : ''}>
+              <option value="ended" ${(seg.trigger || 'ended') === 'ended' ? 'selected' : ''}>Auto (after video)</option>
+              <option value="tap_heart" ${seg.trigger === 'tap_heart' ? 'selected' : ''}>Wait for tap</option>
+              ${[...riveInputMap.keys()].filter(n => n.startsWith('nav_')).map(n =>
+                `<option value="${esc(n)}" ${seg.trigger === n ? 'selected' : ''}>${esc(n)}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Pause before next</label>
+            <input class="field-input" data-seg-field="delay" type="number" value="${seg.delay || 0}" min="0" step="0.5" style="width:80px" title="Seconds to wait before playing the next segment" />
+            <span style="opacity:.5;font-size:12px;margin-left:6px">sec</span>
+          </div>
+          ${renderSegmentCtaRows(config, seg)}
+          <button class="btn btn--ghost btn--small segment-delete-btn" data-action="delete-segment">Delete</button>
+        </div>`;
+      } else if (isPause) {
+        const pauseDur = Math.max(Number(seg.duration) || 3, 0.1);
+        const pauseMarks = Array.isArray(seg.marks) ? seg.marks : [];
+        const selMark = st.activePauseMark != null ? pauseMarks[st.activePauseMark] : null;
+        const describeMark = (m) => {
+          const parts = [];
+          if (Number.isFinite(m.mouth_shape))   parts.push(`Mouth ${MOUTH_LABELS[m.mouth_shape] || m.mouth_shape}`);
+          if (Number.isFinite(m.emotion_state)) parts.push(`Eyes ${EMOTION_LABELS[m.emotion_state] || m.emotion_state}`);
+          if (Number.isFinite(m.body_movement)) parts.push(`Body ${BODY_LABELS[m.body_movement] || m.body_movement}`);
+          if (Number.isFinite(m.head_movement)) parts.push(`Head ${HEAD_LABELS[m.head_movement] || m.head_movement}`);
+          if (Number.isFinite(m.heart_state))   parts.push(`Heart ${HEART_LABELS[m.heart_state] || m.heart_state}`);
+          return parts.join(' · ') || 'empty — press pose buttons below';
+        };
+        segmentConfigHtml = `<div class="segment-editor segment-editor--pause">
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Duration</label>
+            <input class="field-input" data-seg-field="duration" type="number" value="${Number(seg.duration) || 3}" min="0" step="0.5" style="width:80px" title="Seconds of silence before the trigger applies" />
+            <span style="opacity:.5;font-size:12px;margin-left:6px">sec — Eli animates over BG sound only</span>
+          </div>
+          <div class="segment-editor__row segment-editor__row--full">
+            <label class="segment-editor__label">Timeline</label>
+            <div class="pause-timeline-wrap">
+              <div class="pause-timeline" data-pause-timeline="1" title="Click to add an expression mark">
+                ${pauseMarks.map((m, i) => `<button class="pause-mark ${i === st.activePauseMark ? 'is-active' : ''}" data-pause-mark="${i}" style="left:${Math.min(100, ((Number(m.t) || 0) / pauseDur) * 100)}%" title="${(Number(m.t) || 0).toFixed(1)}s — ${esc(describeMark(m))}"></button>`).join('')}
+              </div>
+              <div class="pause-timeline-scale"><span>0s</span><span>${pauseDur}s</span></div>
+            </div>
+            <button class="btn btn--ghost btn--small" data-action="pause-preview" title="Play this silence beat in the preview">▶ Play</button>
+          </div>
+          ${selMark ? `<div class="segment-editor__row segment-editor__row--full">
+            <label class="segment-editor__label">Mark</label>
+            <input class="field-input" data-pause-mark-time="1" type="number" min="0" max="${pauseDur}" step="0.1" value="${(Number(selMark.t) || 0).toFixed(1)}" style="width:64px" />
+            <span class="nudge-inline">s ·</span>
+            <span class="pause-mark-desc">${esc(describeMark(selMark))}</span>
+            <button class="btn btn--ghost btn--small" data-action="pause-mark-delete" style="margin-left:auto">✕ Remove</button>
+          </div>
+          <div class="segment-editor__row segment-editor__row--full">
+            <span class="connections-hint-inline">Pose buttons below now edit this mark. Click the dot again to return to the segment's base pose.</span>
+          </div>` : pauseMarks.length ? '' : `<div class="segment-editor__row segment-editor__row--full">
+            <span class="connections-hint-inline">Click the bar to add expression changes over time. No marks = Eli holds one pose for the whole silence.</span>
+          </div>`}
+          <div class="segment-editor__row segment-editor__row--full">
+            <label class="segment-editor__label">BG music <span style="opacity:.5;font-size:11px">(pick multiple)</span></label>
+            <div class="bg-checklist" data-seg-bgs="1">
+              ${allFiles.filter(f => f.match(/\.(wav|mp3|ogg|m4a)$/i)).map(f => {
+                const checked = (Array.isArray(seg.bgs) ? seg.bgs : (seg.bg ? [seg.bg] : [])).includes(f);
+                return `<label class="bg-check-item"><input type="checkbox" class="bg-check" value="${esc(f)}" ${checked ? 'checked' : ''} />${esc(f)}</label>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Trigger</label>
+            <select class="field-select" data-seg-field="trigger" ${isLast ? 'disabled title="Last segment uses scene FALLBACK"' : ''}>
+              <option value="ended" ${(seg.trigger || 'ended') === 'ended' ? 'selected' : ''}>Auto (after duration)</option>
+              <option value="tap_heart" ${seg.trigger === 'tap_heart' ? 'selected' : ''}>Wait for tap</option>
+              ${[...riveInputMap.keys()].filter(n => n.startsWith('nav_')).map(n =>
+                `<option value="${esc(n)}" ${seg.trigger === n ? 'selected' : ''}>${esc(n)}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="segment-editor__row">
+            <label class="segment-editor__label">Pause before next</label>
+            <input class="field-input" data-seg-field="delay" type="number" value="${seg.delay || 0}" min="0" step="0.5" style="width:80px" title="Seconds to wait before playing the next segment" />
+            <span style="opacity:.5;font-size:12px;margin-left:6px">sec</span>
+          </div>
+          ${renderSegmentCtaRows(config, seg)}
+          <button class="btn btn--ghost btn--small segment-delete-btn" data-action="delete-segment">Delete</button>
+        </div>`;
+      } else if (isChat) {
         segmentConfigHtml = `<div class="segment-editor segment-editor--chat">
           <div class="segment-editor__row segment-editor__row--full">
             <label class="segment-editor__label">Opening line</label>
@@ -1879,7 +2134,7 @@
 
     return `
       <div class="panel-section panel-section--lipsync">
-        <div class="panel-section__header">${hasSegments && segments[st.activeSegmentIndex]?.type === 'chat' ? 'SEGMENTS' : 'LIP SYNC'}
+        <div class="panel-section__header">${hasSegments && ['chat', 'pause', 'video'].includes(segments[st.activeSegmentIndex]?.type) ? 'SEGMENTS' : 'LIP SYNC'}
           <span class="lipsync-file-name">${voiceFile ? esc(voiceFile) : ''}</span>
         </div>
         ${toggleHtml}
@@ -1911,7 +2166,12 @@
                 </div>
               </div>
             </div>`
-          : !voiceFile ? renderExpressionPreviewControls(hasSegments
+          : !voiceFile ? renderExpressionPreviewControls(
+              hasSegments && segments[st.activeSegmentIndex]?.type === 'video'
+              ? "Video segment — the clip plays full-screen over Eli. Use ▶ on the tab to test it in the player."
+              : hasSegments && segments[st.activeSegmentIndex]?.type === 'pause'
+              ? "Silence segment — pose Eli's expression here. He holds it for the duration while only BG sound plays."
+              : hasSegments
               ? "No voice selected for this segment — pose Eli's expression in the preview, or pick a voice file above to add timed lip sync."
               : "No voice audio yet — pose Eli's expression in the preview, or generate Eli voice to add timed lip sync.") :
           !isLoaded ? `<button class="btn btn--edit-lipsync" data-lipsync-load="${esc(voiceFile)}">Load for editing</button>` : `
@@ -2018,6 +2278,292 @@
         `}
       </div>
     `;
+  }
+
+  // ─── Pairs (memory game) section ──────────────────────────────────────────────
+  // Match-the-pairs board config. Winning unlocks the named memory fragment in
+  // Eli's chat brain and follows FALLBACK. Cards use uploaded images with the
+  // "Card image" role, or built-in symbols when there aren't enough.
+  function renderPairsSection(config) {
+    const p = config.pairs || {};
+    return `
+      <div class="panel-section panel-section--pairs">
+        <div class="panel-section__header">MEMORY GAME
+          <span class="connections-hint-inline">match pairs → unlock a memory → FALLBACK decides what's next</span>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Pairs</label>
+          <input class="field-input" data-pairs-field="count" type="number" min="2" max="12" step="1"
+                 value="${Number(p.count) || 6}" style="width:70px" title="How many pairs to match (board size)" />
+          <span class="panel-hint panel-hint--inline">2 = easy warm-up · 6 = standard · 12 = hard</span>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Unlocks memory</label>
+          <input class="field-input" data-pairs-field="fragment" type="text" maxlength="40"
+                 value="${esc(p.fragment || '')}" placeholder="e.g. the_window — Eli can reference it in chat" />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Intro line</label>
+          <input class="field-input" data-pairs-field="intro" type="text" maxlength="120"
+                 value="${esc(p.intro || '')}" placeholder="Shown above the board, e.g. Help him remember..." />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Win line</label>
+          <input class="field-input" data-pairs-field="winText" type="text" maxlength="160"
+                 value="${esc(p.winText || '')}" placeholder="Eli's reaction, e.g. ...the window. I remember the window." />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Once per day</label>
+          <input type="checkbox" data-pairs-field="daily" ${p.daily === true ? 'checked' : ''} />
+          <span class="panel-hint panel-hint--inline">after a win the board rests until tomorrow (editor previews always play)</span>
+        </div>
+        <div class="field-row" data-pairs-lock-row style="${p.daily === true ? '' : 'display:none'}">
+          <label class="field-label">Resting line</label>
+          <input class="field-input" data-pairs-field="lockText" type="text" maxlength="120"
+                 value="${esc(p.lockText || '')}" placeholder="He's resting now... come back tomorrow." />
+        </div>
+        <p class="panel-hint" style="padding:4px 14px 10px">Cards: upload images and set their role to <b>Card image</b> — with fewer images than pairs, built-in symbols fill in. Background audio uses the <b>Background</b> role.</p>
+      </div>
+    `;
+  }
+
+  // ─── Jigsaw (photo restoration) section ───────────────────────────────────────
+  // Tap-to-swap jigsaw over one photo. Solving it reveals the picture, unlocks
+  // the named memory fragment in Eli's chat brain, then follows FALLBACK.
+  // The photo is an uploaded image with the "Photo" role; without one, a
+  // built-in placeholder is drawn so the scene is testable before art exists.
+  function renderJigsawSection(config) {
+    const j = config.jigsaw || {};
+    const pieces = Number(j.pieces) || 9;
+    const PIECE_OPTIONS = [[4, '2 × 2 — warm-up'], [6, '2 × 3 — easy'], [9, '3 × 3 — standard'], [12, '3 × 4 — tricky'], [16, '4 × 4 — hard']];
+    return `
+      <div class="panel-section panel-section--pairs">
+        <div class="panel-section__header">PHOTO JIGSAW
+          <span class="connections-hint-inline">restore the photo → unlock a memory → FALLBACK decides what's next</span>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Pieces</label>
+          <select class="field-select" data-jigsaw-field="pieces" style="width:170px" title="How many pieces the photo breaks into">
+            ${PIECE_OPTIONS.map(([v, l]) => `<option value="${v}" ${pieces === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Unlocks memory</label>
+          <input class="field-input" data-jigsaw-field="fragment" type="text" maxlength="40"
+                 value="${esc(j.fragment || '')}" placeholder="e.g. the_photograph — Eli can reference it in chat" />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Intro line</label>
+          <input class="field-input" data-jigsaw-field="intro" type="text" maxlength="120"
+                 value="${esc(j.intro || '')}" placeholder="Shown above the photo, e.g. Put it back together..." />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Win line</label>
+          <input class="field-input" data-jigsaw-field="winText" type="text" maxlength="160"
+                 value="${esc(j.winText || '')}" placeholder="Eli's reaction, e.g. ...that day at the shore. I remember." />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Once per day</label>
+          <input type="checkbox" data-jigsaw-field="daily" ${j.daily === true ? 'checked' : ''} />
+          <span class="panel-hint panel-hint--inline">after a win the photo rests until tomorrow (editor previews always play)</span>
+        </div>
+        <div class="field-row" data-jigsaw-lock-row style="${j.daily === true ? '' : 'display:none'}">
+          <label class="field-label">Resting line</label>
+          <input class="field-input" data-jigsaw-field="lockText" type="text" maxlength="120"
+                 value="${esc(j.lockText || '')}" placeholder="He's resting now... come back tomorrow." />
+        </div>
+        <p class="panel-hint" style="padding:4px 14px 10px">Photo: upload one image and set its role to <b>Photo</b> — tap two pieces to swap them. Without a photo, a built-in placeholder is used. Background audio uses the <b>Background</b> role.</p>
+      </div>
+    `;
+  }
+
+  // ─── Memory Thread section ───────────────────────────────────────────────────
+  // Two complete paths share one field. The player can preserve either path;
+  // the other fades, turning a familiar connect gesture into a meaningful loss.
+  function renderThreadSection(config) {
+    const t = config.thread || {};
+    const paths = Array.isArray(t.paths) ? t.paths : [];
+    const defaults = [
+      { id: 'care', title: 'Someone came back', nodes: ['wet shoes', 'the door', 'her voice'], fragment: 'someone_was_there', signal: 'caution' },
+      { id: 'experiment', title: 'The bright room', nodes: ['cold floor', 'bright light', 'an alarm'], fragment: 'bright_light', signal: 'risk' },
+    ];
+    const pathCard = (path, index) => {
+      const p = { ...defaults[index], ...(path || {}) };
+      return `
+        <div class="thread-path-editor">
+          <div class="thread-path-editor__title">PATH ${index + 1}</div>
+          <div class="field-row">
+            <label class="field-label">Meaning</label>
+            <input class="field-input" data-thread-path="${index}" data-thread-path-field="title" maxlength="64"
+                   value="${esc(p.title || '')}" placeholder="e.g. Someone came back" />
+          </div>
+          <div class="field-row">
+            <label class="field-label">Fragments</label>
+            <input class="field-input" data-thread-path="${index}" data-thread-path-field="nodes" maxlength="180"
+                   value="${esc((p.nodes || []).join(', '))}" placeholder="wet shoes, the door, her voice" />
+          </div>
+          <div class="field-row">
+            <label class="field-label">Unlocks memory</label>
+            <input class="field-input" data-thread-path="${index}" data-thread-path-field="fragment" maxlength="40"
+                   value="${esc(p.fragment || '')}" placeholder="someone_was_there" />
+          </div>
+          <div class="field-row">
+            <label class="field-label">Mirrors as</label>
+            <select class="field-select" data-thread-path="${index}" data-thread-path-field="signal">
+              <option value="caution" ${p.signal === 'caution' ? 'selected' : ''}>Caution</option>
+              <option value="risk" ${p.signal === 'risk' ? 'selected' : ''}>Risk</option>
+            </select>
+          </div>
+        </div>`;
+    };
+    return `
+      <div class="panel-section panel-section--thread">
+        <div class="panel-section__header">MEMORY THREAD
+          <span class="connections-hint-inline">connect one path → leave the other → carry the memory to Eli</span>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Intro line</label>
+          <input class="field-input" data-thread-field="intro" maxlength="120"
+                 value="${esc(t.intro || '')}" placeholder="Some things still belong together." />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Found line</label>
+          <input class="field-input" data-thread-field="foundText" maxlength="120"
+                 value="${esc(t.foundText || '')}" placeholder="this is the part you kept." />
+        </div>
+        <div class="field-row">
+          <label class="field-label">Carry line</label>
+          <input class="field-input" data-thread-field="carryText" maxlength="120"
+                 value="${esc(t.carryText || '')}" placeholder="take it back to him." />
+        </div>
+        <div class="thread-path-grid">
+          ${pathCard(paths[0], 0)}
+          ${pathCard(paths[1], 1)}
+        </div>
+        <p class="panel-hint" style="padding:8px 14px 12px">Use three short, concrete fragments per path. The player draws through every fragment in one path. The unchosen path fades; there is no wrong ending.</p>
+      </div>`;
+  }
+
+  function wordFitsWheel(word, letters) {
+    const available = {};
+    for (const letter of String(letters || '').toUpperCase()) available[letter] = (available[letter] || 0) + 1;
+    for (const letter of String(word || '').toUpperCase()) {
+      if (!available[letter]) return false;
+      available[letter]--;
+    }
+    return true;
+  }
+
+  function buildWheelFromMemories(memories) {
+    const needed = {};
+    const order = [];
+    for (const memory of memories || []) {
+      const counts = {};
+      for (const letter of String(memory?.word || '').toUpperCase().replace(/[^A-Z]/g, '')) {
+        counts[letter] = (counts[letter] || 0) + 1;
+        if (!order.includes(letter)) order.push(letter);
+      }
+      for (const [letter, count] of Object.entries(counts)) needed[letter] = Math.max(needed[letter] || 0, count);
+    }
+    return order.map(letter => letter.repeat(needed[letter] || 0)).join('').slice(0, 12);
+  }
+
+  function updateWordsValidation(config) {
+    const letters = String(config.words?.letters || '').toUpperCase();
+    const wordInputs = [...document.querySelectorAll('[data-words-memory-field="word"]')];
+    const invalid = [];
+    for (const input of wordInputs) {
+      const word = input.value.trim().toUpperCase();
+      const valid = Boolean(word) && wordFitsWheel(word, letters);
+      input.classList.toggle('words-field--invalid', !valid);
+      input.setAttribute('aria-invalid', String(!valid));
+      if (!valid && word) invalid.push(word);
+    }
+    const status = document.getElementById('wordsValidation');
+    if (!status) return;
+    status.classList.toggle('is-invalid', invalid.length > 0);
+    status.textContent = invalid.length
+      ? `${invalid.join(', ')} cannot be made from this wheel. Choose “Build wheel from answers.”`
+      : 'All three answers can be made from this wheel.';
+  }
+
+  function renderWordsSection(config) {
+    const w = config.words || {};
+    const memories = Array.isArray(w.memories) ? w.memories : [];
+    const sceneFiles = st.files[config.id] || [];
+    const audioFiles = sceneFiles.filter(f => f.match(/\.(wav|mp3|ogg|m4a)$/i));
+    const imageFiles = sceneFiles.filter(f => f.match(/\.(png|jpe?g|webp|gif)$/i));
+    const rivFiles   = sceneFiles.filter(f => f.match(/\.riv$/i));
+    // Keep the saved pick selectable even if the file list hasn't caught up
+    if (w.eliRive && w.eliRive !== 'shared' && !rivFiles.includes(w.eliRive)) rivFiles.push(w.eliRive);
+    const defaults = [
+      { word: 'HOME', reveal: 'wet shoes beside the door' },
+      { word: 'OTHER', reveal: 'a voice in the next room' },
+      { word: 'MOTHER', reveal: 'someone saying his name softly' },
+    ];
+    const memoryRow = (memory, index) => {
+      const m = { ...defaults[index], ...(memory || {}) };
+      return `<div class="words-memory-block">
+        <div class="words-memory-editor">
+          <span class="words-memory-editor__number">${index + 1}</span>
+          <input class="field-input words-memory-editor__word" data-words-memory="${index}" data-words-memory-field="word" maxlength="12" value="${esc(m.word || '')}" placeholder="WORD" />
+          <input class="field-input" data-words-memory="${index}" data-words-memory-field="reveal" maxlength="100" value="${esc(m.reveal || '')}" placeholder="What this word lets Eli remember" />
+          <select class="field-select words-memory-editor__voice" data-words-memory="${index}" data-words-memory-field="voice" title="Eli's voice file for this word">
+            <option value="">🔇 no voice</option>
+            ${audioFiles.map(f => `<option value="${esc(f)}" ${m.voice === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="words-memory-editor__line">
+          <span class="words-memory-editor__line-label" title="What Eli says out loud when this word is found">🗣</span>
+          <input class="field-input" data-words-memory="${index}" data-words-memory-field="line" maxlength="300" value="${esc(m.line || '')}" placeholder='Eli says… e.g. "I see… my mom was there."' />
+          <button type="button" class="btn btn--ghost words-memory-editor__tts" data-words-tts="${index}" title="Generate Eli speaking this line (same Eli voice as other scenes) and use it as this word's voice">♪ Generate</button>
+        </div>
+      </div>`;
+    };
+    return `<div class="panel-section panel-section--words">
+      <div class="panel-section__header">MEMORY WORDS
+        <span class="connections-hint-inline">swipe letters → reveal memories → carry the final word to Eli</span>
+      </div>
+      <div class="field-row"><label class="field-label">Letter wheel</label>
+        <input class="field-input" data-words-field="letters" maxlength="12" value="${esc(w.letters || 'MOTHER')}" placeholder="MOTHER" />
+        <button class="words-wheel-builder" id="wordsBuildWheelBtn" type="button">Build wheel from answers</button>
+        <span class="panel-hint panel-hint--inline">4–12 letters; repeated letters are allowed</span>
+      </div>
+      <div class="field-row"><label class="field-label">Intro line</label>
+        <input class="field-input" data-words-field="intro" maxlength="120" value="${esc(w.intro || '')}" placeholder="His memories are hiding in the letters." />
+      </div>
+      <div class="field-row"><label class="field-label">Live Eli</label>
+        <select class="field-select" data-words-field="eliRive">
+          <option value="">— off —</option>
+          <option value="shared" ${w.eliRive === 'shared' ? 'selected' : ''}>Shared Eli (eli.riv) — lip sync</option>
+          ${rivFiles.map(f => `<option value="${esc(f)}" ${w.eliRive === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+        </select>
+        <label class="rive-upload-btn btn btn--ghost" title="Upload a .riv for this scene's Eli">
+          ↑ Upload .riv
+          <input type="file" id="wordsEliRiveInput" accept=".riv" hidden />
+        </label>
+        <span class="panel-hint panel-hint--inline">animated Eli above the puzzle — his mouth lip-syncs each word's voice line</span>
+      </div>
+      <div class="field-row"><label class="field-label">Eli image</label>
+        <select class="field-select" data-words-field="eliImage">
+          <option value="">— none —</option>
+          ${imageFiles.map(f => `<option value="${esc(f)}" ${w.eliImage === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+        </select>
+        <span class="panel-hint panel-hint--inline">static fallback — used only when Live Eli is off${imageFiles.length ? '' : ' · upload a PNG/JPG to this scene first'}</span>
+      </div>
+      <div class="field-row"><label class="field-label">Unlocks memory</label>
+        <input class="field-input" data-words-field="fragment" maxlength="40" value="${esc(w.fragment || '')}" placeholder="someone_was_there" />
+      </div>
+      <div class="words-memory-list">${[0,1,2].map(i => memoryRow(memories[i], i)).join('')}</div>
+      <div class="words-validation" id="wordsValidation" role="status"></div>
+      <div class="field-row"><label class="field-label">Final line</label>
+        <input class="field-input" data-words-field="foundText" maxlength="120" value="${esc(w.foundText || '')}" placeholder="you found the word he could not say." />
+      </div>
+      <div class="field-row"><label class="field-label">Carry line</label>
+        <input class="field-input" data-words-field="carryText" maxlength="120" value="${esc(w.carryText || '')}" placeholder="take it back to him." />
+      </div>
+      <p class="panel-hint" style="padding:6px 14px 12px">Every answer must be spellable from the wheel. Keep reveals concrete and sensory; the word is the key, the memory is the reward.</p>
+    </div>`;
   }
 
   // ─── Chat section ────────────────────────────────────────────────────────────
@@ -2292,6 +2838,7 @@
       const sceneOptions = scenes.map(s =>
         `<option value="${esc(s)}" ${sel === s ? 'selected' : ''}>${esc(st.configs[s]?.title || s)}</option>`).join('');
       return `<option value="">— stay —</option>`
+        + (segments.length ? `<option value="@segment:next" ${sel === '@segment:next' ? 'selected' : ''}>— next segment —</option>` : '')
         + (segmentOptions ? `<optgroup label="Segments in this scene">${segmentOptions}</optgroup>` : '')
         + (sceneOptions ? `<optgroup label="Scenes">${sceneOptions}</optgroup>` : '');
     };
@@ -2312,13 +2859,24 @@
         </div>`;
 
     const activeGestures = ['tap', 'doubleTap', 'hold'].filter(k => hz[k]).length;
+    // When segments exist, edits apply to the selected segment only. Show
+    // which segment is being edited and whether it inherits the scene zone.
+    const segBadge = activeSegment
+      ? (hasSegmentZone
+          ? `Segment ${st.activeSegmentIndex + 1} only`
+          : `Segment ${st.activeSegmentIndex + 1} · inherits scene zone`)
+      : '';
     return `
       <details class="panel-section panel-section--heart-touch panel-section--collapsible" data-collapse="heart" ${st.sectionOpen.heart ? 'open' : ''}>
         <summary class="panel-section__header panel-section__header--summary">
           <span class="rive-setup__chev" aria-hidden="true">▸</span>
           HEART TOUCH
-          <span class="connections-hint-inline">${activeGestures ? `${activeGestures} gesture${activeGestures > 1 ? 's' : ''} active` : 'invisible gesture zone over Eli\'s heart — leave a row empty to disable it'}</span>
+          <span class="connections-hint-inline">${segBadge ? `${segBadge} — ` : ''}${activeGestures ? `${activeGestures} gesture${activeGestures > 1 ? 's' : ''} active` : 'invisible gesture zone over Eli\'s heart — leave a row empty to disable it'}</span>
         </summary>
+        ${hasSegmentZone ? `<div class="field-row">
+          <span class="connections-hint-inline">These gestures fire only during segment ${st.activeSegmentIndex + 1}.</span>
+          <button class="btn btn--ghost btn--small" data-action="hz-reset-segment" title="Remove this segment's override and use the scene's heart zone" style="margin-left:auto">↺ Use scene zone</button>
+        </div>` : ''}
         <div class="field-row">
           <label class="field-label">Zone</label>
           <span class="nudge-inline">x</span>
@@ -2367,6 +2925,87 @@
     }
   }
 
+  // ─── Preview sizing: drag-to-resize + expanded overlay ───────────────────────
+  const PREVIEW_H_KEY = 'elia.previewHeight';
+  let previewHeight   = parseInt(localStorage.getItem(PREVIEW_H_KEY), 10) || 0;
+  let previewExpanded = false;
+
+  function resizePreviewCanvas() {
+    const canvas = document.getElementById('previewCanvas');
+    if (!canvas || !canvas.offsetWidth) return;
+    canvas.width  = canvas.offsetWidth  * devicePixelRatio;
+    canvas.height = canvas.offsetHeight * devicePixelRatio;
+    try { if (rivePreview) rivePreview.resizeToCanvas(); } catch {}
+  }
+
+  function applyPreviewHeight() {
+    const wrap = document.getElementById('scenePreviewWrap');
+    if (!wrap) return;
+    if (previewHeight && !previewExpanded) {
+      wrap.style.height = previewHeight + 'px';
+      wrap.style.maxHeight = 'none';
+    } else if (previewExpanded) {
+      wrap.style.height = '';
+      wrap.style.maxHeight = '';
+    }
+    resizePreviewCanvas();
+  }
+
+  function setPreviewExpanded(on) {
+    previewExpanded = on;
+    const section = document.getElementById('previewSection');
+    if (!section) return;
+    section.classList.toggle('preview-expanded', on);
+    const btn = document.getElementById('btnPreviewExpand');
+    if (btn) {
+      btn.textContent = on ? '⤡' : '⤢';
+      btn.title = on ? 'Exit expanded preview (Esc)' : 'Expand preview — Esc to close';
+    }
+    applyPreviewHeight();
+    // Second pass after layout settles keeps the canvas crisp
+    requestAnimationFrame(resizePreviewCanvas);
+  }
+
+  function bindPreviewSizing() {
+    applyPreviewHeight();
+
+    const btn = document.getElementById('btnPreviewExpand');
+    if (btn) btn.addEventListener('click', () => setPreviewExpanded(!previewExpanded));
+    if (previewExpanded) setPreviewExpanded(true);   // re-apply after a re-render
+
+    const handle = document.getElementById('previewResizeHandle');
+    if (handle) {
+      handle.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const wrap = document.getElementById('scenePreviewWrap');
+        if (!wrap) return;
+        const startY = e.clientY;
+        const startH = wrap.offsetHeight;
+        handle.setPointerCapture(e.pointerId);
+        let raf = null;
+        const onMove = (ev) => {
+          const h = Math.max(160, Math.min(window.innerHeight - 160, startH + (ev.clientY - startY)));
+          previewHeight = h;
+          wrap.style.height = h + 'px';
+          wrap.style.maxHeight = 'none';
+          if (!raf) raf = requestAnimationFrame(() => { raf = null; resizePreviewCanvas(); });
+        };
+        const onUp = () => {
+          handle.removeEventListener('pointermove', onMove);
+          handle.removeEventListener('pointerup', onUp);
+          localStorage.setItem(PREVIEW_H_KEY, String(previewHeight));
+          resizePreviewCanvas();
+        };
+        handle.addEventListener('pointermove', onMove);
+        handle.addEventListener('pointerup', onUp);
+      });
+    }
+  }
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('previewCanvas')) resizePreviewCanvas();
+  });
+
   // ─── Preview test mode ────────────────────────────────────────────────────────
   let previewTestMode = false;
 
@@ -2376,7 +3015,7 @@
     });
   }
 
-  async function startPreviewTest(config) {
+  async function startPreviewTest(config, segmentIndex = null) {
     const wrap = document.getElementById('scenePreviewWrap');
     if (!wrap) return;
 
@@ -2386,9 +3025,10 @@
     previewTestMode = true;
     stopAudio();
 
+    const segParam = segmentIndex != null ? `&segment=${segmentIndex}` : '';
     wrap.classList.add('scene-preview--testing');
     wrap.innerHTML = `
-      <iframe id="previewTestFrame" src="/?scene=${encodeURIComponent(config.id)}&${gq()}"></iframe>
+      <iframe id="previewTestFrame" src="/?scene=${encodeURIComponent(config.id)}${segParam}&${gq()}"></iframe>
     `;
     setPreviewModeButtons();
   }
@@ -2410,6 +3050,7 @@
       });
     });
     setPreviewModeButtons();
+    bindPreviewSizing();
 
     // Rive setup accordion — remember open/closed, like the files accordion
     const riveSetup = document.getElementById('riveSetupDetails');
@@ -2556,6 +3197,17 @@
       });
     });
 
+    // Per-file background looping. Explicit false is retained because puzzle
+    // and segmented scenes historically looped by default.
+    document.querySelectorAll('[data-bg-loop]').forEach(input => {
+      input.addEventListener('change', () => {
+        const filename = input.dataset.bgLoop;
+        config.bgLoops = config.bgLoops || {};
+        config.bgLoops[filename] = input.checked;
+        st.dirty = true;
+      });
+    });
+
     // Edit lip sync buttons
     document.querySelectorAll('[data-lipsync-load]').forEach(btn => {
       btn.addEventListener('click', () => loadVoiceFile(btn.getAttribute('data-lipsync-load'), config));
@@ -2570,6 +3222,42 @@
         stopAudio();
         st.activeSegmentIndex = idx;
         st.activeVoiceFile = '';
+        st.activePauseMark = null;
+        renderPanel();
+      });
+    });
+    // Drag a tab onto another tab to reorder segments. The active segment
+    // stays selected (its index follows the move), and dirty is set so the
+    // new order persists on save.
+    let dragSegIdx = null;
+    document.querySelectorAll('[data-seg-idx]').forEach(tab => {
+      tab.addEventListener('dragstart', (e) => {
+        dragSegIdx = Number(tab.dataset.segIdx);
+        e.dataTransfer.effectAllowed = 'move';
+        tab.classList.add('is-dragging');
+      });
+      tab.addEventListener('dragend', () => {
+        dragSegIdx = null;
+        document.querySelectorAll('[data-seg-idx]').forEach(t => t.classList.remove('is-dragging', 'is-drag-over'));
+      });
+      tab.addEventListener('dragover', (e) => {
+        if (dragSegIdx === null) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (Number(tab.dataset.segIdx) !== dragSegIdx) tab.classList.add('is-drag-over');
+      });
+      tab.addEventListener('dragleave', () => tab.classList.remove('is-drag-over'));
+      tab.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const to = Number(tab.dataset.segIdx);
+        if (dragSegIdx === null || to === dragSegIdx || !config.segments) return;
+        const activeSeg = config.segments[st.activeSegmentIndex];
+        const [moved] = config.segments.splice(dragSegIdx, 1);
+        config.segments.splice(to, 0, moved);
+        st.activeSegmentIndex = Math.max(0, config.segments.indexOf(activeSeg));
+        dragSegIdx = null;
+        st.activePauseMark = null;
+        st.dirty = true;
         renderPanel();
       });
     });
@@ -2591,6 +3279,92 @@
       st.dirty = true;
       renderPanel();
     });
+    // Add silence segment — a timed beat with no voice or chat, for animating
+    // Eli's expression over background sound only.
+    document.querySelector('[data-action="add-pause-segment"]')?.addEventListener('click', () => {
+      if (!config.segments) config.segments = [];
+      config.segments.push({ type: 'pause', duration: 3, trigger: 'ended' });
+      st.activeSegmentIndex = config.segments.length - 1;
+      st.activeVoiceFile = '';
+      st.activePauseMark = null;
+      st.dirty = true;
+      renderPanel();
+    });
+    // Add video segment — a full-screen clip that plays over the Rive stage,
+    // then hands back to Eli via the segment trigger.
+    document.querySelector('[data-action="add-video-segment"]')?.addEventListener('click', () => {
+      if (!config.segments) config.segments = [];
+      const firstVideo = (st.files[config.id] || []).find(f => f.match(/\.(mp4|webm|mov|m4v|ogv)$/i)) || '';
+      config.segments.push({ type: 'video', video: firstVideo, trigger: 'ended' });
+      st.activeSegmentIndex = config.segments.length - 1;
+      st.activeVoiceFile = '';
+      st.activePauseMark = null;
+      st.dirty = true;
+      renderPanel();
+    });
+    // Silence segment expression timeline — click the bar to add a mark,
+    // click a mark to select it (pose buttons then edit that mark).
+    const pauseTimeline = document.querySelector('[data-pause-timeline]');
+    if (pauseTimeline) {
+      pauseTimeline.addEventListener('click', (e) => {
+        const seg = config.segments?.[st.activeSegmentIndex];
+        if (!seg) return;
+        const rect = pauseTimeline.getBoundingClientRect();
+        const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+        const durationS = Math.max(Number(seg.duration) || 3, 0.1);
+        const mark = { t: Math.round(frac * durationS * 10) / 10 };
+        seg.marks = Array.isArray(seg.marks) ? seg.marks : [];
+        seg.marks.push(mark);
+        seg.marks.sort((a, b) => (Number(a.t) || 0) - (Number(b.t) || 0));
+        st.activePauseMark = seg.marks.indexOf(mark);
+        st.dirty = true;
+        renderPanel();
+      });
+      document.querySelectorAll('[data-pause-mark]').forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const seg = config.segments?.[st.activeSegmentIndex];
+          const i = Number(dot.dataset.pauseMark);
+          st.activePauseMark = st.activePauseMark === i ? null : i;
+          const m = seg?.marks?.[i];
+          if (st.activePauseMark != null && m) {
+            // Show the mark's pose in the preview so you see what you're editing
+            for (const [k, v] of Object.entries(m)) if (k !== 't') previewPoseField(k, v);
+          }
+          renderPanel();
+        });
+      });
+    }
+    document.querySelector('[data-pause-mark-time]')?.addEventListener('change', function () {
+      const seg = config.segments?.[st.activeSegmentIndex];
+      const mark = seg?.marks?.[st.activePauseMark];
+      if (!mark) return;
+      mark.t = Math.max(0, Number(this.value) || 0);
+      seg.marks.sort((a, b) => (Number(a.t) || 0) - (Number(b.t) || 0));
+      st.activePauseMark = seg.marks.indexOf(mark);
+      st.dirty = true;
+      renderPanel();
+    });
+    document.querySelector('[data-action="pause-mark-delete"]')?.addEventListener('click', () => {
+      const seg = config.segments?.[st.activeSegmentIndex];
+      if (!seg || st.activePauseMark == null) return;
+      seg.marks.splice(st.activePauseMark, 1);
+      st.activePauseMark = null;
+      st.dirty = true;
+      renderPanel();
+    });
+    document.querySelector('[data-action="pause-preview"]')?.addEventListener('click', () => {
+      const seg = config.segments?.[st.activeSegmentIndex];
+      if (!seg) return;
+      for (const t of st._pausePreviewTimers || []) clearTimeout(t);
+      st._pausePreviewTimers = [];
+      applyPoseToPreview(config); // base pose first
+      for (const m of (seg.marks || [])) {
+        st._pausePreviewTimers.push(setTimeout(() => {
+          for (const [k, v] of Object.entries(m)) if (k !== 't') previewPoseField(k, v);
+        }, (Number(m.t) || 0) * 1000));
+      }
+    });
     // Delete segment (from tab × or config button)
     function deleteSegment(idx) {
       if (!config.segments) return;
@@ -2602,6 +3376,7 @@
         st.activeSegmentIndex = Math.min(st.activeSegmentIndex, config.segments.length - 1);
       }
       st.activeVoiceFile = '';
+      st.activePauseMark = null;
       st.dirty = true;
       renderPanel();
     }
@@ -2610,6 +3385,13 @@
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         deleteSegment(Number(el.dataset.segDelete));
+      });
+    });
+    // Per-segment ▶ — run the player starting at that segment
+    document.querySelectorAll('[data-seg-play]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startPreviewTest(config, Number(el.dataset.segPlay));
       });
     });
     // Enable segments
@@ -2642,6 +3424,15 @@
           renderPanel();
           return;
         }
+        if (field === 'video') {
+          // Same one-step behavior as voice: picking a clip tags its role too.
+          if (val) {
+            config.files = config.files || {};
+            if (config.files[val] !== 'video') config.files[val] = 'video';
+          }
+          renderPanel();
+          return;
+        }
         if (field === 'trigger') {
           const tab = document.querySelector(`[data-seg-idx="${st.activeSegmentIndex}"] .segment-tab__trigger`);
           if (tab) tab.textContent = this.value;
@@ -2666,7 +3457,14 @@
     if (expressionPreview) {
       bindExpressionPreviewButtons(expressionPreview, (key, value) => {
         const segment = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
-        if (segment) {
+        // In a Silence segment with a selected timeline mark, pose buttons
+        // write to that mark instead of the segment's base pose.
+        const mark = segment?.type === 'pause' && st.activePauseMark != null
+          ? segment.marks?.[st.activePauseMark]
+          : null;
+        if (mark) {
+          mark[key] = value;
+        } else if (segment) {
           segment.pose = segment.pose || {};
           segment.pose[key] = value;
         } else {
@@ -2687,6 +3485,7 @@
         if (!confirm(`Remove "${filename}"?`)) return;
         await fetch('/api/scene/delete-file', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: config.id, filename, game: st.game }) });
         if (config.files) delete config.files[filename];
+        if (config.bgLoops) delete config.bgLoops[filename];
         st.files[config.id] = (st.files[config.id] || []).filter(f => f !== filename);
         if (st.activeVoiceFile === filename) { st.activeVoiceFile = ''; stopAudio(); }
         renderPanel();
@@ -2796,7 +3595,174 @@
     for (const el of hzEls) {
       el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', applyHeartZone);
     }
+    // Remove the active segment's heart-zone override → back to scene zone
+    document.querySelector('[data-action="hz-reset-segment"]')?.addEventListener('click', () => {
+      const activeSegment = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
+      if (!activeSegment) return;
+      delete activeSegment.heartZone;
+      st.dirty = true;
+      renderPanel();
+    });
     if (fieldNextScene) fieldNextScene.addEventListener('change', () => { config.after = config.after || {}; config.after.next = fieldNextScene.value || null; st.dirty = true; });
+
+    // Memory game (pairs) fields
+    document.querySelectorAll('[data-pairs-field]').forEach(el => {
+      const evt = el.tagName === 'SELECT' ? 'change' : el.type === 'checkbox' ? 'change' : 'input';
+      el.addEventListener(evt, function () {
+        config.pairs = config.pairs || {};
+        const field = this.dataset.pairsField;
+        config.pairs[field] = this.type === 'checkbox' ? this.checked
+                            : this.type === 'number'   ? Number(this.value)
+                            : this.value;
+        if (field === 'daily') {
+          const row = document.querySelector('[data-pairs-lock-row]');
+          if (row) row.style.display = this.checked ? '' : 'none';
+        }
+        st.dirty = true;
+      });
+    });
+
+    // Jigsaw fields
+    document.querySelectorAll('[data-jigsaw-field]').forEach(el => {
+      const evt = el.tagName === 'SELECT' ? 'change' : el.type === 'checkbox' ? 'change' : 'input';
+      el.addEventListener(evt, function () {
+        config.jigsaw = config.jigsaw || {};
+        const field = this.dataset.jigsawField;
+        config.jigsaw[field] = this.type === 'checkbox' ? this.checked
+                             : field === 'pieces'       ? Number(this.value)
+                             : this.value;
+        if (field === 'daily') {
+          const row = document.querySelector('[data-jigsaw-lock-row]');
+          if (row) row.style.display = this.checked ? '' : 'none';
+        }
+        st.dirty = true;
+      });
+    });
+
+    // Memory Thread fields
+    document.querySelectorAll('[data-thread-field]').forEach(el => {
+      el.addEventListener('input', function () {
+        config.thread = config.thread || {};
+        config.thread[this.dataset.threadField] = this.value;
+        st.dirty = true;
+      });
+    });
+    document.querySelectorAll('[data-thread-path]').forEach(el => {
+      const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(eventName, function () {
+        config.thread = config.thread || {};
+        config.thread.paths = Array.isArray(config.thread.paths) ? config.thread.paths : [{}, {}];
+        while (config.thread.paths.length < 2) config.thread.paths.push({});
+        const index = Number(this.dataset.threadPath);
+        const field = this.dataset.threadPathField;
+        config.thread.paths[index] = config.thread.paths[index] || {};
+        config.thread.paths[index][field] = field === 'nodes'
+          ? this.value.split(',').map(v => v.trim()).filter(Boolean).slice(0, 5)
+          : this.value;
+        config.thread.paths[index].id = config.thread.paths[index].id || `path_${index + 1}`;
+        st.dirty = true;
+      });
+    });
+
+    document.querySelectorAll('[data-words-field]').forEach(el => {
+      el.addEventListener('input', function () {
+        config.words = config.words || {};
+        const field = this.dataset.wordsField;
+        config.words[field] = field === 'letters' ? this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12) : this.value;
+        if (field === 'letters') this.value = config.words[field];
+        updateWordsValidation(config);
+        st.dirty = true;
+      });
+    });
+    document.querySelectorAll('[data-words-memory]').forEach(el => {
+      el.addEventListener('input', function () {
+        config.words = config.words || {};
+        config.words.memories = Array.isArray(config.words.memories) ? config.words.memories : [{}, {}, {}];
+        while (config.words.memories.length < 3) config.words.memories.push({});
+        const index = Number(this.dataset.wordsMemory);
+        const field = this.dataset.wordsMemoryField;
+        config.words.memories[index][field] = field === 'word' ? this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12) : this.value;
+        if (field === 'word') this.value = config.words.memories[index][field];
+        updateWordsValidation(config);
+        st.dirty = true;
+      });
+    });
+    // Per-word voice generation: Eli speaks the reveal line when the word is found
+    document.querySelectorAll('[data-words-tts]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
+        const index = Number(btn.dataset.wordsTts);
+        config.words = config.words || {};
+        const mems = config.words.memories = Array.isArray(config.words.memories) ? config.words.memories : [{}, {}, {}];
+        while (mems.length < 3) mems.push({});
+        const row    = btn.closest('.words-memory-block');
+        const word   = row?.querySelector('[data-words-memory-field="word"]')?.value?.trim() || '';
+        const reveal = row?.querySelector('[data-words-memory-field="reveal"]')?.value?.trim() || '';
+        const line   = row?.querySelector('[data-words-memory-field="line"]')?.value?.trim() || '';
+        const text   = line || reveal || word;
+        if (!text) { showToast('Write what Eli should say first.', true); return; }
+        btn.disabled = true; btn.textContent = '… generating';
+        showToast(`Generating Eli's voice for ${word || 'this word'}…`);
+        try {
+          const res  = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              game: st.game, id: config.id, text, engine: 'gemini', voice: 'eli',
+              emotion: 'remembering', intensity: 75,
+            }),
+          });
+          const data = await readJsonResponse(res);
+          if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          if (!st.files[config.id]) st.files[config.id] = [];
+          if (!st.files[config.id].includes(data.filename)) st.files[config.id].push(data.filename);
+          mems[index].voice = data.filename;
+          st.dirty = true;
+          await saveAll();
+          renderPanel();
+          showToast(`Voice ready — Eli speaks when ${word || 'the word'} is found.`);
+        } catch (err) {
+          showToast(`TTS failed: ${err.message}`, true);
+          btn.disabled = false; btn.textContent = '♪ Generate';
+        }
+      });
+    });
+
+    // Live Eli .riv upload (Memory Words)
+    const wordsEliRiveInput = document.getElementById('wordsEliRiveInput');
+    if (wordsEliRiveInput) {
+      wordsEliRiveInput.addEventListener('change', async () => {
+        const file = wordsEliRiveInput.files[0];
+        if (!file || !file.name.endsWith('.riv')) { showToast('Please select a .riv file.', true); return; }
+        showToast('Uploading…');
+        const data = await uploadBinary('/api/scene/upload', { id: config.id, filename: file.name, game: st.game }, file);
+        if (data.ok) {
+          rivBufferCache.clear();
+          if (!st.files[config.id]) st.files[config.id] = [];
+          if (!st.files[config.id].includes(data.filename)) st.files[config.id].push(data.filename);
+          config.words = config.words || {};
+          config.words.eliRive = data.filename;
+          st.dirty = true;
+          await saveAll();
+          renderPanel();
+          showToast(`${data.filename} connected as Live Eli.`);
+        } else {
+          showToast(`Upload failed: ${data.error}`, true);
+        }
+      });
+    }
+
+    document.getElementById('wordsBuildWheelBtn')?.addEventListener('click', () => {
+      config.words = config.words || {};
+      config.words.memories = Array.isArray(config.words.memories) ? config.words.memories : [];
+      config.words.letters = buildWheelFromMemories(config.words.memories);
+      const input = document.querySelector('[data-words-field="letters"]');
+      if (input) input.value = config.words.letters;
+      updateWordsValidation(config);
+      st.dirty = true;
+    });
+    updateWordsValidation(config);
+
     // Lip sync controls
     bindLipSyncEvents(config);
   }
@@ -2834,6 +3800,31 @@
           config.files = config.files || {};
           config.files[data.filename] = 'video';
           st.dirty = true;
+        } else if (config.type === 'pairs') {
+          // Images become cards, audio becomes background — no voice role here
+          config.files = config.files || {};
+          config.files[data.filename] = /\.(png|jpe?g|webp|gif|svg)$/i.test(data.filename) ? 'card' : 'bg';
+          st.dirty = true;
+        } else if (config.type === 'jigsaw') {
+          // First image becomes the photo, further images and audio are background
+          config.files = config.files || {};
+          const isImage = /\.(png|jpe?g|webp|gif|svg)$/i.test(data.filename);
+          const hasPhoto = Object.values(config.files).includes('photo');
+          config.files[data.filename] = isImage && !hasPhoto ? 'photo' : isImage ? 'unset' : 'bg';
+          st.dirty = true;
+        } else if (config.type === 'thread' || config.type === 'words') {
+          config.files = config.files || {};
+          config.files[data.filename] = 'bg';
+          st.dirty = true;
+        } else if (/\.(mp4|webm|mov|m4v|ogv)$/i.test(data.filename)) {
+          // Video dropped into a rive/chat scene — it's for a video segment,
+          // not lip sync. If the active segment is a video one without a clip
+          // yet, wire it up in the same gesture.
+          config.files = config.files || {};
+          config.files[data.filename] = 'video';
+          const seg = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
+          if (seg && seg.type === 'video' && !seg.video) seg.video = data.filename;
+          st.dirty = true;
         } else {
           assignGeneratedVoice(config, data.filename);
         }
@@ -2845,7 +3836,8 @@
     }
     if (statusEl) statusEl.textContent = '';
     renderPanel();
-    if (lastUploaded && config.type !== 'video') await loadVoiceFile(lastUploaded, config);
+    if (lastUploaded && config.type !== 'video' && config.type !== 'pairs' && config.type !== 'jigsaw' && config.type !== 'thread' && config.type !== 'words'
+        && !/\.(mp4|webm|mov|m4v|ogv)$/i.test(lastUploaded)) await loadVoiceFile(lastUploaded, config);
   }
 
   // ─── Lip sync: audio loading ──────────────────────────────────────────────────
@@ -3238,14 +4230,14 @@
 
       // Double-click the caption lane to drop a caption right at that spot.
       // Uses whatever is typed in the caption box, or asks for the text.
-      scrubMarks.addEventListener('dblclick', (e) => {
+      scrubMarks.addEventListener('dblclick', async (e) => {
         if (e.target.closest('.scrub-mark')) return;
         const rect = scrubMarks.getBoundingClientRect();
         if (e.clientY - rect.top > 20) return;               // captions live in the top lane
         const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const time = Math.round(pct * dur() * 1000) / 1000;
         const typed = document.getElementById('textCueInput')?.value.trim();
-        const text  = typed || prompt('Caption text:');
+        const text  = typed || await openCaptionModal({ time });
         if (!text || !text.trim()) return;
         addTextCueAt(time, text.trim());
         const inp = document.getElementById('textCueInput');
@@ -3393,10 +4385,10 @@
       });
 
       // Double-click: edit caption text; delete animation keys
-      el.addEventListener('dblclick', (e) => {
+      el.addEventListener('dblclick', async (e) => {
         e.stopPropagation();
         if (isText) {
-          const next = prompt('Edit caption:', item.text);
+          const next = await openCaptionModal({ value: item.text, time: item.time, editing: true });
           if (next === null || !next.trim() || next.trim() === item.text) return;
           pushHistory();
           item.text = next.trim();
@@ -3686,27 +4678,34 @@
     showToast(`Phone URL (copied): ${shortUrl} — open it on a phone on the same WiFi.`, false, 10000);
   }
 
+  // Open the preview tab synchronously (popup blockers require the user
+  // gesture), then guarantee navigation: after the autosave finishes, or after
+  // 4s if the save hangs — the tab must never stay stranded on about:blank.
+  function openTestTab(buildUrl) {
+    const win = window.open('about:blank', '_blank');
+    const go = () => {
+      const url = buildUrl();
+      if (win && !win.closed) win.location.href = url;
+      else location.href = url;   // popup blocked → same tab; Back returns to the editor
+      return url;
+    };
+    if (!st.dirty) return Promise.resolve(go());
+    return Promise.race([saveAll(), new Promise(r => setTimeout(r, 4000))]).then(go, go);
+  }
+
   async function testThisScene(mobile = false) {
     const id = st.activeId;
     if (!id) return;
-    const win = window.open('about:blank', '_blank');
-    if (st.dirty) await saveAll();
-    const base = mobile && st.lanBase ? st.lanBase : '.';
+    const base  = mobile && st.lanBase ? st.lanBase : '.';
     const extra = mobile ? '&shell=0' : '';
-    const url = `${base}/index.html?scene=${encodeURIComponent(id)}&${gq()}&preview=1${extra}&v=${Date.now()}`;
-    if (win) win.location.href = url;
-    else window.open(url, '_blank');
+    const url = await openTestTab(() => `${base}/index.html?scene=${encodeURIComponent(id)}&${gq()}&preview=1${extra}&v=${Date.now()}`);
     if (mobile && st.lanBase) announceMobileUrl(url);
   }
 
   async function testAll(mobile = false) {
-    const win = window.open('about:blank', '_blank');
-    if (st.dirty) await saveAll();
-    const base = mobile && st.lanBase ? st.lanBase : '.';
+    const base  = mobile && st.lanBase ? st.lanBase : '.';
     const extra = mobile ? '&shell=0' : '';
-    const url = `${base}/index.html?${gq()}&preview=1${extra}&v=${Date.now()}`;
-    if (win) win.location.href = url;
-    else window.open(url, '_blank');
+    const url = await openTestTab(() => `${base}/index.html?${gq()}&preview=1${extra}&v=${Date.now()}`);
     if (mobile && st.lanBase) announceMobileUrl(url);
   }
 

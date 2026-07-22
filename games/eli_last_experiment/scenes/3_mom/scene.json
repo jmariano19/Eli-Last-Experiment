@@ -1,0 +1,23 @@
+{
+  "id": "3_mom",
+  "title": "3_mom",
+  "type": "jigsaw",
+  "rive": null,
+  "files": {
+    "mom.jpg": "photo",
+    "relaxing.mp3": "bg"
+  },
+  "jigsaw": {
+    "pieces": 9,
+    "fragment": "",
+    "intro": "The memory is coming apart. Put it back together before he loses her.",
+    "winText": "I remember this room…I thought it was home.",
+    "daily": false
+  },
+  "after": {
+    "trigger": "auto",
+    "message": "",
+    "next": "4_hand"
+  },
+  "ctaRoutes": []
+}

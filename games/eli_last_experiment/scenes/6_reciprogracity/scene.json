@@ -1,0 +1,75 @@
+{
+  "id": "6_reciprogracity",
+  "title": "6_reciprogracity",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_now_i_see_the_lab_002404qn.m4a": "voice",
+    "tts_you_helped_me_remember_something_002503yz.m4a": "voice",
+    "heart_normal.mp3": "voice",
+    "tts_can_i_remember_something_about_0029078s.m4a": "voice",
+    "tts_we_will_discover_ourselves_together_00310875.m4a": "voice",
+    "it_really_was_a.mp3": "voice",
+    "tts_i_would_have_lost_that_191545o1.m4a": "voice",
+    "tts_i_almost_lost_her_again_194257es.m4a": "voice"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "7_the_diary"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "it_really_was_a.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_i_would_have_lost_that_191545o1.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_i_almost_lost_her_again_194257es.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "type": "chat",
+      "opening": "Before you go… what should I remember about you?",
+      "max_exchanges": 1,
+      "context_hint": "Ask for one concrete thing to remember about the player. If they share their name, use it naturally and preserve it.",
+      "suggested_starters": [
+        "My name is…",
+        "Remember that I stayed."
+      ],
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ],
+      "delay": 1
+    },
+    {
+      "voice": "tts_we_will_discover_ourselves_together_00310875.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    }
+  ]
+}

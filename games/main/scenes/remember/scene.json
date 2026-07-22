@@ -1,0 +1,22 @@
+{
+  "id": "remember",
+  "title": "remember",
+  "type": "chat",
+  "rive": "shared",
+  "files": {},
+  "system_prompt": "You are Eli. A British boy who's been sick for a long time.",
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": []
+}

@@ -1,0 +1,181 @@
+{
+  "filename": "but_that_wasnt_our.mp3",
+  "markers": [
+    {
+      "time": 0.47,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.61,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.78,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.91,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.16,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.29,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.43,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.52,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.66,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.8,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1.96,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.1,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.24,
+      "mouth_shape": 9
+    },
+    {
+      "time": 2.34,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.49,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.63,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.68,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.91,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.05,
+      "mouth_shape": 3
+    },
+    {
+      "time": 4.24,
+      "mouth_shape": 2
+    },
+    {
+      "time": 4.38,
+      "mouth_shape": 6
+    },
+    {
+      "time": 4.5,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.73,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.85,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.99,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.12,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.34,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.41,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.51,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.65,
+      "mouth_shape": 11
+    },
+    {
+      "time": 5.79,
+      "mouth_shape": 7
+    },
+    {
+      "time": 5.93,
+      "mouth_shape": 3
+    },
+    {
+      "time": 6.06,
+      "mouth_shape": 10
+    },
+    {
+      "time": 6.14,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.34,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.48,
+      "mouth_shape": 11
+    },
+    {
+      "time": 6.49,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.442,
+      "text": "But that wasn’t our house.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 3.776,
+      "text": "Why did I think it was our house?",
+      "duration": 3.8,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

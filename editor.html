@@ -89,10 +89,48 @@
           <span class="modal-type__name">Chat</span>
           <span class="modal-type__desc">AI conversation with Eli</span>
         </button>
+        <button class="modal-type" data-type="pairs">
+          <span class="modal-type__icon">🃏</span>
+          <span class="modal-type__name">Memory game</span>
+          <span class="modal-type__desc">Match pairs to recover one of Eli's memories</span>
+        </button>
+        <button class="modal-type" data-type="jigsaw">
+          <span class="modal-type__icon">🧩</span>
+          <span class="modal-type__name">Photo jigsaw</span>
+          <span class="modal-type__desc">Piece a photograph back together to restore a memory</span>
+        </button>
+        <button class="modal-type" data-type="words">
+          <span class="modal-type__icon">Aa</span>
+          <span class="modal-type__name">Memory Words</span>
+          <span class="modal-type__desc">Swipe letters to uncover words Eli has forgotten</span>
+        </button>
       </div>
       <div class="modal__actions">
         <button class="btn btn--ghost" id="btnAddSceneCancel">Cancel</button>
         <button class="btn btn--save" id="btnAddSceneCreate">Create Scene</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / edit caption modal -->
+  <div class="modal-backdrop" id="captionModal" role="presentation">
+    <div class="modal modal--caption" role="dialog" aria-modal="true" aria-labelledby="captionModalTitle">
+      <div class="caption-modal__heading">
+        <span class="caption-modal__icon" aria-hidden="true">CC</span>
+        <div>
+          <h2 class="modal__title" id="captionModalTitle">Add Caption</h2>
+          <p class="caption-modal__subtitle" id="captionModalSubtitle">Add on-screen dialogue at this point in the timeline.</p>
+        </div>
+      </div>
+      <label class="modal__label" for="captionModalInput">Caption text</label>
+      <textarea class="modal__input caption-modal__input" id="captionModalInput" rows="3" maxlength="280" placeholder="What should appear on screen?"></textarea>
+      <div class="caption-modal__meta">
+        <span class="caption-modal__time" id="captionModalTime">00:00.0</span>
+        <span><kbd>⌘</kbd><kbd>Enter</kbd> to add</span>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="btnCaptionCancel">Cancel</button>
+        <button class="btn btn--save" id="btnCaptionConfirm">Add Caption</button>
       </div>
     </div>
   </div>

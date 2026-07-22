@@ -1,0 +1,121 @@
+{
+  "filename": "tts_i_thought_i_was_alone_131031nb.m4a",
+  "markers": [
+    {
+      "time": 0.29,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.42,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.52,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.67,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.8,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.93,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.99,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.18,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.23,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.79,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.93,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.95,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.05,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.18,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.32,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.35,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.48,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.62,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.72,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.09,
+      "mouth_shape": 8
+    },
+    {
+      "time": 3.22,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.38,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.39,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.291,
+      "text": "I thought",
+      "duration": 1.4,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 1.784,
+      "text": "I was alone, again",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

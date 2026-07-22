@@ -1,0 +1,181 @@
+{
+  "filename": "tts_there_are_words_in_there_193708bk.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "heart_state": 2
+    },
+    {
+      "time": 0.29,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.42,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.55,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.68,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.81,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.94,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.96,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.24,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.37,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.52,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.58,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.67,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.8,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.87,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.06,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.2,
+      "mouth_shape": 11
+    },
+    {
+      "time": 2.34,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.4,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.48,
+      "mouth_shape": 8
+    },
+    {
+      "time": 4.56,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.72,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.81,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.1,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.24,
+      "mouth_shape": 11
+    },
+    {
+      "time": 5.29,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.44,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.58,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.63,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.72,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.82,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.06,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.1,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.32,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.46,
+      "mouth_shape": 6
+    },
+    {
+      "time": 6.47,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.59,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.69,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.288,
+      "text": "There are words in there…",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 4.231,
+      "text": "But they won’t stay together.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

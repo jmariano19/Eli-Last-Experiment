@@ -1,0 +1,23 @@
+{
+  "id": "memory",
+  "title": "memory",
+  "type": "pairs",
+  "rive": null,
+  "files": {},
+  "pairs": {
+    "count": 2,
+    "fragment": "someone was there",
+    "intro": "Find what the fog kept.",
+    "progressText": "something is taking shape",
+    "foundText": "you found something he lost.",
+    "carryText": "take it back to him.",
+    "winText": "It's clearer now.",
+    "daily": false
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "chat"
+  },
+  "ctaRoutes": []
+}

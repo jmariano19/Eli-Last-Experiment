@@ -1,0 +1,145 @@
+{
+  "filename": "tts_you_stayed_you_kept_it_18354656.m4a",
+  "markers": [
+    {
+      "time": 0.34,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.37,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.7,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.83,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.93,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.06,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.2,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.33,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.37,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.68,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.7,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.78,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.8,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.26,
+      "mouth_shape": 8
+    },
+    {
+      "time": 3.4,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.42,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.59,
+      "mouth_shape": 8
+    },
+    {
+      "time": 3.63,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.94,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.99,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.19,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.33,
+      "mouth_shape": 10
+    },
+    {
+      "time": 4.46,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.62,
+      "mouth_shape": 8
+    },
+    {
+      "time": 4.73,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.13,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.42,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.43,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.335,
+      "text": "You stayed.",
+      "duration": 2.8,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 3.252,
+      "text": "You kept it from disappearing.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

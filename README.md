@@ -1,4 +1,4 @@
-# Eli's Last Experiment — Prototype 8
+# Eli's Last Experiment — Prototype 9
 
 An interactive narrative game with a Rive-animated character (Eli), voice-acted
 scenes with lip sync, and AI-driven chat powered by Claude. Includes a visual
@@ -42,8 +42,10 @@ start.mjs                 Launcher (port cleanup, auto-restart, auto-open)
 ## Scene types
 
 - **rive** — animated character, voice lines with lip-sync markers, text cues,
-  and multi-part *segments* (voice or AI chat) with triggers (auto / tap /
-  Rive input).
+  and multi-part *segments* (voice, AI chat, silence, or full-screen video)
+  with triggers (auto / tap / Rive input). Video segments play a clip over the
+  stage (optional Skip button) and hand back to Eli when it ends — upload
+  .mp4/.webm in the files section, then **+ Video** in the segment picker.
 - **video** — full-screen video with a Skip button.
 - **chat** — free AI conversation with Eli (needs the API key).
 
@@ -78,9 +80,10 @@ against the scene's config and flags missing names.
 **⌨ Generate voice** in the AUDIO FILES section turns typed text into a voice
 file in the scene — no recording needed:
 
-- **Eli voice (Google Gemini)** — the editor uses one fixed Eli preset:
-  Google's youthful `Leda` voice with the sleepy, delicate bedside-whisper
-  prompt. Set `GEMINI_API_KEY` in `.env`; override the model with
+- **Eli voice (Google Gemini)** — the editor keeps Google's youthful `Leda`
+  voice as Eli's identity. Choose a vulnerable, frightened, exhausted,
+  remembering, hopeful, or relieved performance and set its strength per line.
+  Set `GEMINI_API_KEY` in `.env`; override the model with
   `GEMINI_TTS_MODEL` if needed.
 - **Natural (Kokoro)** — neural TTS, ~3s per line. One-time setup:
   `bash tts/setup-kokoro.sh` (downloads ~340 MB of models into `tts/`).

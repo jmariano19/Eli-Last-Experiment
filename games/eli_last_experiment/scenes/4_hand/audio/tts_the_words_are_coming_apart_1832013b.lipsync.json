@@ -1,0 +1,124 @@
+{
+  "filename": "tts_the_words_are_coming_apart_1832013b.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "heart_state": 2
+    },
+    {
+      "time": 0.218,
+      "emotion_state": 11
+    },
+    {
+      "time": 0.3,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.43,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.56,
+      "mouth_shape": 2,
+      "emotion_state": 9
+    },
+    {
+      "time": 0.613,
+      "emotion_state": 0
+    },
+    {
+      "time": 0.69,
+      "mouth_shape": 3
+    },
+    {
+      "time": 0.82,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.95,
+      "mouth_shape": 11,
+      "emotion_state": 11
+    },
+    {
+      "time": 1.04,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.17,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.3,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1.44,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.49,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.8,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.94,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.08,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.22,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.25,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.44,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.58,
+      "mouth_shape": 9
+    },
+    {
+      "time": 2.72,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.85,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.95,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.09,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.21,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.274,
+      "text": "The words are coming apart again.",
+      "duration": 3.7,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

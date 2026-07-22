@@ -1,0 +1,61 @@
+{
+  "id": "8_the_return_hook",
+  "title": "8_The Return Hook",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_i_dont_have_enough_strength_1710092t.m4a": "voice",
+    "tts_until_then_ill_hold_onto_171159k2.m4a": "voice",
+    "tts_wait_i_heard_her_again_171336yz.m4a": "voice",
+    "freesound_community-woman-sigh-101931.mp3": "voice",
+    "heart_normal.mp3": "bg",
+    "tts_theres_more_behind_that_memory_195103jl.m4a": "voice",
+    "tts_until_then_ill_hold_onto_2345147r.m4a": "voice"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "9_last"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "tts_theres_more_behind_that_memory_195103jl.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "tts_until_then_ill_hold_onto_2345147r.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    },
+    {
+      "voice": "",
+      "trigger": "ended",
+      "bgs": [
+        "freesound_community-woman-sigh-101931.mp3",
+        "heart_normal.mp3"
+      ],
+      "delay": 1
+    },
+    {
+      "voice": "tts_wait_i_heard_her_again_171336yz.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "heart_normal.mp3"
+      ]
+    }
+  ]
+}

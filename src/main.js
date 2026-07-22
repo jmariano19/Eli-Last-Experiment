@@ -4,6 +4,9 @@
   // ─── State ──────────────────────────────────────────────────────────────────
   const params    = new URLSearchParams(window.location.search);
   const startScene = params.get('scene') || null;
+  // ?segment=N — editor's per-segment ▶ test: start the scene at that segment
+  const startSegment = params.get('segment');
+  let startSegmentUsed = false;
 
   // Editor previews pass ?scene= / ?preview=1 and must always fetch fresh files.
   // The deployed game uses clean URLs so the browser + in-memory caches can work.
@@ -47,6 +50,8 @@
   let activeLipSyncAudio  = null;
   let activeLipSyncFrame  = null;
   let segmentCleanup  = null;
+  let activePlayingSegment = -1;   // index of the segment currently playing
+  let segmentsDone = false;        // true once a segmented scene reaches its fallback stage
   let activeSegmentBgs = [];      // array — supports multiple simultaneous bg tracks
   let activeSegmentBgNames = [];  // parallel array of filenames for change-detection
   let activeBgAudios = [];
@@ -61,6 +66,7 @@
   let pendingSceneId = null;
   let sceneTapCleanups = [];
   let activeMemoryCleanup = null;
+  let activeGiveCleanup = null;
   let activeMemoryCaptionTimer = null;
 
   // Haptic presets — keep in sync with the editor's HAPTIC_PRESETS.
@@ -394,6 +400,32 @@
   const memoryEli = document.getElementById('memoryEli');
   const memoryHeart = document.getElementById('memoryHeart');
   const memoryHoldProgress = document.getElementById('memoryHoldProgress');
+  const threadScreen = document.getElementById('threadScreen');
+  const threadField = document.getElementById('threadField');
+  const threadNodes = document.getElementById('threadNodes');
+  const threadPath = document.getElementById('threadPath');
+  const threadCaption = document.getElementById('threadCaption');
+  const threadWhisper = document.getElementById('threadWhisper');
+  const threadRecovered = document.getElementById('threadRecovered');
+  const wordsScreen = document.getElementById('wordsScreen');
+  const wordsCaption = document.getElementById('wordsCaption');
+  const wordsMemories = document.getElementById('wordsMemories');
+  const wordsCurrent = document.getElementById('wordsCurrent');
+  const wordsWheel = document.getElementById('wordsWheel');
+  const wordsLetters = document.getElementById('wordsLetters');
+  const wordsPath = document.getElementById('wordsPath');
+  const wordsReveal = document.getElementById('wordsReveal');
+  const wordsRecovered = document.getElementById('wordsRecovered');
+  const wordsEli = document.getElementById('wordsEli');
+  const wordsEliImg = document.getElementById('wordsEliImg');
+  const pairsScreen  = document.getElementById('pairsScreen');
+  const pairsBoard   = document.getElementById('pairsBoard');
+  const pairsCaption = document.getElementById('pairsCaption');
+  const pairsFound   = document.getElementById('pairsFound');
+  const jigsawScreen  = document.getElementById('jigsawScreen');
+  const jigsawBoard   = document.getElementById('jigsawBoard');
+  const jigsawCaption = document.getElementById('jigsawCaption');
+  const jigsawPlaced  = document.getElementById('jigsawPlaced');
   const messageEl   = document.getElementById('message');
   const fadeEl      = document.getElementById('fade');
   let stableViewportWidth = 0;
@@ -588,6 +620,50 @@
   }
 
   // ─── Scene loader ────────────────────────────────────────────────────────────
+  async function applyDynamicRiveText(config) {
+    if (config.id !== '7_the_diary') return;
+    const textRun = String(config.dynamicDiary?.textRun || 'DiaryText');
+
+    let playerName = '';
+    try {
+      const suffix = gameId ? `?game=${encodeURIComponent(gameId)}` : '';
+      const response = await fetch(`/api/narrative-state${suffix}`);
+      if (response.ok) {
+        const state = await response.json();
+        playerName = String(state?.player_name || '').trim().slice(0, 40);
+      }
+    } catch {}
+
+    const text = playerName
+      ? `“Today, ${playerName} found me in the dark.”\n\n“They helped me remember my mother's hand. When the memory hurt, they stayed.”\n\n“I wrote their name here so I won't lose them too.”\n\n${playerName}.`
+      : `“Today, someone found me in the dark.”\n\n“They helped me remember my mother's hand. When the memory hurt, they stayed.”\n\n“I don't know their name yet, but I don't want to forget them.”`;
+
+    let appliedToRive = false;
+    if (riveInstance?.setTextRunValue) {
+      try {
+        riveInstance.setTextRunValue(textRun, text);
+        appliedToRive = typeof riveInstance.getTextRunValue !== 'function' ||
+          riveInstance.getTextRunValue(textRun) === text;
+      } catch (err) {
+        if (devMode) console.warn(`[diary] Rive text run "${textRun}" was not found`, err);
+      }
+    }
+
+    // A Rive text run must be explicitly exposed by the asset. Until it is,
+    // render the same personalized entry as an HTML layer so testing never
+    // produces a blank diary.
+    if (!appliedToRive) {
+      showTextOverlay(text, 600, {
+        fontSize: 24,
+        color: '#d8b77b',
+        position: 'diary',
+        fontWeight: '400',
+        speed: 90,
+        lipSync: false,
+      });
+    }
+  }
+
   async function loadScene(id) {
     // If a load is already in flight, remember the request instead of dropping it
     // (e.g. an auto-advance fired synchronously during another scene's setup).
@@ -608,6 +684,8 @@
       activeBgAudios = [];
       if (window._chatCleanup) { window._chatCleanup(); window._chatCleanup = null; }
       if (activeMemoryCleanup) { activeMemoryCleanup(); activeMemoryCleanup = null; }
+      if (activeGiveCleanup) { activeGiveCleanup(); activeGiveCleanup = null; }
+      cleanupWordsEliRive();
       clearHeartZone();
       hideHeartPrompt();
       hideSegmentChat();
@@ -626,6 +704,10 @@
       if (config.type === 'video') await playVideoScene(config);
       if (config.type === 'chat')  await playChatScene(config);
       if (config.type === 'memory') await playMemoryScene(config);
+      if (config.type === 'thread') await playThreadScene(config);
+      if (config.type === 'words') await playWordsScene(config);
+      if (config.type === 'pairs') await playPairsScene(config);
+      if (config.type === 'jigsaw') await playJigsawScene(config);
 
       updateCtaButton(config);
       // Segment scenes install their own effective zone in playSegment().
@@ -718,6 +800,7 @@
           }
           fadeIn();
           applyScenePose(config);
+          applyDynamicRiveText(config);
           playVoiceLines(config);
 
           if (riveInstance.on && rive.EventType?.RiveEvent) {
@@ -840,12 +923,16 @@
 
   // ─── Rive helpers ──────────────────────────────────────────────────────────────
   function collectInputs(smNames) {
+    return collectInputsFrom(riveInstance, smNames);
+  }
+
+  function collectInputsFrom(instance, smNames) {
     const map = new Map();
-    if (!riveInstance) return map;
-    const names = smNames || riveInstance.stateMachineNames || [];
+    if (!instance) return map;
+    const names = smNames || instance.stateMachineNames || [];
     for (const sm of names) {
       try {
-        for (const input of (riveInstance.stateMachineInputs(sm) || [])) {
+        for (const input of (instance.stateMachineInputs(sm) || [])) {
           map.set(input.name, input);
           // Tolerate stray trailing colons/whitespace typed in Rive Studio
           // (e.g. an input named "is_speaking:") — register a cleaned alias
@@ -879,6 +966,16 @@
   // track before applying it so state left by the previous segment cannot leak
   // into the next one. Scene-level pose values remain the backwards-compatible
   // fallback for segments created before independent poses were supported.
+  // Apply one timed expression mark from a Silence segment's timeline.
+  // Only the fields the mark sets are changed; everything else holds.
+  function applyPoseMark(mark) {
+    if (Number.isFinite(mark.mouth_shape))   { setInput('mouth_shape', mark.mouth_shape); setInput('is_speaking', mark.mouth_shape > 0); }
+    if (Number.isFinite(mark.emotion_state)) { setInput('emotion_state', mark.emotion_state); setInput('eyes_state', mark.emotion_state); lastEmotion = mark.emotion_state; }
+    if (Number.isFinite(mark.body_movement)) { setInput('body_movement', mark.body_movement); setInput('nav_heart', mark.body_movement); }
+    if (Number.isFinite(mark.head_movement)) { setInput('head_movement', mark.head_movement); setInput('head_state', mark.head_movement); }
+    if (Number.isFinite(mark.heart_state))   setInput('heart_state', mark.heart_state);
+  }
+
   function applySegmentPose(config, segment) {
     const pose = { ...(config?.pose || {}), ...(segment?.pose || {}) };
     setInput('mouth_shape', Number.isFinite(pose.mouth_shape) ? pose.mouth_shape : 0);
@@ -915,13 +1012,22 @@
   // ─── Voice lines ─────────────────────────────────────────────────────────────
   async function playVoiceLines(config) {
     if (Array.isArray(config.segments) && config.segments.length) {
-      playSegment(config, 0);
+      // First load of the ?scene= target may jump straight to ?segment=N —
+      // one-time so later navigation through the scene behaves normally.
+      let startIndex = 0;
+      if (devMode && startSegment !== null && !startSegmentUsed && config.id === startScene) {
+        startSegmentUsed = true;
+        const n = Number(startSegment);
+        if (Number.isFinite(n)) startIndex = Math.max(0, Math.min(config.segments.length - 1, n));
+      }
+      playSegment(config, startIndex);
       return;
     }
 
     const bgFiles = getBgFiles(config);
     for (const bg of bgFiles) {
       const bgAudio = makeAudio(sceneAssetUrl(config.id, `audio/${bg}`));
+      bgAudio.loop = shouldLoopBackground(config, bg, false);
       bgAudio.volume = 0.65;
       bgAudio.play().catch(() => {});
       activeBgAudios.push(bgAudio);
@@ -951,11 +1057,9 @@
       showMessage('');
       applyLipSyncMarkers(audio, markers, textCues);
     } catch (err) {
-      showMessage('Tap to play.', false);
-      addSceneTapListener(getActiveTapTarget(), async () => {
+      requestPlaybackTap('touch to hear him', async () => {
         for (const a of activeBgAudios) if (a.paused) a.play().catch(() => {});
         await audio.play();
-        showMessage('');
         applyLipSyncMarkers(audio, markers, textCues);
       });
     }
@@ -993,6 +1097,8 @@
 
     const seg = config.segments[index];
     const isLast = index === config.segments.length - 1;
+    activePlayingSegment = index;
+    segmentsDone = false;
 
     applySegmentPose(config, seg);
     const segmentZone = Object.prototype.hasOwnProperty.call(seg, 'heartZone')
@@ -1012,7 +1118,7 @@
       activeSegmentBgNames = newBgList;
       for (const file of newBgList) {
         const bgAudio = makeAudio(sceneAssetUrl(config.id, `audio/${file}`));
-        bgAudio.loop = true;
+        bgAudio.loop = shouldLoopBackground(config, file, true);
         bgAudio.volume = 0.5;
         bgAudio.play().catch(() => {});
         activeSegmentBgs.push(bgAudio);
@@ -1021,6 +1127,59 @@
 
     if (seg.type === 'chat') {
       playChatSegment(config, index);
+      return;
+    }
+
+    if (seg.type === 'video') {
+      playVideoSegment(config, index);
+      return;
+    }
+
+    if (seg.type === 'pause') {
+      // Silence segment — no voice, no chat. Eli animates through timed
+      // expression marks (seg.marks) while only BG sound plays; after the
+      // duration the trigger decides how to advance (ended = auto,
+      // tap_heart = wait for tap, etc.).
+      setInput('mouth_shape', 0);
+      setInput('is_speaking', false);
+      const durationMs = (Number(seg.duration) || 0) * 1000;
+      const marks = (Array.isArray(seg.marks) ? seg.marks : [])
+        .filter(m => m && Number.isFinite(Number(m.t)))
+        .sort((a, b) => Number(a.t) - Number(b.t));
+      let markFrame = null;
+      let timer = null;
+      const startedAt = performance.now();
+      let mi = 0;
+      const tickMarks = () => {
+        const elapsed = (performance.now() - startedAt) / 1000;
+        while (mi < marks.length && Number(marks[mi].t) <= elapsed) {
+          applyPoseMark(marks[mi]);
+          mi++;
+        }
+        markFrame = mi < marks.length ? requestAnimationFrame(tickMarks) : null;
+      };
+      if (marks.length) markFrame = requestAnimationFrame(tickMarks);
+      const finish = () => {
+        if (markFrame) { cancelAnimationFrame(markFrame); markFrame = null; }
+        if (isLast) {
+          for (const a of activeSegmentBgs) a.pause(); activeSegmentBgs = []; activeSegmentBgNames = [];
+          setupAfterTrigger(config);
+          return;
+        }
+        waitForSegmentTrigger(config, index);
+      };
+      segmentCleanup = () => {
+        if (timer) clearTimeout(timer);
+        if (markFrame) cancelAnimationFrame(markFrame);
+      };
+      if (durationMs > 0) {
+        timer = setTimeout(() => {
+          timer = null;
+          finish();
+        }, durationMs);
+      } else {
+        finish();
+      }
       return;
     }
 
@@ -1066,11 +1225,9 @@
       showMessage('');
       applyLipSyncMarkers(audio, markers, textCues);
     } catch (err) {
-      showMessage('Tap to play.', false);
-      addSceneTapListener(getActiveTapTarget(), async () => {
+      requestPlaybackTap('touch to hear him', async () => {
         for (const a of activeSegmentBgs) if (a.paused) a.play().catch(() => {});
         await audio.play();
-        showMessage('');
         applyLipSyncMarkers(audio, markers, textCues);
       });
     }
@@ -1103,6 +1260,16 @@
     if (seg.message) showMessage(seg.message, false);
 
     if (trigger === 'tap_heart') {
+      // A configured Heart Touch gesture owns this beat. Installing the legacy
+      // pointerup fallback here would let a quick tap bypass an authored hold.
+      const zone = Object.prototype.hasOwnProperty.call(seg, 'heartZone')
+        ? seg.heartZone
+        : config.heartZone;
+      const hasHeartGesture = zone && ['tap', 'doubleTap', 'hold'].some(key => {
+        const action = zone[key];
+        return action && (action.heartState !== undefined || action.input || action.next);
+      });
+      if (hasHeartGesture) return;
       const tapTarget = getActiveTapTarget();
       const handler = () => advanceSegment(config, index);
       tapTarget.addEventListener('pointerup', handler, { once: true });
@@ -1124,6 +1291,67 @@
     };
     pollFrame = requestAnimationFrame(poll);
     segmentCleanup = () => { if (pollFrame) cancelAnimationFrame(pollFrame); };
+  }
+
+  // ─── Video segment ──────────────────────────────────────────────────────────
+  // Plays a full-screen clip over the Rive stage using the shared videoScreen
+  // element, then returns to Eli and advances via the segment's trigger.
+  async function playVideoSegment(config, index) {
+    const seg = config.segments[index];
+    const isLast = index === config.segments.length - 1;
+    const videoFile = seg.video;
+
+    setInput('mouth_shape', 0);
+    setInput('is_speaking', false);
+
+    if (!videoFile) {
+      if (isLast) { setupAfterTrigger(config); return; }
+      waitForSegmentTrigger(config, index);
+      return;
+    }
+
+    videoScreen.style.display = 'flex';
+    sceneVideo.src = sceneAssetUrl(config.id, `audio/${videoFile}`);
+    sceneVideo.load();
+
+    const skipBtn = document.getElementById('videoSkip');
+    const showSkip = seg.skippable !== false;
+    if (skipBtn) skipBtn.style.display = showSkip ? '' : 'none';
+
+    let finished = false;
+    const hideVideo = () => {
+      sceneVideo.pause();
+      sceneVideo.onended = null;
+      sceneVideo.removeAttribute('src');
+      sceneVideo.load();
+      if (skipBtn) { skipBtn.onclick = null; skipBtn.style.display = ''; }
+      videoScreen.style.display = 'none';
+    };
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      hideVideo();
+      if (isLast) {
+        for (const a of activeSegmentBgs) a.pause(); activeSegmentBgs = []; activeSegmentBgNames = [];
+        setupAfterTrigger(config);
+        return;
+      }
+      waitForSegmentTrigger(config, index);
+    };
+
+    sceneVideo.onended = finish;
+    if (skipBtn && showSkip) skipBtn.onclick = finish;
+
+    // Leaving the scene (or jumping segments) mid-video must not leave the
+    // full-screen video sitting over the next scene.
+    segmentCleanup = () => { finished = true; hideVideo(); };
+
+    try {
+      await sceneVideo.play();
+      showMessage('');
+    } catch {
+      requestPlaybackTap('touch to stay with him', async () => { await sceneVideo.play(); });
+    }
   }
 
   // ─── Chat segment ───────────────────────────────────────────────────────────
@@ -1282,8 +1510,16 @@
     return Object.keys(files).filter(f => files[f] === 'bg');
   }
 
+  function shouldLoopBackground(config, filename, defaultValue = false) {
+    const settings = config?.bgLoops;
+    return settings && Object.prototype.hasOwnProperty.call(settings, filename)
+      ? settings[filename] === true
+      : defaultValue;
+  }
+
   // ─── Scene transitions ───────────────────────────────────────────────────────
   function setupAfterTrigger(config) {
+    segmentsDone = true;
     const after = config.after || {};
     if (after.trigger === 'never') {
       if (after.message) showMessage(after.message, false);
@@ -1310,10 +1546,20 @@
 
     const ctaDest = getCtaDestination(name, config);
     if (ctaDest) { loadScene(ctaDest); return; }
-    if (name === 'tap_heart' || name === 'hit_heart') { handleInteraction('tap_heart', config); return; }
+    if (name === 'tap_heart' || name === 'hit_heart') {
+      // An active Heart Touch zone owns heart gestures. The Rive rig's own
+      // heart listeners fire on mere pointer-over, which would bypass the
+      // zone's tap/double-tap/hold timing — so ignore them while a zone is up.
+      if (heartZoneEl) return;
+      handleInteraction('tap_heart', config);
+      return;
+    }
     if (name.startsWith('goto_')) { loadScene(name.slice(5)); return; }
     const after = config.after || {};
     if (after.trigger && name === after.trigger) {
+      // Same gate as handleInteraction: segmented scenes honor the fallback
+      // trigger only after the last segment has ended.
+      if (Array.isArray(config.segments) && config.segments.length && !segmentsDone) return;
       const dest = after.next || nextInSequence(config.id);
       if (dest) { loadScene(dest); return; }
     }
@@ -1383,7 +1629,7 @@
     showCta(label, () => {
       const dest = cta.next || config.after?.next || nextInSequence(config.id);
       if (dest) loadScene(dest);
-      else showMessage('The story ends here — for now.');
+      else showMessage(cta.message || 'The story ends here — for now.');
     }, cta.hold === true);
   }
 
@@ -1444,6 +1690,12 @@
     if (navigator.vibrate) { try { navigator.vibrate(25); } catch {} }
     if (action.next) {
       const destination = String(action.next);
+      // Relative jump — advance to whatever segment follows the one playing.
+      // Past the end, playSegment falls through to the scene's FALLBACK.
+      if (destination === '@segment:next' && Array.isArray(config.segments)) {
+        playSegment(config, Math.min(activePlayingSegment + 1, config.segments.length));
+        return;
+      }
       const segmentMatch = destination.match(/^@segment:(\d+)$/);
       if (segmentMatch && Array.isArray(config.segments)) {
         const index = Number(segmentMatch[1]);
@@ -1479,25 +1731,58 @@
     stage.appendChild(heartZoneEl);
 
     let holdTimer = null;
+    let holdStartedAt = 0;
+    let holdDurationMs = 0;
+    let holdFired = false;
+    let completeHold = null;
     let tapTimer  = null;
     let lastTapAt = 0;
+    let activePointerId = null;
 
     heartZoneEl.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (activePointerId !== null) return;
+      activePointerId = e.pointerId;
+      holdFired = false;
+      try { heartZoneEl.setPointerCapture(e.pointerId); } catch {}
       if (gHold) {
         const dur = Math.max(0.3, Number(gHold.duration) || 3);
-        holdTimer = setTimeout(() => { holdTimer = null; fireHeartAction(gHold, config); }, dur * 1000);
+        holdStartedAt = performance.now();
+        holdDurationMs = dur * 1000;
+        heartZoneEl.style.setProperty('--heart-hold-duration', `${dur}s`);
+        heartZoneEl.classList.add('is-holding');
+        completeHold = () => {
+          if (holdFired) return;
+          holdFired = true;
+          if (holdTimer) clearTimeout(holdTimer);
+          holdTimer = null;
+          heartZoneEl?.classList.remove('is-holding');
+          fireHeartAction(gHold, config);
+        };
+        holdTimer = setTimeout(() => {
+          completeHold();
+        }, holdDurationMs);
         heartZoneTimers.push(holdTimer);
       }
     });
 
-    const cancelHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+    const cancelHold = () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      heartZoneEl?.classList.remove('is-holding');
+    };
 
     heartZoneEl.addEventListener('pointerup', (e) => {
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
       e.stopPropagation();
-      const held = gHold && !holdTimer;   // hold already fired for this press
+      if (gHold && !holdFired && holdTimer &&
+          performance.now() - holdStartedAt >= holdDurationMs) {
+        completeHold?.();
+      }
+      const held = holdFired;
       cancelHold();
+      try { heartZoneEl.releasePointerCapture(e.pointerId); } catch {}
+      activePointerId = null;
       if (held) return;
       const now = performance.now();
       if (gDbl && now - lastTapAt < 340) {
@@ -1518,16 +1803,23 @@
       }
     });
 
-    heartZoneEl.addEventListener('pointercancel', cancelHold);
-    heartZoneEl.addEventListener('pointerleave', cancelHold);
+    heartZoneEl.addEventListener('pointercancel', (e) => {
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
+      cancelHold();
+      activePointerId = null;
+    });
   }
 
   function handleInteraction(type, config) {
     const ctaDest = getCtaDestination(type, config);
     if (ctaDest) { loadScene(ctaDest); return; }
     const after = config.after || {};
-    if (after.trigger === type && after.next) {
-      loadScene(after.next);
+    if (after.trigger === type) {
+      // In a segmented scene the fallback trigger only applies once the last
+      // segment has ended — heart taps mid-story are visual, not navigation.
+      if (Array.isArray(config.segments) && config.segments.length && !segmentsDone) return;
+      const destination = after.next || nextInSequence(config.id);
+      if (destination) loadScene(destination);
     }
   }
 
@@ -1646,9 +1938,13 @@
     textOverlayEl.style.bottom   = '';
     textOverlayEl.style.width    = '';
     textOverlayEl.style.maxWidth = '';
-    if (s.position === 'caption')     { textOverlayEl.style.top = '60px'; textOverlayEl.style.bottom = 'auto'; textOverlayEl.style.width = 'min(90%, 350px)'; textOverlayEl.style.maxWidth = 'min(90%, 350px)'; }
+    textOverlayEl.style.maxHeight = '';
+    textOverlayEl.style.lineHeight = '';
+    textOverlayEl.dataset.position = s.position || 'bottom';
+    if (s.position === 'caption')     { textOverlayEl.style.top = 'max(60px, calc(var(--safe-top) + 48px))'; textOverlayEl.style.bottom = 'auto'; textOverlayEl.style.width = 'min(90%, 350px)'; textOverlayEl.style.maxWidth = 'min(90%, 350px)'; }
     else if (s.position === 'top')    { textOverlayEl.style.top = '12%'; textOverlayEl.style.bottom = 'auto'; }
     else if (s.position === 'center') { textOverlayEl.style.top = '45%'; textOverlayEl.style.bottom = 'auto'; }
+    else if (s.position === 'diary')  { textOverlayEl.style.top = '50%'; textOverlayEl.style.bottom = 'auto'; textOverlayEl.style.width = 'min(62%, 350px)'; textOverlayEl.style.maxWidth = 'min(62%, 350px)'; }
     else                              { textOverlayEl.style.top = ''; textOverlayEl.style.bottom = '15%'; }
 
     const tokens = text.split(/(\s+)/);
@@ -1660,12 +1956,22 @@
     textOverlayEl.innerHTML = html;
     textOverlayEl.classList.add('is-visible');
 
-    // Shrink font to fit the screen so long captions never run off the top/bottom edge
-    const maxOverlayHeight = stableViewportHeight - (s.position === 'caption' ? 100 : 80);
-    let fittedSize = baseFontSize;
+    // Caption CSS used to clip at 30vh while this fitter measured against nearly
+    // the whole screen. Give dialogue a real bounded region and fit within that
+    // exact same value so no final words disappear behind overflow:hidden.
+    const viewportHeight = document.getElementById('phoneScreen')?.clientHeight || stableViewportHeight || window.innerHeight;
+    const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+    const maxOverlayHeight = s.position === 'caption'
+      ? Math.max(220, Math.min(viewportHeight * 0.56, viewportHeight - 190))
+      : Math.max(160, viewportHeight - 100);
+    textOverlayEl.style.maxHeight = `${Math.floor(maxOverlayHeight)}px`;
+    textOverlayEl.style.lineHeight = wordCount > 34 ? '1.3' : '1.5';
+    let fittedSize = wordCount > 60 ? Math.min(baseFontSize, 20)
+      : wordCount > 34 ? Math.min(baseFontSize, 24)
+        : baseFontSize;
     textOverlayEl.style.fontSize = fittedSize + 'px';
-    while (textOverlayEl.scrollHeight > maxOverlayHeight && fittedSize > 12) {
-      fittedSize -= 2;
+    while (textOverlayEl.scrollHeight > maxOverlayHeight && fittedSize > 13) {
+      fittedSize -= 1;
       textOverlayEl.style.fontSize = fittedSize + 'px';
     }
 
@@ -1951,6 +2257,917 @@
     }
   }
 
+  // ─── Memory Thread scene ────────────────────────────────────────────────────
+  // A familiar one-thumb connect gesture with a moral edge: preserving one
+  // complete memory path means allowing the other path to fade.
+  async function playThreadScene(config) {
+    if (!threadScreen || !threadField || !threadNodes || !threadPath || !threadCaption || !threadWhisper || !threadRecovered) {
+      fadeIn(); showMessage('Memory Thread UI is missing.', true); return;
+    }
+    const sceneId = config.id;
+    const t = config.thread || {};
+    const defaultPaths = [
+      { id: 'care', title: 'Someone came back', nodes: ['wet shoes', 'the door', 'her voice'], fragment: 'someone_was_there', signal: 'caution' },
+      { id: 'experiment', title: 'The bright room', nodes: ['cold floor', 'bright light', 'an alarm'], fragment: 'bright_light', signal: 'risk' },
+    ];
+    const paths = (Array.isArray(t.paths) ? t.paths : defaultPaths).slice(0, 2).map((path, index) => ({
+      ...defaultPaths[index],
+      ...(path || {}),
+      nodes: Array.isArray(path?.nodes) && path.nodes.length >= 2 ? path.nodes.slice(0, 5) : defaultPaths[index].nodes,
+    }));
+    const positions = [
+      { x: 18, y: 28 }, { x: 78, y: 70 }, { x: 52, y: 15 },
+      { x: 22, y: 72 }, { x: 82, y: 30 }, { x: 50, y: 86 },
+      { x: 12, y: 50 }, { x: 88, y: 51 }, { x: 50, y: 50 }, { x: 68, y: 49 },
+    ];
+
+    showMessage('');
+    clearTextOverlay();
+    syncViewportVars();
+    threadScreen.style.display = 'flex';
+    threadScreen.className = 'thread-screen';
+    threadNodes.innerHTML = '';
+    threadPath.setAttribute('points', '');
+    threadRecovered.classList.remove('is-visible');
+    threadCaption.textContent = t.intro || 'Some things still belong together.';
+    threadWhisper.textContent = 'draw through the pieces that belong.';
+    fadeIn();
+
+    for (const bg of getBgFiles(config)) {
+      const a = makeAudio(sceneAssetUrl(sceneId, `audio/${bg}`));
+      a.loop = shouldLoopBackground(config, bg, true); a.volume = 0.45; a.play().catch(() => {}); activeBgAudios.push(a);
+    }
+
+    let positionIndex = 0;
+    const nodeButtons = [];
+    paths.forEach((path, pathIndex) => {
+      path.nodes.forEach((label, nodeIndex) => {
+        const pos = positions[positionIndex++ % positions.length];
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'thread-node';
+        button.textContent = label;
+        button.dataset.path = String(pathIndex);
+        button.dataset.node = String(nodeIndex);
+        button.dataset.x = String(pos.x);
+        button.dataset.y = String(pos.y);
+        button.style.left = `${pos.x}%`;
+        button.style.top = `${pos.y}%`;
+        threadNodes.appendChild(button);
+        nodeButtons.push(button);
+      });
+    });
+
+    let drawing = false;
+    let completed = false;
+    let activePath = -1;
+    let crossedPath = false;
+    let selected = [];
+    const selectedKeys = new Set();
+    const later = (fn, ms) => setTimeout(() => { if (currentSceneId === sceneId) fn(); }, ms);
+
+    const renderThread = (livePoint = null) => {
+      const points = selected.map(node => `${node.dataset.x},${node.dataset.y}`);
+      if (livePoint) points.push(`${livePoint.x},${livePoint.y}`);
+      threadPath.setAttribute('points', points.join(' '));
+    };
+    const resetThread = (message) => {
+      drawing = false;
+      threadField.classList.add('is-releasing');
+      if (message) threadWhisper.textContent = message;
+      later(() => {
+        for (const node of selected) node.classList.remove('is-threaded', 'is-uncertain');
+        selected = [];
+        selectedKeys.clear();
+        activePath = -1;
+        crossedPath = false;
+        threadPath.setAttribute('points', '');
+        threadField.classList.remove('is-drawing', 'is-releasing');
+        threadWhisper.textContent = 'draw through the pieces that belong.';
+      }, 620);
+    };
+    const finishPath = (pathIndex) => {
+      completed = true;
+      drawing = false;
+      const chosen = paths[pathIndex];
+      threadScreen.classList.add('is-recovered');
+      threadField.classList.remove('is-drawing');
+      threadPath.classList.add('is-complete');
+      for (const node of nodeButtons) {
+        node.classList.toggle('is-chosen', Number(node.dataset.path) === pathIndex);
+        node.classList.toggle('is-left-behind', Number(node.dataset.path) !== pathIndex);
+      }
+      playHaptic('heartbeat');
+      threadCaption.textContent = t.foundText || 'this is the part you kept.';
+      threadWhisper.textContent = chosen.title || '';
+      threadRecovered.classList.add('is-visible');
+      if (chosen.fragment) {
+        fetch('/api/memory/unlock', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game: gameId || undefined, fragment: chosen.fragment }),
+        }).catch(() => {});
+        recordRecovery(chosen.fragment, sceneId);
+      }
+      if (chosen.signal === 'caution' || chosen.signal === 'risk') {
+        fetch('/api/behavior/signal', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game: gameId || undefined, signal: chosen.signal, scene: sceneId }),
+        }).catch(() => {});
+      }
+      later(() => {
+        threadCaption.textContent = t.carryText || 'take it back to him.';
+        threadWhisper.textContent = '';
+      }, 1700);
+      later(() => setupAfterTrigger(config), 3700);
+    };
+    const addNode = (node) => {
+      if (!node || completed) return;
+      const pathIndex = Number(node.dataset.path);
+      const key = `${pathIndex}:${node.dataset.node}`;
+      if (selectedKeys.has(key)) return;
+      if (activePath < 0) activePath = pathIndex;
+      if (pathIndex !== activePath) {
+        crossedPath = true;
+        node.classList.add('is-uncertain');
+        threadWhisper.textContent = 'those pieces remember different things.';
+        return;
+      }
+      selectedKeys.add(key);
+      selected.push(node);
+      node.classList.add('is-threaded');
+      playHaptic('tap');
+      renderThread();
+    };
+    const pointerPosition = (event) => {
+      const rect = threadField.getBoundingClientRect();
+      return { x: ((event.clientX - rect.left) / rect.width) * 100, y: ((event.clientY - rect.top) / rect.height) * 100 };
+    };
+    const onPointerDown = (event) => {
+      const node = event.target.closest('.thread-node');
+      if (!node || completed) return;
+      event.preventDefault();
+      drawing = true;
+      threadField.classList.add('is-drawing');
+      threadField.setPointerCapture?.(event.pointerId);
+      addNode(node);
+    };
+    const onPointerMove = (event) => {
+      if (!drawing || completed) return;
+      const beneath = document.elementFromPoint(event.clientX, event.clientY)?.closest?.('.thread-node');
+      if (beneath && threadNodes.contains(beneath)) addNode(beneath);
+      renderThread(pointerPosition(event));
+    };
+    const onPointerUp = () => {
+      if (!drawing || completed) return;
+      const needed = paths[activePath]?.nodes.length || Infinity;
+      if (!crossedPath && selected.length >= needed) finishPath(activePath);
+      else resetThread(crossedPath ? 'try another thread.' : 'the thread slips loose.');
+    };
+    threadField.onpointerdown = onPointerDown;
+    threadField.onpointermove = onPointerMove;
+    threadField.onpointerup = onPointerUp;
+    threadField.onpointercancel = onPointerUp;
+  }
+
+  // ─── Memory Words scene ─────────────────────────────────────────────────────
+  // Live Eli in the words screen: a second, small Rive instance with its own
+  // input map, so his mouth can lip-sync while the main canvas stays unused.
+  let wordsEliRiveInstance = null;
+  let wordsEliRiveInputs = new Map();
+  let wordsLipFrame = null;
+  let wordsLipInterval = null;
+  let activeWordsVoice = null;
+
+  function wordsSetInput(name, value) {
+    const input = wordsEliRiveInputs.get(name);
+    if (!input) return;
+    try {
+      if (typeof value === 'boolean') input.value = value;
+      else if (input.type === 3) input.fire();
+      else input.value = Number(value);
+    } catch {}
+  }
+
+  function cleanupWordsEliRive() {
+    if (wordsLipFrame) { cancelAnimationFrame(wordsLipFrame); wordsLipFrame = null; }
+    if (wordsLipInterval) { clearInterval(wordsLipInterval); wordsLipInterval = null; }
+    if (activeWordsVoice) { activeWordsVoice.pause(); activeWordsVoice = null; }
+    if (wordsEliRiveInstance) { try { wordsEliRiveInstance.cleanup(); } catch {} wordsEliRiveInstance = null; }
+    wordsEliRiveInputs = new Map();
+    document.getElementById('wordsEliCanvas')?.remove();
+  }
+
+  function mountWordsEliRive(sceneId, eliRive) {
+    if (!wordsEli || typeof rive === 'undefined' || !rive.Rive) return;
+    let eliCanvas = document.getElementById('wordsEliCanvas');
+    if (!eliCanvas) {
+      eliCanvas = document.createElement('canvas');
+      eliCanvas.id = 'wordsEliCanvas';
+      wordsEli.appendChild(eliCanvas);
+    }
+    if (wordsEliImg) wordsEliImg.style.display = 'none';
+    wordsEli.style.display = '';
+    const dpr = window.devicePixelRatio || 1;
+    const cssSize = Math.round(Math.min(window.innerWidth * 0.38, 220));
+    eliCanvas.width = cssSize * dpr;
+    eliCanvas.height = cssSize * dpr;
+    // Style inline so a stale cached stylesheet can never blow up the layout
+    const eliMask = 'radial-gradient(circle, #000 55%, transparent 72%)';
+    Object.assign(eliCanvas.style, {
+      display: 'block',
+      margin: '0 auto',
+      width: `${cssSize}px`,
+      height: `${cssSize}px`,
+      borderRadius: '50%',
+      webkitMaskImage: eliMask,
+      maskImage: eliMask,
+    });
+    const path = eliRive === 'shared' ? './public/rive/eli.riv' : sceneAssetUrl(sceneId, eliRive);
+    const sharedSmNames = ['EliState', 'EliBody', 'FacialState', 'EmotionState', 'AyesMovements'];
+    getRiveBuffer(path).then(buffer => {
+      let rediscovered = false;
+      const init = (names) => new rive.Rive({
+        buffer,
+        canvas: eliCanvas,
+        autoplay: true,
+        fit: rive.Fit.Contain,
+        alignment: rive.Alignment?.Center,
+        useOffscreenRenderer: true,
+        ...(names.length ? { stateMachines: names } : {}),
+        // setTimeout(0) so this always runs after wordsEliRiveInstance is assigned
+        onLoad: () => setTimeout(() => {
+          const inst = wordsEliRiveInstance;
+          if (!inst) return;
+          const available = names.length ? names : (inst.stateMachineNames || []);
+          if (!names.length && available.length && !rediscovered) {
+            // Bare load told us the real state machine names — reload with them live
+            rediscovered = true;
+            try { inst.cleanup(); } catch {}
+            wordsEliRiveInstance = init(available);
+            return;
+          }
+          wordsEliRiveInputs = collectInputsFrom(inst, available);
+          try { inst.resizeDrawingSurfaceToCanvas?.(); } catch {}
+          wordsSetInput('mouth_shape', 0);
+          wordsSetInput('is_speaking', false);
+          console.log('[words] Eli mounted', { path, stateMachines: available, inputs: [...wordsEliRiveInputs.keys()] });
+        }, 0),
+        onLoadError: () => {
+          console.error('[words] Eli rive failed to load', { path, stateMachines: names });
+          if (names.length) {
+            // Configured state-machine names are stale — retry bare so at
+            // least Eli's artwork shows, then discover the real names
+            try { wordsEliRiveInstance?.cleanup?.(); } catch {}
+            wordsEliRiveInstance = init([]);
+          }
+        },
+      });
+      wordsEliRiveInstance = init(eliRive === 'shared' ? sharedSmNames : []);
+    }).catch((err) => console.error('[words] Eli rive fetch failed', path, err));
+  }
+
+  // Play one of Eli's word-reaction lines, driving his mouth from lip sync
+  // markers when a .lipsync.json exists, or a gentle auto-flap when it doesn't.
+  function playWordsEliLine(sceneId, voiceFile, markers, onEnded) {
+    if (wordsLipFrame) { cancelAnimationFrame(wordsLipFrame); wordsLipFrame = null; }
+    if (wordsLipInterval) { clearInterval(wordsLipInterval); wordsLipInterval = null; }
+    if (activeWordsVoice) activeWordsVoice.pause();
+
+    const audio = makeAudio(sceneAssetUrl(sceneId, `audio/${voiceFile}`));
+    activeWordsVoice = audio;
+    const closeMouth = () => { wordsSetInput('mouth_shape', 0); wordsSetInput('is_speaking', false); };
+    const finish = () => {
+      if (wordsLipFrame) { cancelAnimationFrame(wordsLipFrame); wordsLipFrame = null; }
+      if (wordsLipInterval) { clearInterval(wordsLipInterval); wordsLipInterval = null; }
+      closeMouth();
+      if (onEnded) onEnded();
+    };
+    audio.onended = finish;
+
+    const hasMarkers = Array.isArray(markers) && markers.length;
+    let nextMarker = 0;
+    const tick = () => {
+      if (!audio || audio.ended || audio !== activeWordsVoice) return;
+      if (!audio.paused) {
+        const t = audio.currentTime;
+        while (nextMarker < markers.length && t >= markers[nextMarker].time) {
+          const m = markers[nextMarker];
+          if (Number.isFinite(m.mouth_shape))   { wordsSetInput('mouth_shape', m.mouth_shape); wordsSetInput('is_speaking', m.mouth_shape > 0); }
+          if (Number.isFinite(m.emotion_state)) { wordsSetInput('emotion_state', m.emotion_state); wordsSetInput('eyes_state', m.emotion_state); }
+          if (Number.isFinite(m.head_movement)) { wordsSetInput('head_movement', m.head_movement); wordsSetInput('head_state', m.head_movement); }
+          nextMarker++;
+        }
+      }
+      wordsLipFrame = requestAnimationFrame(tick);
+    };
+
+    audio.play().then(() => {
+      if (hasMarkers) {
+        wordsLipFrame = requestAnimationFrame(tick);
+      } else if (wordsEliRiveInputs.size) {
+        // No lip sync file — simple mouth flapping in speech rhythm
+        wordsSetInput('is_speaking', true);
+        wordsLipInterval = setInterval(() => {
+          wordsSetInput('mouth_shape', 1 + Math.floor(Math.random() * 3));
+        }, 110);
+      }
+    }).catch(finish);
+    return audio;
+  }
+
+  async function playWordsScene(config) {
+    if (!wordsScreen || !wordsCaption || !wordsMemories || !wordsCurrent || !wordsWheel || !wordsLetters || !wordsPath || !wordsReveal || !wordsRecovered) {
+      fadeIn(); showMessage('Memory Words UI is missing.', true); return;
+    }
+    const sceneId = config.id;
+    const w = config.words || {};
+    const letters = String(w.letters || 'MOTHER').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12).split('');
+    const defaults = [
+      { word: 'HOME', reveal: 'wet shoes beside the door' },
+      { word: 'OTHER', reveal: 'a voice in the next room' },
+      { word: 'MOTHER', reveal: 'someone saying his name softly' },
+    ];
+    const memories = (Array.isArray(w.memories) ? w.memories : defaults).slice(0, 3).map((memory, index) => ({
+      ...defaults[index], ...(memory || {}), word: String(memory?.word || defaults[index].word).toUpperCase(),
+    })).filter(memory => memory.word);
+    const found = new Set();
+    let selected = [];
+    let selectedIndexes = new Set();
+    let drawing = false;
+    let complete = false;
+
+    showMessage(''); clearTextOverlay(); syncViewportVars();
+    wordsScreen.style.display = 'flex';
+    wordsScreen.className = 'words-screen';
+    wordsCaption.textContent = w.intro || 'His memories are hiding in the letters.';
+    wordsReveal.textContent = 'swipe through the letters.';
+    wordsCurrent.textContent = '';
+    wordsRecovered.classList.remove('is-visible');
+    wordsPath.setAttribute('points', '');
+    // Eli watching over the puzzle: a live Rive Eli with lip sync (words.eliRive),
+    // or a static portrait (words.eliImage), or nothing.
+    cleanupWordsEliRive();
+    if (wordsEli && wordsEliImg) {
+      wordsEli.classList.remove('is-speaking');
+      if (w.eliRive) {
+        try { mountWordsEliRive(sceneId, w.eliRive); }
+        catch (err) { console.error('words Eli mount failed:', err); wordsEli.style.display = 'none'; }
+      } else if (w.eliImage) {
+        wordsEliImg.src = sceneAssetUrl(sceneId, `audio/${w.eliImage}`);
+        wordsEliImg.style.display = '';
+        wordsEli.style.display = '';
+      } else {
+        wordsEli.style.display = 'none';
+      }
+    }
+    // Pre-fetch lip sync markers for every word voice so mouths sync instantly
+    const wordsVoiceData = new Map();
+    for (const memory of memories) {
+      if (memory.voice) {
+        fetchLipSyncData(sceneId, memory.voice)
+          .then(d => wordsVoiceData.set(memory.word, d))
+          .catch(() => {});
+      }
+    }
+    fadeIn();
+    for (const bg of getBgFiles(config)) {
+      const a = makeAudio(sceneAssetUrl(sceneId, `audio/${bg}`)); a.loop = shouldLoopBackground(config, bg, true); a.volume = .45; a.play().catch(() => {}); activeBgAudios.push(a);
+    }
+
+    const buildCrossword = () => {
+      const cells = new Map();
+      const placements = [];
+      const key = (x, y) => `${x},${y}`;
+      const ordered = [...memories].sort((a, b) => b.word.length - a.word.length);
+      const place = (memory, x, y, direction) => {
+        const dx = direction === 'across' ? 1 : 0;
+        const dy = direction === 'down' ? 1 : 0;
+        const placement = { memory, x, y, direction, cells: [] };
+        for (let i = 0; i < memory.word.length; i++) {
+          const cx = x + dx * i, cy = y + dy * i, cellKey = key(cx, cy);
+          let cell = cells.get(cellKey);
+          if (!cell) { cell = { x: cx, y: cy, letter: memory.word[i], words: new Set() }; cells.set(cellKey, cell); }
+          cell.words.add(memory.word); placement.cells.push(cell);
+        }
+        placements.push(placement);
+      };
+      const canPlace = (memory, x, y, direction) => {
+        const dx = direction === 'across' ? 1 : 0, dy = direction === 'down' ? 1 : 0;
+        for (let i = 0; i < memory.word.length; i++) {
+          const existing = cells.get(key(x + dx * i, y + dy * i));
+          if (existing && existing.letter !== memory.word[i]) return false;
+        }
+        return true;
+      };
+      if (ordered[0]) place(ordered[0], 0, 0, 'across');
+      for (const memory of ordered.slice(1)) {
+        let placed = false;
+        for (const existingPlacement of placements) {
+          for (let wi = 0; wi < memory.word.length && !placed; wi++) {
+            for (let ei = 0; ei < existingPlacement.memory.word.length && !placed; ei++) {
+              if (memory.word[wi] !== existingPlacement.memory.word[ei]) continue;
+              const crossing = existingPlacement.cells[ei];
+              const direction = existingPlacement.direction === 'across' ? 'down' : 'across';
+              const x = crossing.x - (direction === 'across' ? wi : 0);
+              const y = crossing.y - (direction === 'down' ? wi : 0);
+              if (canPlace(memory, x, y, direction)) { place(memory, x, y, direction); placed = true; }
+            }
+          }
+          if (placed) break;
+        }
+        if (!placed) {
+          const maxY = Math.max(0, ...[...cells.values()].map(cell => cell.y));
+          place(memory, 0, maxY + 2, 'across');
+        }
+      }
+      const values = [...cells.values()];
+      const minX = Math.min(0, ...values.map(cell => cell.x));
+      const minY = Math.min(0, ...values.map(cell => cell.y));
+      const maxX = Math.max(0, ...values.map(cell => cell.x));
+      const maxY = Math.max(0, ...values.map(cell => cell.y));
+      return { cells: values, cols: maxX - minX + 1, rows: maxY - minY + 1, minX, minY };
+    };
+    const crossword = buildCrossword();
+    const renderMemorySlots = (newWord = null) => {
+      wordsMemories.style.setProperty('--words-cols', String(crossword.cols));
+      wordsMemories.style.setProperty('--words-rows', String(crossword.rows));
+      const byPosition = new Map(crossword.cells.map(cell => [`${cell.x - crossword.minX},${cell.y - crossword.minY}`, cell]));
+      let html = '';
+      let newIndex = 0;   // stagger: the found word writes itself across the grid
+      for (let y = 0; y < crossword.rows; y++) {
+        for (let x = 0; x < crossword.cols; x++) {
+          const cell = byPosition.get(`${x},${y}`);
+          if (!cell) { html += '<span class="words-tile words-tile--empty"></span>'; continue; }
+          const revealed = [...cell.words].some(word => found.has(word));
+          const isNew = newWord && cell.words.has(newWord);
+          const delay = isNew ? ` style="animation-delay:${newIndex++ * 70}ms"` : '';
+          html += `<span class="words-tile ${revealed ? 'is-revealed' : ''}${isNew ? ' is-new' : ''}"${delay}><span>${revealed ? cell.letter : ''}</span></span>`;
+        }
+      }
+      wordsMemories.innerHTML = html;
+    };
+    renderMemorySlots();
+
+    wordsLetters.innerHTML = '';
+    const letterButtons = [];
+    const radius = letters.length > 9 ? 42 : 38;
+    wordsWheel.style.setProperty('--words-letter-size', letters.length > 9 ? '38px' : letters.length > 7 ? '44px' : '52px');
+    wordsWheel.style.setProperty('--words-letter-font', letters.length > 9 ? '19px' : letters.length > 7 ? '22px' : '25px');
+    letters.forEach((letter, index) => {
+      const angle = (-Math.PI / 2) + (Math.PI * 2 * index / letters.length);
+      const x = 50 + Math.cos(angle) * radius;
+      const y = 50 + Math.sin(angle) * radius;
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'words-letter'; button.textContent = letter;
+      button.dataset.index = String(index); button.dataset.x = String(x); button.dataset.y = String(y);
+      button.style.left = `${x}%`; button.style.top = `${y}%`;
+      wordsLetters.appendChild(button); letterButtons.push(button);
+    });
+
+    const later = (fn, ms) => setTimeout(() => { if (currentSceneId === sceneId) fn(); }, ms);
+    const renderSelection = (live = null) => {
+      const points = selected.map(button => `${button.dataset.x},${button.dataset.y}`);
+      if (live) points.push(`${live.x},${live.y}`);
+      wordsPath.setAttribute('points', points.join(' '));
+      wordsCurrent.textContent = selected.map(button => button.textContent).join('');
+    };
+    const clearSelection = () => {
+      for (const button of selected) button.classList.remove('is-selected');
+      selected = []; selectedIndexes.clear(); wordsPath.setAttribute('points', ''); wordsCurrent.textContent = '';
+    };
+    const finishGame = () => {
+      complete = true;
+      playHaptic('heartbeat');
+      if (w.fragment) {
+        fetch('/api/memory/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({game:gameId||undefined,fragment:w.fragment}) }).catch(()=>{});
+        recordRecovery(w.fragment, sceneId);
+      }
+      // No lingering ember screen — a short beat for the last word's pop to
+      // land, then straight on to the next scene in the sequence.
+      later(() => {
+        const dest = (config.after && config.after.next) || nextInSequence(sceneId);
+        if (dest) loadScene(dest);
+        else setupAfterTrigger(config);
+      }, 900);
+    };
+    const submitWord = () => {
+      drawing = false;
+      const word = selected.map(button => button.textContent).join('');
+      const memory = memories.find(item => item.word === word);
+      if (memory && !found.has(word)) {
+        found.add(word); playHaptic('double'); wordsReveal.textContent = memory.reveal; renderMemorySlots(word);
+        wordsScreen.classList.add('has-new-word'); later(() => wordsScreen.classList.remove('has-new-word'), 700);
+        // Let the traced word swell gold and release before it clears —
+        // the little dopamine beat of "I got it"
+        for (const button of selected) button.classList.remove('is-selected');
+        selected = []; selectedIndexes.clear(); wordsPath.setAttribute('points', '');
+        wordsCurrent.classList.add('is-committing');
+        later(() => { wordsCurrent.classList.remove('is-committing'); wordsCurrent.textContent = ''; }, 560);
+        // Eli reacts out loud when a word is recovered (memory.voice),
+        // lip-syncing if a live Rive Eli is mounted
+        if (memory.voice) {
+          if (wordsEli) wordsEli.classList.add('is-speaking');
+          const isFinal = found.size === memories.length;
+          let finished = false;
+          const go = () => { if (!finished) { finished = true; finishGame(); } };
+          const markers = wordsVoiceData.get(memory.word)?.markers || [];
+          playWordsEliLine(sceneId, memory.voice, markers, () => {
+            if (wordsEli) wordsEli.classList.remove('is-speaking');
+            if (isFinal) later(go, 500);   // let the line land before the finale
+          });
+          if (isFinal) later(go, 10000);   // safety cap if audio never ends
+          return;
+        }
+        if (found.size === memories.length) later(finishGame, 850);
+      } else {
+        wordsCurrent.classList.add('is-dissolving');
+        wordsReveal.textContent = found.has(word) ? 'you already found that memory.' : 'the word slips away.';
+        later(() => { wordsCurrent.classList.remove('is-dissolving'); clearSelection(); }, 450);
+      }
+    };
+    const addLetter = (button) => {
+      if (!button || complete) return;
+      const index = Number(button.dataset.index);
+      if (selectedIndexes.has(index)) return;
+      selectedIndexes.add(index); selected.push(button); button.classList.add('is-selected'); playHaptic('tap'); renderSelection();
+    };
+    const pointerPos = event => { const rect=wordsWheel.getBoundingClientRect(); return {x:(event.clientX-rect.left)/rect.width*100,y:(event.clientY-rect.top)/rect.height*100}; };
+    wordsWheel.onpointerdown = event => {
+      const button = event.target.closest('.words-letter'); if (!button || complete) return;
+      event.preventDefault(); drawing = true; wordsWheel.setPointerCapture?.(event.pointerId); addLetter(button);
+    };
+    wordsWheel.onpointermove = event => {
+      if (!drawing || complete) return;
+      const button = document.elementFromPoint(event.clientX,event.clientY)?.closest?.('.words-letter');
+      if (button && wordsLetters.contains(button)) addLetter(button);
+      renderSelection(pointerPos(event));
+    };
+    wordsWheel.onpointerup = () => { if (drawing && !complete) submitWord(); };
+    wordsWheel.onpointercancel = () => { if (drawing && !complete) submitWord(); };
+  }
+
+  // ─── Pairs (memory game) scene ───────────────────────────────────────────────
+  // A proven match-the-pairs loop reskinned as remembering: every matched pair
+  // is a fragment of Eli's memory. Winning reports the scene's fragment to the
+  // server so Eli's chat brain can reference it, then follows FALLBACK.
+  const PAIRS_GLYPHS = ['☾', '☂', '✉', '⌛', '♪', '❀', '✶', '☁', '⚘', '✂', '☕', '⚷'];
+
+  function pairsDayKey(sceneId) {
+    return `eli.pairs.${gameId || 'default'}.${sceneId}`;
+  }
+
+  // A mini-game win leaves a short-lived "just recovered" record so the next
+  // chat scene can open with Eli noticing it (Beat 5). Consumed on read.
+  function recoveredKey() {
+    return `eli.recovered.${gameId || 'default'}`;
+  }
+  function recordRecovery(fragment, sceneId) {
+    try { localStorage.setItem(recoveredKey(), JSON.stringify({ fragment, sceneId, ts: Date.now() })); } catch {}
+  }
+  function consumeRecovery(maxAgeMs = 30 * 60 * 1000) {
+    try {
+      const raw = localStorage.getItem(recoveredKey());
+      if (!raw) return null;
+      localStorage.removeItem(recoveredKey());
+      const rec = JSON.parse(raw);
+      return rec && rec.fragment && (Date.now() - rec.ts) < maxAgeMs ? rec : null;
+    } catch { return null; }
+  }
+
+  // Read without consuming: the Give ritual may look at the carried fragment,
+  // but only Eli's first chat response is allowed to spend it.
+  function peekRecovery(maxAgeMs = 30 * 60 * 1000) {
+    try {
+      const raw = localStorage.getItem(recoveredKey());
+      if (!raw) return null;
+      const rec = JSON.parse(raw);
+      return rec && rec.fragment && (Date.now() - rec.ts) < maxAgeMs ? rec : null;
+    } catch { return null; }
+  }
+
+  async function playPairsScene(config) {
+    if (!pairsScreen || !pairsBoard) { fadeIn(); showMessage('Pairs UI is missing.', true); return; }
+    const sceneId = config.id;
+    const p = config.pairs || {};
+    showMessage('');
+    clearTextOverlay();
+    syncViewportVars();
+    pairsScreen.style.display = 'flex';
+    pairsScreen.classList.remove('is-recovered');
+    pairsBoard.innerHTML = '';
+    pairsFound.textContent = '';
+    fadeIn();
+
+    // Timers die with the scene — a stray flip-back or win advance from a
+    // previous board must never fire into the scene that replaced it.
+    const later = (fn, ms) => setTimeout(() => { if (currentSceneId === sceneId) fn(); }, ms);
+
+    // Background audio (same file roles as every other scene)
+    for (const bg of getBgFiles(config)) {
+      const a = makeAudio(sceneAssetUrl(sceneId, `audio/${bg}`));
+      a.loop = shouldLoopBackground(config, bg, true); a.volume = 0.5;
+      a.play().catch(() => {});
+      activeBgAudios.push(a);
+    }
+
+    // Once-per-day lock (off unless the editor enables it; previews bypass it)
+    const today = new Date().toISOString().slice(0, 10);
+    let locked = false;
+    if (p.daily === true && !devMode) {
+      try { locked = localStorage.getItem(pairsDayKey(sceneId)) === today; } catch {}
+    }
+    if (locked) {
+      pairsCaption.textContent = p.lockText || 'He’s resting now... come back tomorrow.';
+      pairsCaption.classList.add('is-visible');
+      return;
+    }
+
+    pairsCaption.textContent = p.intro || 'Help him remember...';
+    pairsCaption.classList.add('is-visible');
+
+    // Card faces: uploaded images with the "card" role, else built-in glyphs
+    const files = config.files || {};
+    const cardImgs = Object.keys(files).filter(f => files[f] === 'card');
+    const count = Math.max(2, Math.min(12, Math.round(Number(p.count)) || 6));
+    const faces = cardImgs.length >= count
+      ? cardImgs.slice(0, count).map(f => ({ img: sceneAssetUrl(sceneId, `audio/${f}`) }))
+      : PAIRS_GLYPHS.slice(0, count).map(g => ({ glyph: g }));
+
+    const deck = faces.flatMap((face, key) => [{ face, key }, { face, key }]);
+    for (let i = deck.length - 1; i > 0; i--) {          // Fisher–Yates shuffle
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+
+    const cols = deck.length <= 8 ? 3 : 4;
+    pairsBoard.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    let first = null;         // first flipped card this turn
+    let inputLocked = false;  // during the mismatch flip-back
+    let matched = 0;
+    let mismatches = 0;
+    let choices = 0;
+    let lastChoiceAt = performance.now();
+    let totalChoiceMs = 0;
+
+    function onWin() {
+      playHaptic('heartbeat');
+      pairsScreen.classList.add('is-recovered');
+      pairsCaption.textContent = p.foundText || 'you found something he lost.';
+      pairsCaption.classList.add('is-visible');
+      pairsFound.innerHTML = '<span class="pairs-recovered-ember" aria-hidden="true"></span>';
+      if (p.daily === true && !devMode) { try { localStorage.setItem(pairsDayKey(sceneId), today); } catch {} }
+      if (p.fragment) {
+        fetch('/api/memory/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game: gameId || undefined, fragment: p.fragment }),
+        }).catch(() => {});
+        recordRecovery(p.fragment, sceneId);
+      }
+      // Temporary extraction proxy: quick uncertain guesses lean risk; slower,
+      // accurate observation leans caution. Only the aggregate reaches Eli.
+      const averageChoiceMs = choices ? totalChoiceMs / choices : 0;
+      const signal = mismatches >= 3 || averageChoiceMs < 900 ? 'risk' : 'caution';
+      fetch('/api/behavior/signal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: gameId || undefined, signal, scene: sceneId }),
+      }).catch(() => {});
+      later(() => {
+        pairsCaption.textContent = p.carryText || 'take it back to him.';
+      }, 1550);
+      later(() => setupAfterTrigger(config), 3500);
+    }
+
+    for (const card of deck) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pairs-card';
+      btn.innerHTML = `
+        <span class="pairs-card__inner">
+          <span class="pairs-card__back"></span>
+          <span class="pairs-card__face">${card.face.img
+            ? `<img src="${card.face.img}" alt="" draggable="false" />`
+            : `<span class="pairs-card__glyph">${card.face.glyph}</span>`}</span>
+        </span>`;
+      btn.addEventListener('click', () => {
+        if (inputLocked || btn.classList.contains('is-flipped') || btn.classList.contains('is-matched')) return;
+        ensureMumbleUnlocked();
+        const choiceAt = performance.now();
+        totalChoiceMs += choiceAt - lastChoiceAt;
+        lastChoiceAt = choiceAt;
+        choices++;
+        btn.classList.add('is-flipped');
+        playHaptic('tap');
+        if (!first) { first = { btn, key: card.key }; return; }
+
+        if (first.key === card.key) {
+          btn.classList.add('is-matched');
+          first.btn.classList.add('is-matched');
+          first = null;
+          matched++;
+          playHaptic('double');
+          pairsFound.textContent = matched < count ? (p.progressText || 'something is taking shape') : '';
+          if (matched === count) later(onWin, 650);
+        } else {
+          mismatches++;
+          const a = first.btn;
+          first = null;
+          inputLocked = true;
+          later(() => {
+            a.classList.remove('is-flipped');
+            btn.classList.remove('is-flipped');
+            inputLocked = false;
+          }, 750);
+        }
+      });
+      pairsBoard.appendChild(btn);
+    }
+  }
+
+  // ─── Jigsaw (photo restoration) scene ────────────────────────────────────────
+  // A proven jigsaw loop reskinned as reconstructing a memory: the photo is
+  // shuffled into tiles, tap two to swap. Solving it reveals the picture,
+  // reports the scene's fragment to the server so Eli's chat brain can
+  // reference it, then follows FALLBACK.
+  function jigsawDayKey(sceneId) {
+    return `eli.jigsaw.${gameId || 'default'}.${sceneId}`;
+  }
+
+  // Grid shape per piece count — kept in sync with the editor's options.
+  const JIGSAW_GRIDS = { 4: [2, 2], 6: [3, 2], 9: [3, 3], 12: [3, 4], 16: [4, 4] };  // pieces → [cols, rows]
+
+  // No photo uploaded yet → draw a placeholder in the game's look so the
+  // scene stays testable before art exists (same spirit as the pairs glyphs).
+  function jigsawPlaceholder() {
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 800;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#0d0a07';
+    ctx.fillRect(0, 0, 600, 800);
+    const glow = ctx.createRadialGradient(300, 430, 40, 300, 430, 360);
+    glow.addColorStop(0, 'rgba(150, 30, 12, 0.5)');
+    glow.addColorStop(1, 'rgba(150, 30, 12, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, 600, 800);
+    ctx.font = '200px Schoolbell, cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#C1A376';
+    ctx.shadowColor = 'rgba(193, 163, 118, 0.5)';
+    ctx.shadowBlur = 30;
+    ctx.fillText('☾', 300, 400);
+    return c.toDataURL('image/png');
+  }
+
+  async function playJigsawScene(config) {
+    if (!jigsawScreen || !jigsawBoard) { fadeIn(); showMessage('Jigsaw UI is missing.', true); return; }
+    const sceneId = config.id;
+    const j = config.jigsaw || {};
+    showMessage('');
+    clearTextOverlay();
+    syncViewportVars();
+    jigsawScreen.style.display = 'flex';
+    jigsawBoard.innerHTML = '';
+    jigsawBoard.classList.remove('is-solved');
+    jigsawPlaced.textContent = '';
+    fadeIn();
+
+    // Timers die with the scene — a stray win advance from a previous board
+    // must never fire into the scene that replaced it.
+    const later = (fn, ms) => setTimeout(() => { if (currentSceneId === sceneId) fn(); }, ms);
+
+    // Background audio (same file roles as every other scene)
+    for (const bg of getBgFiles(config)) {
+      const a = makeAudio(sceneAssetUrl(sceneId, `audio/${bg}`));
+      a.loop = shouldLoopBackground(config, bg, true); a.volume = 0.5;
+      a.play().catch(() => {});
+      activeBgAudios.push(a);
+    }
+
+    // Once-per-day lock (off unless the editor enables it; previews bypass it)
+    const today = new Date().toISOString().slice(0, 10);
+    let locked = false;
+    if (j.daily === true && !devMode) {
+      try { locked = localStorage.getItem(jigsawDayKey(sceneId)) === today; } catch {}
+    }
+    if (locked) {
+      jigsawCaption.textContent = j.lockText || 'He’s resting now... come back tomorrow.';
+      jigsawCaption.classList.add('is-visible');
+      return;
+    }
+
+    jigsawCaption.textContent = j.intro || 'Put it back together...';
+    jigsawCaption.classList.add('is-visible');
+
+    // The photo: uploaded image with the "photo" role, else the placeholder
+    const files = config.files || {};
+    const photoFile = Object.keys(files).find(f => files[f] === 'photo') || null;
+    const photoUrl = photoFile ? sceneAssetUrl(sceneId, `audio/${photoFile}`) : jigsawPlaceholder();
+
+    const pieces = JIGSAW_GRIDS[Number(j.pieces)] ? Number(j.pieces) : 9;
+    const [cols, rows] = JIGSAW_GRIDS[pieces];
+    jigsawBoard.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    jigsawBoard.style.setProperty('--jigsaw-aspect', `${cols} / ${rows}`);
+
+    // Shuffle slot order (Fisher–Yates), re-shuffling if it lands solved
+    let order;
+    do {
+      order = Array.from({ length: pieces }, (_, i) => i);
+      for (let i = order.length - 1; i > 0; i--) {
+        const k = Math.floor(Math.random() * (i + 1));
+        [order[i], order[k]] = [order[k], order[i]];
+      }
+    } while (order.every((v, i) => v === i));
+
+    let selected = null;      // first tapped tile this turn
+    let solvedLock = false;   // input freeze during the win reveal
+
+    const countPlaced = () =>
+      [...jigsawBoard.children].filter((el, slot) => Number(el.dataset.piece) === slot).length;
+
+    function updatePlaced() {
+      const placed = countPlaced();
+      jigsawPlaced.textContent = `${placed} / ${pieces}`;
+      return placed;
+    }
+
+    function onWin() {
+      solvedLock = true;
+      playHaptic('heartbeat');
+      jigsawCaption.textContent = '';
+      jigsawCaption.classList.remove('is-visible');
+      jigsawPlaced.textContent = '';
+      jigsawBoard.classList.add('is-solved');   // seams fade — the photo becomes whole
+      if (j.daily === true && !devMode) { try { localStorage.setItem(jigsawDayKey(sceneId), today); } catch {} }
+      if (j.fragment) {
+        fetch('/api/memory/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game: gameId || undefined, fragment: j.fragment }),
+        }).catch(() => {});
+        recordRecovery(j.fragment, sceneId);
+      }
+      later(() => showTextOverlay(j.winText || 'I remember this...', 5, { fontSize: 30, color: '#C1A376', position: 'center', fontWeight: '700' }), 1400);
+      later(() => setupAfterTrigger(config), 4600);
+    }
+
+    // Tiles live in fixed grid slots; swapping exchanges which photo piece a
+    // slot shows (data-piece + background-position) — no DOM reordering.
+    const pieceBgPos = (piece) => {
+      const px = piece % cols, py = Math.floor(piece / cols);
+      return `${cols === 1 ? 0 : (px / (cols - 1)) * 100}% ${rows === 1 ? 0 : (py / (rows - 1)) * 100}%`;
+    };
+
+    function setPiece(tile, piece) {
+      tile.dataset.piece = String(piece);
+      tile.style.backgroundPosition = pieceBgPos(piece);
+      tile.classList.toggle('is-placed', Number(tile.dataset.slot) === piece);
+    }
+
+    order.forEach((piece, slot) => {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'jigsaw-tile';
+      tile.dataset.slot = String(slot);
+      tile.style.backgroundImage = `url("${photoUrl}")`;
+      tile.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
+      setPiece(tile, piece);
+      tile.addEventListener('click', () => {
+        if (solvedLock) return;
+        ensureMumbleUnlocked();
+        if (selected === tile) {          // tap again to deselect
+          tile.classList.remove('is-selected');
+          selected = null;
+          return;
+        }
+        playHaptic('tap');
+        if (!selected) {
+          selected = tile;
+          tile.classList.add('is-selected');
+          return;
+        }
+        // Swap the two pieces
+        const a = selected;
+        selected = null;
+        a.classList.remove('is-selected');
+        const pa = Number(a.dataset.piece);
+        const pb = Number(tile.dataset.piece);
+        setPiece(a, pb);
+        setPiece(tile, pa);
+        a.classList.remove('is-swapped'); tile.classList.remove('is-swapped');
+        void a.offsetWidth;               // restart the pulse animation
+        a.classList.add('is-swapped'); tile.classList.add('is-swapped');
+        const placedNow = a.classList.contains('is-placed') || tile.classList.contains('is-placed');
+        playHaptic(placedNow ? 'double' : 'soft');
+        if (updatePlaced() === pieces) later(onWin, 500);
+      });
+      jigsawBoard.appendChild(tile);
+    });
+    updatePlaced();
+  }
+
   // ─── Video scene ─────────────────────────────────────────────────────────────
   async function playVideoScene(config) {
     clearTextOverlay();
@@ -1986,7 +3203,12 @@
     if (skipBtn) skipBtn.onclick = skipNext;
 
     fadeIn();
-    try { await sceneVideo.play(); } catch { showMessage('Tap to play video.'); }
+    try {
+      await sceneVideo.play();
+      showMessage('');
+    } catch {
+      requestPlaybackTap('touch to stay with him', async () => { await sceneVideo.play(); });
+    }
   }
 
   // ─── Chat scene ──────────────────────────────────────────────────────────────
@@ -2043,10 +3265,24 @@
     chatForm.style.display = 'none';
 
     const hasSegments = Array.isArray(config.segments) && config.segments.length;
+    const hasVoice = getVoiceFile(config);
+    const waitingRecovery = peekRecovery();
+
+    // Treat beat: a recovered fragment must be deliberately held into Eli's
+    // heart before the Notice beat can begin. Segmented scenes can explicitly
+    // opt in by defining `give`, allowing an authored finale after the ritual.
+    const shouldGive = waitingRecovery && (config.give || (!hasSegments && !hasVoice && config.give !== false));
+    if (shouldGive) {
+      await playGiveRitual(config.give || {});
+      if (currentSceneId !== config.id) return;
+      // Segment/voice finales provide their own authored Notice line, so they
+      // spend the recovery here. Open chat remains the consumer otherwise.
+      if (hasSegments || hasVoice) consumeRecovery();
+    }
+
     if (hasSegments) {
       playSegment(config, 0);
     } else {
-      const hasVoice = getVoiceFile(config);
       if (hasVoice) {
         playVoiceLines(config);
         const waitForDone = setInterval(() => {
@@ -2115,6 +3351,26 @@
       }
     }
 
+    // If the player just recovered a memory in a mini-game, Eli speaks first
+    // and notices it — the payoff is the noticing, not a reward screen.
+    // Skipped for segment/voice scenes so it can't talk over authored lines.
+    if (!hasSegments && !getVoiceFile(config)) {
+      const rec = consumeRecovery();
+      if (rec) {
+        const memoryId = String(rec.fragment).toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+        const authoredLine = config.recoveredLines?.[memoryId];
+        if (authoredLine) {
+          chatMessages.push({ role: 'assistant', content: authoredLine });
+          setInput('emotion_state', 6);
+          setInput('heart_state', 5);
+          setInput('body_movement', 3);
+          showTextOverlay(authoredLine, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700' });
+        } else {
+          sendMessage(`[The player just completed the remembering ritual and helped you recover a memory: "${rec.fragment}". The fog has lifted a little — you feel slightly clearer, slightly steadier, and it is because of them. Open by noticing this yourself: reference that memory specifically, with quiet wonder, as if it just surfaced. Do not thank them like a game reward and do not mention any game — the memory itself is the gift. Use emotion "remembering" and body "heart_glow" in this reply.]`);
+        }
+      }
+    }
+
     const chatSubmitHandler = (e) => {
       e.preventDefault();
       ensureMumbleUnlocked();
@@ -2126,6 +3382,137 @@
       chatForm.removeEventListener('submit', chatSubmitHandler);
       voiceCleanup();
     };
+  }
+
+  function playGiveRitual(rawConfig) {
+    const ritual = document.getElementById('giveRitual');
+    const ember = document.getElementById('giveEmber');
+    const heart = document.getElementById('giveHeart');
+    const glow = document.getElementById('giveGlow');
+    const whisper = document.getElementById('giveWhisper');
+    if (!ritual || !ember || !heart || !glow || !whisper) return Promise.resolve();
+
+    const holdMs = Math.max(800, Number(rawConfig.holdMs) || 3200);
+    const hint = rawConfig.hint || "he can't take it himself.";
+    const timers = [];
+    let frame = null;
+    let startedAt = 0;
+    let earlyReleases = 0;
+    let complete = false;
+    let settled = false;
+    let resolveRitual;
+    const done = new Promise(resolve => { resolveRitual = resolve; });
+    const later = (fn, ms) => { const id = setTimeout(fn, ms); timers.push(id); return id; };
+
+    const setProgress = (value) => {
+      const p = Math.max(0, Math.min(1, value));
+      ritual.style.setProperty('--give-progress', String(p));
+      setInput('give_progress', p * 100);
+    };
+    const resetVisuals = () => {
+      ritual.classList.remove('is-holding');
+      ritual.classList.add('was-released');
+      setProgress(0);
+      setInput('heart_state', 6);
+      setInput('body_movement', 0);
+      later(() => ritual.classList.remove('was-released'), 420);
+    };
+    const cancelHold = () => {
+      if (complete || !startedAt) return;
+      startedAt = 0;
+      if (frame) cancelAnimationFrame(frame);
+      frame = null;
+      earlyReleases++;
+      resetVisuals();
+      if (earlyReleases === 2) {
+        later(() => {
+          whisper.textContent = rawConfig.retryHint || 'gently. all the way.';
+          whisper.classList.add('is-visible');
+        }, 2000);
+      }
+    };
+    const finish = () => {
+      complete = true;
+      startedAt = 0;
+      if (frame) cancelAnimationFrame(frame);
+      frame = null;
+      ritual.classList.remove('is-holding');
+      ritual.classList.add('is-complete');
+      setProgress(1);
+      playHaptic('soft');
+      setInput('heart_state', 5);
+      later(() => setInput('emotion_state', 6), 400);
+      later(() => setInput('body_movement', 15), 800);
+      later(() => setInput('body_movement', 3), 1600);
+      later(() => { whisper.textContent = '...'; whisper.classList.add('is-visible'); }, 2200);
+      later(() => {
+        ritual.classList.add('is-exiting');
+        later(cleanup, 320);
+      }, 3000);
+    };
+    const update = () => {
+      if (!startedAt || complete) return;
+      const progress = Math.min(1, (performance.now() - startedAt) / holdMs);
+      setProgress(progress);
+      if (progress >= 1) finish();
+      else frame = requestAnimationFrame(update);
+    };
+    const startHold = (event) => {
+      if (complete || startedAt) return;
+      event.preventDefault();
+      heart.setPointerCapture?.(event.pointerId);
+      startedAt = performance.now();
+      ritual.classList.remove('was-released');
+      ritual.classList.add('is-holding');
+      setInput('heart_state', 1);
+      setInput('body_movement', 3);
+      playHaptic('tap');
+      playHaptic('heartbeat');
+      later(() => { if (startedAt && !complete) playHaptic('heartbeat'); }, 1200);
+      later(() => { if (startedAt && !complete) playHaptic('heartbeat'); }, 2400);
+      update();
+    };
+    const onVisibility = () => { if (document.hidden) cancelHold(); };
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      for (const id of timers) clearTimeout(id);
+      if (frame) cancelAnimationFrame(frame);
+      heart.removeEventListener('pointerdown', startHold);
+      heart.removeEventListener('pointerup', cancelHold);
+      heart.removeEventListener('pointercancel', cancelHold);
+      heart.removeEventListener('lostpointercapture', cancelHold);
+      document.removeEventListener('visibilitychange', onVisibility);
+      ritual.className = 'give-ritual';
+      ritual.setAttribute('aria-hidden', 'true');
+      whisper.classList.remove('is-visible');
+      setProgress(0);
+      activeGiveCleanup = null;
+      resolveRitual();
+    };
+
+    activeGiveCleanup = cleanup;
+    ritual.className = 'give-ritual is-active';
+    ritual.setAttribute('aria-hidden', 'false');
+    whisper.textContent = '';
+    setProgress(0);
+    setInput('heart_state', 6);
+    heart.addEventListener('pointerdown', startHold);
+    heart.addEventListener('pointerup', cancelHold);
+    heart.addEventListener('pointercancel', cancelHold);
+    heart.addEventListener('lostpointercapture', cancelHold);
+    document.addEventListener('visibilitychange', onVisibility);
+    later(() => {
+      whisper.textContent = hint;
+      whisper.classList.add('is-visible');
+    }, 2000);
+    later(() => {
+      if (!startedAt && !complete) {
+        whisper.classList.remove('is-visible');
+        later(() => { whisper.textContent = hint; whisper.classList.add('is-visible'); }, 500);
+      }
+    }, 12000);
+    return done;
   }
 
   // ─── Emotion / body mapping ──────────────────────────────────────────────────
@@ -2192,12 +3579,34 @@
     }
     chatScreen.style.display  = 'none';
     if (memoryScreen) memoryScreen.style.display = 'none';
+    if (threadScreen) threadScreen.style.display = 'none';
+    if (wordsScreen) wordsScreen.style.display = 'none';
+    if (pairsScreen) pairsScreen.style.display = 'none';
+    if (jigsawScreen) jigsawScreen.style.display = 'none';
   }
 
   function showMessage(text, isError = false) {
+    messageEl.onclick = null;
+    messageEl.style.pointerEvents = 'none';
     messageEl.textContent  = text;
     messageEl.style.display = text ? 'block' : 'none';
     messageEl.classList.toggle('is-error', !!isError);
+  }
+
+  function requestPlaybackTap(text, onStart) {
+    showMessage(text, false);
+    messageEl.style.pointerEvents = 'auto';
+    messageEl.style.cursor = 'pointer';
+    messageEl.onclick = async () => {
+      messageEl.onclick = null;
+      messageEl.style.pointerEvents = 'none';
+      try {
+        await onStart();
+        showMessage('');
+      } catch {
+        requestPlaybackTap(text, onStart);
+      }
+    };
   }
 
   function fadeOut() {

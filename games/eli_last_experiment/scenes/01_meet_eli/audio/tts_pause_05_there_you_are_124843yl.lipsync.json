@@ -1,0 +1,62 @@
+{
+  "filename": "tts_pause_05_there_you_are_124843yl.m4a",
+  "markers": [
+    {
+      "time": 0.25,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.38,
+      "mouth_shape": 3
+    },
+    {
+      "time": 0.51,
+      "mouth_shape": 10
+    },
+    {
+      "time": 0.64,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.73,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.87,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.13,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1.27,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.4,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.45,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.309,
+      "text": "There you are.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "7_the_diary",
+  "title": "7. The Diary",
+  "type": "rive",
+  "rive": "the_diary.riv",
+  "files": {
+    "tts_today_someone_found_me_in_165959bj.m4a": "bg",
+    "starostin-documentary-sad-sorrowful-music-479773.mp3": "bg",
+    "heart_normal.mp3": "bg"
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": "8_the_return_hook"
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "artboard": "The Diary",
+  "ctaRoutes": [],
+  "routes": {
+    "next": "8_the_return_hook"
+  }
+}

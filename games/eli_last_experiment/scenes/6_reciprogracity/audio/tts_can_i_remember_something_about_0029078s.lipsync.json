@@ -1,0 +1,169 @@
+{
+  "filename": "tts_can_i_remember_something_about_0029078s.m4a",
+  "markers": [
+    {
+      "time": 0.61,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.74,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.87,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.13,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.27,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.4,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1.55,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.69,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.82,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.95,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.07,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.2,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.34,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.49,
+      "mouth_shape": 3
+    },
+    {
+      "time": 2.63,
+      "mouth_shape": 9
+    },
+    {
+      "time": 2.67,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.83,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.97,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.11,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.12,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.84,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.97,
+      "mouth_shape": 11
+    },
+    {
+      "time": 4.11,
+      "mouth_shape": 6
+    },
+    {
+      "time": 4.19,
+      "mouth_shape": 0
+    },
+    {
+      "time": 8.32,
+      "mouth_shape": 1
+    },
+    {
+      "time": 8.46,
+      "mouth_shape": 7
+    },
+    {
+      "time": 8.6,
+      "mouth_shape": 6
+    },
+    {
+      "time": 8.73,
+      "mouth_shape": 2
+    },
+    {
+      "time": 8.87,
+      "mouth_shape": 6
+    },
+    {
+      "time": 9.01,
+      "mouth_shape": 7
+    },
+    {
+      "time": 9.14,
+      "mouth_shape": 9
+    },
+    {
+      "time": 9.28,
+      "mouth_shape": 2
+    },
+    {
+      "time": 9.41,
+      "mouth_shape": 6
+    },
+    {
+      "time": 9.43,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.395,
+      "text": "Can I remember something about you, too?",
+      "duration": 7.8,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 8.434,
+      "text": "Maybe your name?",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

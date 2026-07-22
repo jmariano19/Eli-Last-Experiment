@@ -1,0 +1,209 @@
+{
+  "filename": "tts_i_can_still_feel_the_1842518l.m4a",
+  "markers": [
+    {
+      "time": 1.31,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.45,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.58,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.74,
+      "mouth_shape": 3
+    },
+    {
+      "time": 1.87,
+      "mouth_shape": 10
+    },
+    {
+      "time": 2.01,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.18,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.26,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.45,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.59,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.6,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.73,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.86,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.96,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.03,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.18,
+      "mouth_shape": 8
+    },
+    {
+      "time": 3.32,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.46,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.59,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.72,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.86,
+      "mouth_shape": 3
+    },
+    {
+      "time": 3.92,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.84,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.98,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.17,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.31,
+      "mouth_shape": 11
+    },
+    {
+      "time": 5.45,
+      "mouth_shape": 6
+    },
+    {
+      "time": 5.58,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.06,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.15,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.23,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.32,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.51,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.64,
+      "mouth_shape": 11
+    },
+    {
+      "time": 6.78,
+      "mouth_shape": 7
+    },
+    {
+      "time": 6.84,
+      "mouth_shape": 0
+    },
+    {
+      "time": 7.15,
+      "mouth_shape": 5
+    },
+    {
+      "time": 7.29,
+      "mouth_shape": 1
+    },
+    {
+      "time": 7.41,
+      "mouth_shape": 0
+    },
+    {
+      "time": 7.5,
+      "mouth_shape": 1
+    },
+    {
+      "time": 7.64,
+      "mouth_shape": 2
+    },
+    {
+      "time": 7.67,
+      "mouth_shape": 0
+    },
+    {
+      "time": 7.79,
+      "mouth_shape": 5
+    },
+    {
+      "time": 7.96,
+      "mouth_shape": 6
+    },
+    {
+      "time": 7.97,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 1.268,
+      "text": "I can still feel the words.",
+      "duration": 3.3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 4.784,
+      "text": "They’re there, but they’re all mixed together.",
+      "duration": 3.9,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

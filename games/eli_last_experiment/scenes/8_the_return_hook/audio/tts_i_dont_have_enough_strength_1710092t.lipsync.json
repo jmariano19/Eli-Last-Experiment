@@ -1,0 +1,300 @@
+{
+  "filename": "tts_i_dont_have_enough_strength_1710092t.m4a",
+  "markers": [
+    {
+      "time": 0.53,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.66,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.71,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.37,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.51,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.62,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.91,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.05,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.18,
+      "mouth_shape": 11
+    },
+    {
+      "time": 2.29,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.45,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.53,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.64,
+      "mouth_shape": 8
+    },
+    {
+      "time": 2.78,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.91,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.05,
+      "mouth_shape": 10
+    },
+    {
+      "time": 3.19,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.32,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.41,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.51,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.52,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.82,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.89,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.06,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.25,
+      "mouth_shape": 7
+    },
+    {
+      "time": 4.39,
+      "mouth_shape": 2
+    },
+    {
+      "time": 4.4,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.66,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.8,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.97,
+      "mouth_shape": 8
+    },
+    {
+      "time": 4.98,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.48,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.62,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.75,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.89,
+      "mouth_shape": 11
+    },
+    {
+      "time": 7.03,
+      "mouth_shape": 2
+    },
+    {
+      "time": 7.16,
+      "mouth_shape": 0
+    },
+    {
+      "time": 7.3,
+      "mouth_shape": 5
+    },
+    {
+      "time": 7.44,
+      "mouth_shape": 11
+    },
+    {
+      "time": 7.6,
+      "mouth_shape": 7
+    },
+    {
+      "time": 7.66,
+      "mouth_shape": 0
+    },
+    {
+      "time": 9.7,
+      "mouth_shape": 1
+    },
+    {
+      "time": 9.82,
+      "mouth_shape": 0
+    },
+    {
+      "time": 9.99,
+      "mouth_shape": 8
+    },
+    {
+      "time": 10.13,
+      "mouth_shape": 6
+    },
+    {
+      "time": 10.27,
+      "mouth_shape": 7
+    },
+    {
+      "time": 10.29,
+      "mouth_shape": 0
+    },
+    {
+      "time": 10.46,
+      "mouth_shape": 5
+    },
+    {
+      "time": 10.6,
+      "mouth_shape": 2
+    },
+    {
+      "time": 10.68,
+      "mouth_shape": 0
+    },
+    {
+      "time": 10.83,
+      "mouth_shape": 8
+    },
+    {
+      "time": 10.96,
+      "mouth_shape": 7
+    },
+    {
+      "time": 11.1,
+      "mouth_shape": 9
+    },
+    {
+      "time": 11.23,
+      "mouth_shape": 6
+    },
+    {
+      "time": 11.34,
+      "mouth_shape": 0
+    },
+    {
+      "time": 11.5,
+      "mouth_shape": 1
+    },
+    {
+      "time": 11.65,
+      "mouth_shape": 11
+    },
+    {
+      "time": 11.79,
+      "mouth_shape": 3
+    },
+    {
+      "time": 11.95,
+      "mouth_shape": 5
+    },
+    {
+      "time": 12.08,
+      "mouth_shape": 0
+    },
+    {
+      "time": 12.21,
+      "mouth_shape": 1
+    },
+    {
+      "time": 12.33,
+      "mouth_shape": 0
+    },
+    {
+      "time": 12.42,
+      "mouth_shape": 1
+    },
+    {
+      "time": 12.55,
+      "mouth_shape": 7
+    },
+    {
+      "time": 12.59,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.297,
+      "text": "I don’t have enough strength to reach it yet.",
+      "duration": 5.7,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 6.387,
+      "text": "But when I do…",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 9.635,
+      "text": "I really need to know what happened to me",
+      "duration": 3.5,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "0_start",
+  "title": "0_start",
+  "type": "rive",
+  "rive": "start.riv",
+  "files": {
+    "heart_normal.mp3": "bg"
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": "01_meet_eli"
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "artboard": "Entri",
+  "segments": [
+    {
+      "voice": "",
+      "trigger": "ended",
+      "cta_label": "",
+      "cta_next": "",
+      "cta_hold": false
+    }
+  ]
+}

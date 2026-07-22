@@ -1,0 +1,28 @@
+{
+  "filename": "tts_theres_more_behind_that_memory_195103jl.m4a",
+  "markers": [],
+  "textCues": [
+    {
+      "time": 0.246,
+      "text": "There’s more behind that memory.",
+      "duration": 3.6,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 4.828,
+      "text": "But I don’t have enough strength to reach it yet.",
+      "duration": 4.9,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}

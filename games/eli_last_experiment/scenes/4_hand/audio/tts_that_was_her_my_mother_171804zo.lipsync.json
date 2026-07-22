@@ -1,0 +1,157 @@
+{
+  "filename": "tts_that_was_her_my_mother_171804zo.m4a",
+  "markers": [
+    {
+      "time": 0.53,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.66,
+      "mouth_shape": 9
+    },
+    {
+      "time": 0.78,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.98,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.11,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.31,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.45,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.58,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.72,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.68,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.82,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.83,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.03,
+      "mouth_shape": 1
+    },
+    {
+      "time": 4.18,
+      "mouth_shape": 6
+    },
+    {
+      "time": 4.25,
+      "mouth_shape": 0
+    },
+    {
+      "time": 4.54,
+      "mouth_shape": 5
+    },
+    {
+      "time": 4.68,
+      "mouth_shape": 7
+    },
+    {
+      "time": 4.81,
+      "mouth_shape": 6
+    },
+    {
+      "time": 4.95,
+      "mouth_shape": 2
+    },
+    {
+      "time": 5.13,
+      "mouth_shape": 7
+    },
+    {
+      "time": 5.17,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.38,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.54,
+      "mouth_shape": 7
+    },
+    {
+      "time": 5.68,
+      "mouth_shape": 2
+    },
+    {
+      "time": 5.76,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.91,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.01,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.17,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.31,
+      "mouth_shape": 10
+    },
+    {
+      "time": 6.33,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.48,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.54,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": [
+    {
+      "time": 0.516,
+      "text": "That was her.",
+      "duration": 3,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    },
+    {
+      "time": 3.763,
+      "text": "My mother was trying to pull me toward her.",
+      "duration": 3.6,
+      "fontSize": 24,
+      "color": "#c1a376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 90,
+      "lipSync": true
+    }
+  ]
+}
