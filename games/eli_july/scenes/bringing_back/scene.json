@@ -1,0 +1,70 @@
+{
+  "id": "bringing_back",
+  "title": "Bringing back",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_there_was_someone_inside_my_19400320.m4a": "voice",
+    "low.mp3": "bg",
+    "tts_you_know_something_about_me_211106a0.m4a": "voice",
+    "tts_what_should_i_call_you_211149jd.m4a": "voice",
+    "tts_ill_write_it_down_pause_211549ey.m4a": "voice"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "eli_s_diary"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "bgLoops": {
+    "low.mp3": true
+  },
+  "segments": [
+    {
+      "voice": "tts_there_was_someone_inside_my_19400320.m4a",
+      "trigger": "ended"
+    },
+    {
+      "voice": "tts_you_know_something_about_me_211106a0.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 3
+    },
+    {
+      "voice": "tts_what_should_i_call_you_211149jd.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 3
+    },
+    {
+      "type": "chat",
+      "opening": "",
+      "max_exchanges": 1,
+      "context_hint": "Eli asked for name ",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "voice": "tts_ill_write_it_down_pause_211549ey.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2.5
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "filename": "could_you_keep_your_hand_011822n5.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "heart_state": 2
+    },
+    {
+      "time": 0.22,
+      "emotion_state": 11
+    },
+    {
+      "time": 0.29,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.42,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.55,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.63,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.72,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.85,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.98,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.11,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.25,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.38,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.52,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.65,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.79,
+      "mouth_shape": 10
+    },
+    {
+      "time": 1.93,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.06,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.18,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.29,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.33,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.731,
+      "heart_state": 2
+    }
+  ],
+  "textCues": []
+}

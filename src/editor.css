@@ -463,6 +463,41 @@ html, body {
   accent-color: var(--green);
 }
 
+.file-row__download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  border-radius: 4px;
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.file-row__download:hover {
+  color: var(--green);
+  background: rgba(83,238,134,0.1);
+}
+
+.lipsync-download {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(126,184,247,0.28);
+  border-radius: 4px;
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.lipsync-download:hover {
+  color: var(--green);
+  border-color: rgba(83,238,134,0.4);
+  background: rgba(83,238,134,0.08);
+}
+
 .upload-zone {
   display: flex;
   align-items: center;
@@ -779,6 +814,8 @@ html, body {
 }
 .pause-mark:hover { box-shadow: 0 0 0 3px rgba(179,157,219,0.25); }
 .pause-mark.is-active { background: #fff; box-shadow: 0 0 0 3px rgba(179,157,219,0.45); }
+.pause-mark { cursor: grab; touch-action: none; }
+.pause-mark.is-dragging { cursor: grabbing; box-shadow: 0 0 0 4px rgba(179,157,219,0.5); }
 .pause-timeline-scale {
   display: flex;
   justify-content: space-between;
@@ -2455,6 +2492,22 @@ html, body {
   height: 100%;
   max-height: calc(100vh - 60px);
 }
+
+/* ─── Video captions ──────────────────────────────────────────────────────── */
+
+.caption-rows { padding: 4px 14px 0; }
+
+.caption-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.caption-row__time { width: 62px; flex: none; }
+.caption-row__unit { opacity: 0.5; font-size: 11px; flex: none; }
+.caption-row__text { flex: 1; min-width: 0; }
+.caption-row__dur  { width: 62px; flex: none; }
+.caption-row__delete { flex: none; }
 
 /* ─── File rename ─────────────────────────────────────────────────────────── */
 

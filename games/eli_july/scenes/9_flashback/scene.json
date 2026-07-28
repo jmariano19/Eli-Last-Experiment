@@ -1,0 +1,15 @@
+{
+  "id": "9_flashback",
+  "title": "9.Flashback",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "memory_flash.mp4": "video"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "bringing_back"
+  },
+  "ctaRoutes": []
+}

@@ -4,6 +4,18 @@
   "start": "intro",
   "scenes": [
     "intro",
-    "1_eli"
+    "1_eli",
+    "2_remembering",
+    "3_the_memory_slips",
+    "4_memory",
+    "5_playground",
+    "6_words",
+    "7_bring_back",
+    "8_eli",
+    "9_flashback",
+    "bringing_back",
+    "eli_s_diary",
+    "last_memory",
+    "end"
   ]
 }

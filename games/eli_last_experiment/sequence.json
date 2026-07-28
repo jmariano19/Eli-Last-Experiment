@@ -3,6 +3,7 @@
   "title": "Eli Last Experiment",
   "start": "0_start",
   "scenes": [
+    "the_memory_film",
     "0_start",
     "01_meet_eli",
     "3_mom",

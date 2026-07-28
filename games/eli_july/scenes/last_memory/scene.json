@@ -1,0 +1,54 @@
+{
+  "id": "last_memory",
+  "title": "last_memory",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_theres_something_else_behind_that_221130t0.m4a": "voice",
+    "freesound_community-woman-sigh-101931.mp3": "voice",
+    "low.mp3": "bg",
+    "tts_that_voice_i_know_that_22183789.m4a": "voice"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "end"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "tts_theres_something_else_behind_that_221130t0.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "voice": "freesound_community-woman-sigh-101931.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "freesound_community-woman-sigh-101931.mp3",
+        "low.mp3"
+      ]
+    },
+    {
+      "voice": "tts_that_voice_i_know_that_22183789.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2
+    }
+  ],
+  "bgLoops": {
+    "freesound_community-woman-sigh-101931.mp3": false
+  }
+}

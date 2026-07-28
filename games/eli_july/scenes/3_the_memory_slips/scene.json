@@ -1,0 +1,75 @@
+{
+  "id": "3_the_memory_slips",
+  "title": "3_The Memory Slips",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_youre_still_here_pause_15_182330lj.m4a": "voice",
+    "low.mp3": "bg",
+    "tts_every_time_i_reach_for_184433du.m4a": "voice",
+    "tts_maybe_you_can_see_what_184712to.m4a": "voice",
+    "tts_every_time_i_reach_for_104237gg.m4a": "voice"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "type": "pause",
+      "duration": 3,
+      "trigger": "ended",
+      "voice": "low.mp3",
+      "bgs": [
+        "low.mp3"
+      ],
+      "marks": [
+        {
+          "t": 0,
+          "emotion_state": 9
+        },
+        {
+          "t": 2.9,
+          "emotion_state": 1
+        }
+      ]
+    },
+    {
+      "voice": "tts_every_time_i_reach_for_104237gg.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2
+    },
+    {
+      "voice": "tts_maybe_you_can_see_what_184712to.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "pause",
+      "duration": 0.5,
+      "trigger": "ended",
+      "cta_label": "Remember",
+      "cta_hold": true,
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 1,
+      "cta_next": "4_memory"
+    }
+  ]
+}

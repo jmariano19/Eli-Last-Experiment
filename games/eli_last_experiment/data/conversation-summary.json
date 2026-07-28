@@ -1,4 +1,25 @@
 {
   "summary": "",
-  "recent_messages": []
+  "recent_messages": [
+    {
+      "role": "user",
+      "content": "[The player is here, listening.]"
+    },
+    {
+      "role": "assistant",
+      "content": "What do you notice in the memory?"
+    },
+    {
+      "role": "user",
+      "content": "she was holding you"
+    },
+    {
+      "role": "assistant",
+      "content": "Before you go… what should I remember about you?"
+    },
+    {
+      "role": "user",
+      "content": "jeff"
+    }
+  ]
 }

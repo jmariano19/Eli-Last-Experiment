@@ -1,23 +1,26 @@
 {
-  "bond_level": 0,
+  "bond_level": 2,
   "chapter": 1,
-  "emotional_state": "uncertain",
-  "memories_unlocked": [],
+  "emotional_state": "happy",
+  "memories_unlocked": [
+    "someone_was_there"
+  ],
   "memories_available": [
     "cold_feeling",
-    "someone_was_there",
     "bright_light",
     "a_voice",
     "the_experiment",
     "before_it_happened",
     "who_i_was"
   ],
-  "player_name": null,
+  "player_name": "Jeff",
   "things_player_shared": [],
-  "open_thread": null,
+  "open_thread": "Eli wants to tell Jeff about the missing note in the humming — when he's stronger",
   "questions_player_asked": [],
-  "things_eli_shared": [],
-  "conversation_count": 0,
+  "things_eli_shared": [
+    "Her hand felt like the only warm thing in the room"
+  ],
+  "conversation_count": 2,
   "behavior_signals": {
     "caution_risk": {
       "score": 0,

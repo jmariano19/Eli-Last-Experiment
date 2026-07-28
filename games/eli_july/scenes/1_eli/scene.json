@@ -4,14 +4,20 @@
   "type": "rive",
   "rive": "shared",
   "files": {
-    "tts_there_you_are_183922h0.m4a": "voice",
     "low.mp3": "bg",
-    "tts_i_thought_i_was_alone_190421ge.m4a": "voice"
+    "there_you_are.m4a": "voice",
+    "i_thought_i_was_alone.m4a": "voice",
+    "medium.mp3": "bg",
+    "ha_you_stayed_16173151.m4a": "voice",
+    "my_thoughts_keep_slipping_away_000242z2.m4a": "voice",
+    "could_you_keep_your_hand_011822n5.m4a": "voice",
+    "ha.mp3": "voice",
+    "tts_something_moved_when_you_touched_161210qv.m4a": "voice"
   },
   "after": {
-    "trigger": "tap_heart",
+    "trigger": "auto",
     "message": "",
-    "next": null
+    "next": "2_remembering"
   },
   "stateMachines": [
     "EliState",
@@ -23,8 +29,8 @@
   ],
   "ctaRoutes": [],
   "bgLoops": {
-    "tts_there_you_are_183922h0.m4a": false,
-    "low.mp3": true
+    "low.mp3": true,
+    "there_you_are.m4a": false
   },
   "segments": [
     {
@@ -32,14 +38,15 @@
       "duration": 3,
       "trigger": "ended",
       "pose": {
-        "emotion_state": 9
+        "emotion_state": 9,
+        "heart_state": 0
       },
       "bgs": [
         "low.mp3"
       ]
     },
     {
-      "voice": "tts_there_you_are_183922h0.m4a",
+      "voice": "there_you_are.m4a",
       "trigger": "ended",
       "bgs": [
         "low.mp3"
@@ -47,11 +54,61 @@
       "delay": 1.5
     },
     {
-      "voice": "tts_i_thought_i_was_alone_190421ge.m4a",
+      "voice": "i_thought_i_was_alone.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2.5
+    },
+    {
+      "voice": "my_thoughts_keep_slipping_away_000242z2.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "medium.mp3"
+      ]
+    },
+    {
+      "voice": "could_you_keep_your_hand_011822n5.m4a",
+      "trigger": "tap_heart",
+      "bgs": [
+        "medium.mp3"
+      ],
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "hold": {
+          "heartState": 0,
+          "next": "@segment:next",
+          "duration": 2.5
+        }
+      }
+    },
+    {
+      "voice": "ha_you_stayed_16173151.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 0
+    },
+    {
+      "voice": "ha.mp3",
       "trigger": "ended",
       "bgs": [
         "low.mp3"
       ]
+    },
+    {
+      "voice": "tts_something_moved_when_you_touched_161210qv.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "cta_next": "2_remembering",
+      "delay": 2
     }
-  ]
+  ],
+  "artboard": "Eli"
 }

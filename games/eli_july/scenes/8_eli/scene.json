@@ -1,0 +1,51 @@
+{
+  "id": "8_eli",
+  "title": "8.Eli",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_you_brought_them_back_to_190726lm.m4a": "voice",
+    "low.mp3": "bg",
+    "tts_not_the_moments_themselves_but_172556g7.m4a": "voice",
+    "tts_i_thought_the_past_was_172757d5.m4a": "voice"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "9_flashback"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "voice": "tts_you_brought_them_back_to_190726lm.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2
+    },
+    {
+      "voice": "tts_not_the_moments_themselves_but_172556g7.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2
+    },
+    {
+      "voice": "tts_i_thought_the_past_was_172757d5.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
+    }
+  ]
+}

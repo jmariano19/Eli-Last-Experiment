@@ -1,0 +1,114 @@
+{
+  "id": "5_playground",
+  "title": "5_playground",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "low.mp3": "bg",
+    "kid_playing.mp3": "bg",
+    "ha.mp3": "voice",
+    "tts_a_playground_yes_i_remember_1130431n.m4a": "voice",
+    "tts_when_you_name_something_it_162044yb.m4a": "voice",
+    "tts_the_children_are_going_no_1639224z.m4a": "voice",
+    "tts_i_used_to_think_people_1642378b.m4a": "voice",
+    "tts_its_getting_cold_again_pause_164423fk.m4a": "voice",
+    "medium.mp3": "bg",
+    "tts_the_cold_stopped_pause_05_170339va.m4a": "voice",
+    "tts_ohh_no_the_children_where_112948tm.m4a": "voice"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "6_words"
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": [],
+  "bgLoops": {
+    "kid_playing.mp3": true,
+    "ha.mp3": false
+  },
+  "segments": [
+    {
+      "voice": "tts_a_playground_yes_i_remember_1130431n.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "kid_playing.mp3",
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "chat",
+      "opening": "What do you notice?",
+      "max_exchanges": 1,
+      "context_hint": "",
+      "trigger": "ended",
+      "bgs": [
+        "kid_playing.mp3",
+        "low.mp3"
+      ]
+    },
+    {
+      "voice": "tts_when_you_name_something_it_162044yb.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "kid_playing.mp3",
+        "low.mp3"
+      ],
+      "delay": 3
+    },
+    {
+      "voice": "tts_ohh_no_the_children_where_112948tm.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "medium.mp3"
+      ]
+    },
+    {
+      "voice": "ha.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "ha.mp3"
+      ]
+    },
+    {
+      "voice": "tts_its_getting_cold_again_pause_164423fk.m4a",
+      "trigger": "tap_heart",
+      "bgs": [
+        "ha.mp3",
+        "medium.mp3"
+      ],
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "hold": {
+          "heartState": 0,
+          "next": "@segment:6",
+          "duration": 3
+        }
+      }
+    },
+    {
+      "voice": "tts_the_cold_stopped_pause_05_170339va.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "voice": "ha.mp3",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 3
+    }
+  ]
+}

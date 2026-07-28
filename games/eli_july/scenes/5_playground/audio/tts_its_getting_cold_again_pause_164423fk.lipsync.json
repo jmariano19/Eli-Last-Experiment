@@ -1,0 +1,147 @@
+{
+  "filename": "tts_its_getting_cold_again_pause_164423fk.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 7,
+      "heart_state": 2
+    },
+    {
+      "time": 0.34,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.43,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.56,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.69,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.7,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.79,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.97,
+      "mouth_shape": 11
+    },
+    {
+      "time": 0.98,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.39,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.53,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.54,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.8,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.83,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.97,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.99,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.512,
+      "emotion_state": 11
+    },
+    {
+      "time": 5.34,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.35,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.54,
+      "mouth_shape": 1
+    },
+    {
+      "time": 5.61,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.92,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.96,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.17,
+      "mouth_shape": 8
+    },
+    {
+      "time": 6.2,
+      "mouth_shape": 0
+    },
+    {
+      "time": 8.46,
+      "mouth_shape": 8
+    },
+    {
+      "time": 8.51,
+      "mouth_shape": 0
+    },
+    {
+      "time": 8.68,
+      "mouth_shape": 8
+    },
+    {
+      "time": 8.71,
+      "mouth_shape": 0
+    },
+    {
+      "time": 9.11,
+      "mouth_shape": 8
+    },
+    {
+      "time": 9.17,
+      "mouth_shape": 0
+    },
+    {
+      "time": 9.34,
+      "mouth_shape": 8
+    },
+    {
+      "time": 9.45,
+      "mouth_shape": 0
+    },
+    {
+      "time": 9.65,
+      "mouth_shape": 8
+    },
+    {
+      "time": 9.78,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": []
+}

@@ -20,7 +20,7 @@ if (existsSync(envPath)) {
 
 // Bump when the editor/server API contract changes — the editor refuses to
 // run against a mismatched server instead of failing in confusing ways.
-const API_VERSION = 7;
+const API_VERSION = 8;
 
 const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
 const chatModel    = process.env.CHAT_MODEL || 'claude-sonnet-4-6';
@@ -744,8 +744,9 @@ function sanitizeMarkers(raw) {
     return Number.isFinite(m.mouth_shape) || Number.isFinite(m.emotion_state) || Number.isFinite(m.body_movement) || Number.isFinite(m.head_movement) || Number.isFinite(m.heart_state) || Array.isArray(m.haptic);
   }).map(m => {
     const s = { time: Math.max(0, Number(m.time)) };
-    if (Number.isFinite(m.mouth_shape))   s.mouth_shape   = Math.max(0, Math.min(16, Math.round(Number(m.mouth_shape))));
-    if (Number.isFinite(m.emotion_state)) s.emotion_state = Math.max(0, Math.min(13, Math.round(Number(m.emotion_state))));
+    // Keep these caps in sync with MOUTH_LABELS / EMOTION_LABELS in editor.js
+    if (Number.isFinite(m.mouth_shape))   s.mouth_shape   = Math.max(0, Math.min(18, Math.round(Number(m.mouth_shape))));
+    if (Number.isFinite(m.emotion_state)) s.emotion_state = Math.max(0, Math.min(14, Math.round(Number(m.emotion_state))));
     if (Number.isFinite(m.body_movement)) s.body_movement = Math.max(0, Math.min(17, Math.round(Number(m.body_movement))));
     if (Number.isFinite(m.head_movement)) s.head_movement = Math.max(0, Math.min(8,  Math.round(Number(m.head_movement))));
     if (Number.isFinite(m.heart_state))   s.heart_state   = Math.max(0, Math.min(8,  Math.round(Number(m.heart_state))));
@@ -1149,8 +1150,10 @@ function runCmd(cmd, args, timeoutMs = 60000) {
 function prepareTtsTranscript(text) {
   return String(text || '')
     .replace(/\[pause:\s*([0-9]+(?:\.[0-9]+)?)\]/gi, (_, seconds) => {
+      // Capped at 3 tokens — the model stretches each one already, and 5 in a
+      // row made it wander off into very long audio
       const value = Math.min(5, Math.max(0.1, Number(seconds) || 1));
-      const repeats = Math.min(5, Math.max(1, Math.round(value / 0.7)));
+      const repeats = Math.min(3, Math.max(1, Math.round(value / 1.2)));
       return ` ${Array.from({ length: repeats }, () => '... [short pause]').join(' ')} `;
     })
     .replace(/\s+/g, ' ')
@@ -1206,11 +1209,66 @@ function buildGeminiTtsPrompt(style, text) {
     'Perform only the transcript below. Do not add, remove, or explain words.',
     'Treat [short pause] tags and ellipses as silent hesitation, not spoken text.',
     'Treat words wrapped in asterisks as soft acting emphasis, not spoken punctuation.',
-    'Keep the delivery intimate and realistic, with natural breathiness and long sleepy pauses.',
+    'Keep the delivery intimate and realistic, with natural breathiness and gentle pauses.',
+    'Each [short pause] is a brief beat of about one second — never stretch any single pause beyond two seconds.',
+    'Begin speaking immediately and end right after the last word — no long silence at the start or end.',
     'Avoid announcer energy, theatrical projection, or a cartoon voice.',
     '',
     `Transcript: [whispering, very slow, sleepy] "${transcript}"`,
   ].join('\n');
+}
+
+// Trim Gemini's raw PCM (24 kHz mono 16-bit) in pure JS — no ffmpeg needed.
+// Cuts dead air at the start/end and squeezes any internal silence longer
+// than 3s down to ~2.2s, leaving normal speech pauses untouched.
+function trimPcmSilence(pcm, sampleRate = 24000) {
+  const WIN = Math.round(sampleRate * 0.02);          // 20 ms windows
+  const THRESHOLD = 150;                              // ≈ -47 dBFS peak — whisper-safe
+  const samples = Math.floor(pcm.length / 2);
+  const nWin = Math.floor(samples / WIN);
+  if (nWin < 4) return pcm;
+
+  // Peak amplitude per window → silent yes/no
+  const silent = new Array(nWin);
+  for (let w = 0; w < nWin; w++) {
+    let peak = 0;
+    const base = w * WIN;
+    for (let s = 0; s < WIN; s++) {
+      const v = Math.abs(pcm.readInt16LE((base + s) * 2));
+      if (v > peak) peak = v;
+    }
+    silent[w] = peak < THRESHOLD;
+  }
+
+  const secs = (w) => (w * WIN) / sampleRate;
+  const winsFor = (sec) => Math.round((sec * sampleRate) / WIN);
+
+  // Leading / trailing silence — keep a small breath either side
+  let first = 0;                 while (first < nWin && silent[first]) first++;
+  let last  = nWin - 1;          while (last > first && silent[last]) last--;
+  if (first >= last) return pcm; // all-silent safety
+  first = Math.max(0, first - winsFor(0.25));
+  last  = Math.min(nWin - 1, last + winsFor(0.4));
+
+  // Internal silences: any run longer than 3s shrinks to 2.2s
+  const MAX_RUN = winsFor(3), KEEP_RUN = winsFor(2.2);
+  const keep = [];
+  let w = first;
+  while (w <= last) {
+    if (!silent[w]) { keep.push(w); w++; continue; }
+    let end = w;
+    while (end <= last && silent[end]) end++;
+    const runLen = end - w;
+    const keepLen = runLen > MAX_RUN ? KEEP_RUN : runLen;
+    for (let k = 0; k < keepLen; k++) keep.push(w + k);
+    w = end;
+  }
+
+  const out = Buffer.alloc(keep.length * WIN * 2);
+  keep.forEach((win, i) => {
+    pcm.copy(out, i * WIN * 2, win * WIN * 2, (win + 1) * WIN * 2);
+  });
+  return out;
 }
 
 async function handleTts(req, res) {
@@ -1296,7 +1354,7 @@ async function handleTts(req, res) {
             }
           } catch {}
           const daily = /day|daily/i.test(quotaId) || /per day|daily/i.test(gMsg);
-          rateLimits.push({ model, daily, retrySec });
+          rateLimits.push({ model, daily, retrySec, quotaId });
           lastDetail = `rate limit (429${quotaId ? ` — ${quotaId}` : ''})`;
           console.warn(`Gemini TTS: ${model} rate-limited (${quotaId || 'unknown quota'}${retrySec ? `, retry in ~${retrySec}s` : ''}), trying next model`);
           continue;
@@ -1322,18 +1380,25 @@ async function handleTts(req, res) {
         if (rateLimits.length) {
           const allDaily  = rateLimits.every(r => r.daily);
           const retrySec  = Math.max(60, ...rateLimits.filter(r => !r.daily).map(r => r.retrySec));
+          const quotaNames = [...new Set(rateLimits.map(r => r.quotaId).filter(Boolean))].join(', ');
           const error = allDaily
-            ? 'Gemini DAILY TTS quota used up for this API key — the free tier only allows a small number of TTS requests per day. It resets at midnight Pacific time. Until then, use the Natural (Kokoro) or Draft voice, or upgrade the key to a paid tier.'
-            : `Gemini rate limit hit — wait ~${retrySec} seconds and try again.${rateLimits.some(r => r.daily) ? ' (Note: some fallback models have also exhausted their daily free-tier quota.)' : ''}`;
+            ? `Gemini DAILY TTS quota used up for this API key${quotaNames ? ` (quota: ${quotaNames})` : ''}. If you pay for Google AI Pro/Gemini Advanced, note that does NOT cover API usage — the key's Google Cloud project needs billing enabled at aistudio.google.com/apikey. Resets at midnight Pacific.`
+            : `Gemini rate limit hit — wait ~${retrySec} seconds and try again.${rateLimits.some(r => r.daily) ? ' (Note: some fallback models have also exhausted their daily free-tier quota.)' : ''}${quotaNames ? ` (quota: ${quotaNames})` : ''}`;
           sendJson(res, 429, { error });
           return;
         }
         sendJson(res, 502, { error: `Gemini returned no audio (${lastDetail.slice(0, 160)}). Try again, or simplify the acting marks.` });
         return;
       }
-      await writeFile(`${tmpBase}.wav`, pcmToWav(Buffer.from(b64, 'base64')));
+      const rawPcm = Buffer.from(b64, 'base64');
+      const pcm = trimPcmSilence(rawPcm);
+      const duration = Math.round((pcm.length / 2 / 24000) * 10) / 10;
+      console.log(`Gemini TTS: raw ${(rawPcm.length / 2 / 24000).toFixed(1)}s → trimmed ${duration}s`);
+      await writeFile(`${tmpBase}.wav`, pcmToWav(pcm));
       const r2 = await convertToM4a(`${tmpBase}.wav`, outPath);
       if (!r2.ok) { sendJson(res, 500, { error: `Audio conversion failed: ${r2.err}` }); return; }
+      sendJson(res, 200, { ok: true, filename, duration });
+      return;
     } else {
       const venvPy = join(root, 'tts', 'venv', 'bin', 'python');
       const script = join(root, 'tts', 'kokoro-tts.py');

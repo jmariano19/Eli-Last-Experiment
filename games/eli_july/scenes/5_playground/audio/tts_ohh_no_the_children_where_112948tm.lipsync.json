@@ -1,0 +1,102 @@
+{
+  "filename": "tts_ohh_no_the_children_where_112948tm.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 7
+    },
+    {
+      "time": 0.39,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.52,
+      "mouth_shape": 6
+    },
+    {
+      "time": 0.53,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.69,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.82,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.95,
+      "mouth_shape": 11
+    },
+    {
+      "time": 1.06,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.71,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.84,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.98,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.99,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.15,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.28,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.39,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.11,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.25,
+      "mouth_shape": 7
+    },
+    {
+      "time": 3.29,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.42,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.54,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.62,
+      "mouth_shape": 5
+    },
+    {
+      "time": 3.76,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.9,
+      "mouth_shape": 2
+    },
+    {
+      "time": 3.99,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": []
+}

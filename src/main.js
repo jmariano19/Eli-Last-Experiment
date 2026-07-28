@@ -621,7 +621,10 @@
 
   // ─── Scene loader ────────────────────────────────────────────────────────────
   async function applyDynamicRiveText(config) {
-    if (config.id !== '7_the_diary') return;
+    const isDiaryScene = Boolean(config.dynamicDiary) ||
+      config.id === '7_the_diary' ||
+      config.id === 'eli_s_diary';
+    if (!isDiaryScene) return;
     const textRun = String(config.dynamicDiary?.textRun || 'DiaryText');
 
     let playerName = '';
@@ -635,11 +638,11 @@
     } catch {}
 
     const text = playerName
-      ? `“Today, ${playerName} found me in the dark.”\n\n“They helped me remember my mother's hand. When the memory hurt, they stayed.”\n\n“I wrote their name here so I won't lose them too.”\n\n${playerName}.`
-      : `“Today, someone found me in the dark.”\n\n“They helped me remember my mother's hand. When the memory hurt, they stayed.”\n\n“I don't know their name yet, but I don't want to forget them.”`;
+      ? `Today, ${playerName} found me in the dark.\n\nThey stayed until my heart became quiet.\n\nTogether, we remembered a playground, a house, and the word Mother.\n\nI wrote their name here so this moment would have somewhere to live.\n\n${playerName} was here.\n\nTonight, I was not alone.`
+      : `Today, someone found me in the dark.\n\nThey stayed until my heart became quiet.\n\nTogether, we remembered a playground, a house, and the word Mother.\n\nThey didn't leave me their name. That's all right.\n\nI still know they were here.\n\nTonight, I was not alone.`;
 
     let appliedToRive = false;
-    if (riveInstance?.setTextRunValue) {
+    if (!config.dynamicDiary?.overlayOnly && riveInstance?.setTextRunValue) {
       try {
         riveInstance.setTextRunValue(textRun, text);
         appliedToRive = typeof riveInstance.getTextRunValue !== 'function' ||
@@ -654,12 +657,14 @@
     // produces a blank diary.
     if (!appliedToRive) {
       showTextOverlay(text, 600, {
-        fontSize: 24,
+        fontSize: 17,
         color: '#d8b77b',
         position: 'diary',
         fontWeight: '400',
-        speed: 90,
+        speed: 38,
+        revealDurationMs: Number(config.dynamicDiary?.revealDurationMs) || 30200,
         lipSync: false,
+        hold: true,
       });
     }
   }
@@ -1372,14 +1377,19 @@
     const useMumble = seg.mumble === true;
 
     if (seg.opening) {
-      showTextOverlay(seg.opening, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700', mumble: useMumble });
+      showTextOverlay(seg.opening, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700', mumble: useMumble, hold: true });
       localMessages.push({ role: 'assistant', content: seg.opening });
     }
 
     let tornDown = false;
+    let continueRevealTimer = null;
     function teardownChatUI() {
       if (tornDown) return;
       tornDown = true;
+      if (continueRevealTimer) {
+        clearTimeout(continueRevealTimer);
+        continueRevealTimer = null;
+      }
       segChatContinue.removeEventListener('click', continueHandler);
       segChatForm.removeEventListener('submit', formHandler);
       voiceCleanup();
@@ -1429,7 +1439,7 @@
         const reply = data.reply || '...';
         localMessages.push({ role: 'assistant', content: reply });
 
-        showTextOverlay(reply, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700', mumble: useMumble });
+        showTextOverlay(reply, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700', mumble: useMumble, hold: true });
 
         if (data.vitals) applyVitals(data.vitals);
         if (data.emotion) applyEmotion(data.emotion);
@@ -1445,7 +1455,16 @@
         }
 
         if (maxExchanges > 0 && exchangeCount >= maxExchanges) {
-          setTimeout(() => finishChat(), 3000);
+          // Keep Eli's final answer visible until the player has finished
+          // reading it. Reveal Continue only after the typewriter animation
+          // completes and a short reading pause has passed.
+          segChatInput.closest('form').style.display = 'none';
+          const replyWordCount = reply.trim().split(/\s+/).filter(Boolean).length;
+          const continueDelayMs = Math.max(6500, replyWordCount * 360 + 1800);
+          continueRevealTimer = setTimeout(() => {
+            continueRevealTimer = null;
+            segChatContinue.style.display = 'block';
+          }, continueDelayMs);
           return;
         }
 
@@ -1707,6 +1726,30 @@
     }
   }
 
+  function showHeartGift(x, y, size) {
+    const gift = document.createElement('div');
+    gift.className = 'heart-gift-burst';
+    gift.setAttribute('aria-hidden', 'true');
+    Object.assign(gift.style, {
+      left: `${x}%`,
+      top: `${y}%`,
+      width: `${Math.max(34, size * 2.2)}%`,
+    });
+    gift.innerHTML = `
+      <span class="heart-gift-burst__core"></span>
+      <span class="heart-gift-burst__ring"></span>
+      <span class="heart-gift-burst__spark"></span>
+      <span class="heart-gift-burst__spark"></span>
+      <span class="heart-gift-burst__spark"></span>
+      <span class="heart-gift-burst__spark"></span>
+      <span class="heart-gift-burst__spark"></span>
+      <span class="heart-gift-burst__spark"></span>`;
+    stage.appendChild(gift);
+    // Keep this timer independent from the gesture timers: a successful hold
+    // can immediately advance the segment, but the gift bloom should finish.
+    setTimeout(() => gift.remove(), 1150);
+  }
+
   function setupHeartZone(config, zone = config.heartZone) {
     clearHeartZone();
     if (config.type !== 'rive') return;
@@ -1720,6 +1763,15 @@
     const x = Number(hz.x) || 50, y = Number(hz.y) || 62, size = Number(hz.size) || 24;
     heartZoneEl = document.createElement('div');
     heartZoneEl.className = 'heart-zone';
+    heartZoneEl.setAttribute('aria-hidden', 'true');
+    heartZoneEl.innerHTML = `
+      <span class="heart-zone__core"></span>
+      <span class="heart-zone__mote"></span>
+      <span class="heart-zone__mote"></span>
+      <span class="heart-zone__mote"></span>
+      <span class="heart-zone__mote"></span>
+      <span class="heart-zone__mote"></span>
+      <span class="heart-zone__mote"></span>`;
     Object.assign(heartZoneEl.style, {
       left: `${x}%`,
       top: `${y}%`,
@@ -1745,6 +1797,10 @@
       if (activePointerId !== null) return;
       activePointerId = e.pointerId;
       holdFired = false;
+      heartZoneEl.classList.add('is-touching');
+      // Immediate tactile acknowledgement that the player's finger found
+      // Eli's heart. The stronger lub-dub pattern plays on completion.
+      if (navigator.vibrate) { try { navigator.vibrate(22); } catch {} }
       try { heartZoneEl.setPointerCapture(e.pointerId); } catch {}
       if (gHold) {
         const dur = Math.max(0.3, Number(gHold.duration) || 3);
@@ -1758,7 +1814,12 @@
           if (holdTimer) clearTimeout(holdTimer);
           holdTimer = null;
           heartZoneEl?.classList.remove('is-holding');
+          heartZoneEl?.classList.add('is-received');
+          showHeartGift(x, y, size);
           fireHeartAction(gHold, config);
+          // fireHeartAction includes a generic tap tick. Set the authored
+          // hold-complete pattern afterward so it remains the final haptic.
+          if (navigator.vibrate) { try { navigator.vibrate([42, 70, 78]); } catch {} }
         };
         holdTimer = setTimeout(() => {
           completeHold();
@@ -1769,7 +1830,7 @@
 
     const cancelHold = () => {
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      heartZoneEl?.classList.remove('is-holding');
+      heartZoneEl?.classList.remove('is-holding', 'is-touching');
     };
 
     heartZoneEl.addEventListener('pointerup', (e) => {
@@ -1944,7 +2005,7 @@
     if (s.position === 'caption')     { textOverlayEl.style.top = 'max(60px, calc(var(--safe-top) + 48px))'; textOverlayEl.style.bottom = 'auto'; textOverlayEl.style.width = 'min(90%, 350px)'; textOverlayEl.style.maxWidth = 'min(90%, 350px)'; }
     else if (s.position === 'top')    { textOverlayEl.style.top = '12%'; textOverlayEl.style.bottom = 'auto'; }
     else if (s.position === 'center') { textOverlayEl.style.top = '45%'; textOverlayEl.style.bottom = 'auto'; }
-    else if (s.position === 'diary')  { textOverlayEl.style.top = '50%'; textOverlayEl.style.bottom = 'auto'; textOverlayEl.style.width = 'min(62%, 350px)'; textOverlayEl.style.maxWidth = 'min(62%, 350px)'; }
+    else if (s.position === 'diary')  { textOverlayEl.style.top = '49%'; textOverlayEl.style.bottom = 'auto'; textOverlayEl.style.width = 'min(62%, 350px)'; textOverlayEl.style.maxWidth = 'min(62%, 350px)'; }
     else                              { textOverlayEl.style.top = ''; textOverlayEl.style.bottom = '15%'; }
 
     const tokens = text.split(/(\s+)/);
@@ -1963,9 +2024,13 @@
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
     const maxOverlayHeight = s.position === 'caption'
       ? Math.max(220, Math.min(viewportHeight * 0.56, viewportHeight - 190))
+      : s.position === 'diary'
+        ? Math.max(200, Math.min(viewportHeight * 0.45, 320))
       : Math.max(160, viewportHeight - 100);
     textOverlayEl.style.maxHeight = `${Math.floor(maxOverlayHeight)}px`;
-    textOverlayEl.style.lineHeight = wordCount > 34 ? '1.3' : '1.5';
+    textOverlayEl.style.lineHeight = s.position === 'diary'
+      ? '1.24'
+      : wordCount > 34 ? '1.3' : '1.5';
     let fittedSize = wordCount > 60 ? Math.min(baseFontSize, 20)
       : wordCount > 34 ? Math.min(baseFontSize, 24)
         : baseFontSize;
@@ -1976,7 +2041,10 @@
     }
 
     const wordEls = textOverlayEl.querySelectorAll('.word');
-    const perWord = (Number(s.speed) || 90) * 4;
+    const requestedRevealDuration = Number(s.revealDurationMs);
+    const perWord = Number.isFinite(requestedRevealDuration) && requestedRevealDuration > 0
+      ? requestedRevealDuration / Math.max(1, wordEls.length - 1)
+      : (Number(s.speed) || 90) * 4;
 
     const isChatText = s.position === 'caption' && s.lipSync !== false;
     const currentEmotion = typeof lastEmotion === 'number' ? lastEmotion : 0;
@@ -2012,9 +2080,16 @@
       activeCharTimers.push(stopMouthTid);
     }
 
-    // Hide the overlay once its duration elapses (never before typing finishes).
+    // hold: true → never auto-hide; the text stays until the next overlay or
+    // scene change replaces it (chat replies — the player reads at their pace).
+    if (s.hold === true) return;
+
+    // Hide the overlay once its duration elapses — but never before the player
+    // has had time to READ it. Typing reveals ~1 word per 0.36s; after the last
+    // word lands, hold for ~0.4s per word (≈150 wpm re-read pace, min 3.5s).
     const typingMs   = wordEls.length * perWord;
-    const durationMs = Math.max((Number(duration) || 3) * 1000, typingMs + 800);
+    const readingMs  = Math.max(3500, 1200 + wordCount * 400);
+    const durationMs = Math.max((Number(duration) || 3) * 1000, typingMs + readingMs);
     activeTextCueTimer = setTimeout(() => {
       activeTextCueTimer = null;
       textOverlayEl.classList.remove('is-visible');
@@ -2603,6 +2678,7 @@
     wordsReveal.textContent = 'swipe through the letters.';
     wordsCurrent.textContent = '';
     wordsRecovered.classList.remove('is-visible');
+    wordsRecovered.innerHTML = '';
     wordsPath.setAttribute('points', '');
     // Eli watching over the puzzle: a live Rive Eli with lip sync (words.eliRive),
     // or a static portrait (words.eliImage), or nothing.
@@ -2742,13 +2818,35 @@
         fetch('/api/memory/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({game:gameId||undefined,fragment:w.fragment}) }).catch(()=>{});
         recordRecovery(w.fragment, sceneId);
       }
-      // No lingering ember screen — a short beat for the last word's pop to
-      // land, then straight on to the next scene in the sequence.
+      const dest = (config.after && config.after.next) || nextInSequence(sceneId);
+
+      // Let the player's work become one carried memory before leaving the
+      // puzzle. The recovered words orbit the ember, gather into it, and then
+      // travel forward into the next scene.
+      wordsCaption.textContent = w.foundText || 'You found the words he could not say.';
+      wordsReveal.textContent = w.carryText || 'Take them back to Eli.';
+      wordsRecovered.innerHTML = `
+        <span class="words-recovered__core"></span>
+        ${memories.map((memory, index) =>
+          `<span class="words-recovered__word" style="--word-delay:${index * .42}s">${memory.word.charAt(0)}${memory.word.slice(1).toLowerCase()}</span>`
+        ).join('')}`;
+      wordsScreen.classList.add('is-recovered');
+      wordsRecovered.classList.add('is-visible');
+
+      // When this is currently the last authored scene, preserve the victory
+      // tableau. As soon as a next scene is added, the same ending naturally
+      // becomes a transition without further configuration.
+      if (!dest) {
+        later(() => playHaptic('soft'), 850);
+        setupAfterTrigger(config);
+        return;
+      }
+
       later(() => {
-        const dest = (config.after && config.after.next) || nextInSequence(sceneId);
-        if (dest) loadScene(dest);
-        else setupAfterTrigger(config);
-      }, 900);
+        playHaptic('strong');
+        wordsScreen.classList.add('is-departing');
+      }, 3200);
+      later(() => loadScene(dest), 4200);
     };
     const submitWord = () => {
       drawing = false;
@@ -3030,7 +3128,8 @@
     syncViewportVars();
     jigsawScreen.style.display = 'flex';
     jigsawBoard.innerHTML = '';
-    jigsawBoard.classList.remove('is-solved');
+    jigsawBoard.classList.remove('is-solved', 'is-winwave', 'is-bloom', 'is-alive');
+    jigsawCaption.classList.remove('is-win');
     jigsawPlaced.textContent = '';
     fadeIn();
 
@@ -3093,13 +3192,52 @@
       return placed;
     }
 
+    // Golden dust motes drifting up from the restored photo — the reward particles
+    function spawnJigsawSparks() {
+      for (let i = 0; i < 28; i++) {
+        const s = document.createElement('span');
+        s.className = 'jigsaw-spark';
+        s.style.left = `${6 + Math.random() * 88}%`;
+        s.style.top  = `${25 + Math.random() * 70}%`;
+        s.style.setProperty('--spark-delay', `${(Math.random() * 1.8).toFixed(2)}s`);
+        s.style.setProperty('--spark-drift', `${(Math.random() * 44 - 22).toFixed(0)}px`);
+        s.style.setProperty('--spark-size',  `${(2 + Math.random() * 3.5).toFixed(1)}px`);
+        jigsawBoard.appendChild(s);
+        setTimeout(() => s.remove(), 5200);
+      }
+    }
+
     function onWin() {
       solvedLock = true;
-      playHaptic('heartbeat');
       jigsawCaption.textContent = '';
       jigsawCaption.classList.remove('is-visible');
       jigsawPlaced.textContent = '';
-      jigsawBoard.classList.add('is-solved');   // seams fade — the photo becomes whole
+
+      // Win sequence: cascade wave → seams melt → bloom flash + shine + sparks → photo breathes
+      const cx = (cols - 1) / 2, cy = (rows - 1) / 2;
+      [...jigsawBoard.children].forEach(tile => {
+        const slot = Number(tile.dataset.slot);
+        if (!Number.isFinite(slot)) return;
+        const dist = Math.hypot((slot % cols) - cx, Math.floor(slot / cols) - cy);
+        tile.style.setProperty('--wave-delay', `${Math.round(dist * 95)}ms`);
+      });
+      jigsawBoard.classList.add('is-winwave');           // 0s — golden pulse ripples out from the center
+      playHaptic('tap');
+      later(() => jigsawBoard.classList.add('is-solved'), 700);    // seams melt — the photo becomes whole
+      later(() => {                                                // impact beat
+        jigsawBoard.classList.add('is-bloom');
+        playHaptic('heartbeat');
+        spawnJigsawSparks();
+        // Win audio — any file given the "Win audio" role in the editor
+        const winFile = Object.keys(config.files || {}).find(f => (config.files || {})[f] === 'win');
+        if (winFile) {
+          const a = makeAudio(sceneAssetUrl(sceneId, `audio/${winFile}`));
+          a.volume = 0.9;
+          a.play().catch(() => {});
+        }
+      }, 1250);
+      later(() => jigsawBoard.classList.add('is-alive'), 2000);    // slow Ken Burns — the memory comes alive
+
       if (j.daily === true && !devMode) { try { localStorage.setItem(jigsawDayKey(sceneId), today); } catch {} }
       if (j.fragment) {
         fetch('/api/memory/unlock', {
@@ -3109,8 +3247,12 @@
         }).catch(() => {});
         recordRecovery(j.fragment, sceneId);
       }
-      later(() => showTextOverlay(j.winText || 'I remember this...', 5, { fontSize: 30, color: '#C1A376', position: 'center', fontWeight: '700' }), 1400);
-      later(() => setupAfterTrigger(config), 4600);
+      // Win text appears in the caption slot ABOVE the photo — never over it
+      later(() => {
+        jigsawCaption.textContent = j.winText || 'I remember this...';
+        jigsawCaption.classList.add('is-visible', 'is-win');
+      }, 2700);
+      later(() => setupAfterTrigger(config), 6200);
     }
 
     // Tiles live in fixed grid slots; swapping exchanges which photo piece a
@@ -3191,8 +3333,30 @@
       videoOverlay.style.removeProperty('--video-overlay-opacity');
     }
 
+    // Timed captions authored in the editor (config.captions: [{t, text, d}]).
+    // Each shows at its time and holds until its duration — or until the next
+    // caption if no duration is set (5s fallback on the last one).
+    const captions = (Array.isArray(config.captions) ? config.captions : [])
+      .filter(c => c && Number.isFinite(Number(c.t)) && String(c.text || '').trim())
+      .map(c => ({ t: Number(c.t), d: Number(c.d) || 0, text: String(c.text).trim() }))
+      .sort((a, b) => a.t - b.t);
+    let capIdx = -1;
+    sceneVideo.ontimeupdate = captions.length ? () => {
+      const now = sceneVideo.currentTime;
+      let idx = -1;
+      for (let i = 0; i < captions.length; i++) if (captions[i].t <= now) idx = i;
+      if (idx === capIdx) return;
+      capIdx = idx;
+      if (idx < 0) return;
+      const c = captions[idx];
+      const holdFor = c.d > 0 ? c.d : (captions[idx + 1] ? Math.max(1, captions[idx + 1].t - c.t) : 5);
+      showTextOverlay(c.text, holdFor, { fontSize: 22, color: '#e6d3ae', position: 'bottom', fontWeight: '700', lipSync: false });
+    } : null;
+
     const skipNext = () => {
       sceneVideo.pause();
+      sceneVideo.ontimeupdate = null;
+      clearTextOverlay();
       const after = config.after || {};
       if (after.next) loadScene(after.next);
     };
@@ -3325,7 +3489,7 @@
         const data = res.ok ? await res.json() : { reply: '...' };
         const reply = data.reply || '...';
         chatMessages.push({ role: 'assistant', content: reply });
-        showTextOverlay(reply, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700' });
+        showTextOverlay(reply, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700', hold: true });
         if (data.vitals) applyVitals(data.vitals);
         if (data.emotion) applyEmotion(data.emotion);
         if (data.body) applyBody(data.body);
@@ -3364,7 +3528,7 @@
           setInput('emotion_state', 6);
           setInput('heart_state', 5);
           setInput('body_movement', 3);
-          showTextOverlay(authoredLine, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700' });
+          showTextOverlay(authoredLine, 8, { fontSize: 28, color: '#C1A376', position: 'caption', fontWeight: '700', hold: true });
         } else {
           sendMessage(`[The player just completed the remembering ritual and helped you recover a memory: "${rec.fragment}". The fog has lifted a little — you feel slightly clearer, slightly steadier, and it is because of them. Open by noticing this yourself: reference that memory specifically, with quiet wonder, as if it just surfaced. Do not thank them like a game reward and do not mention any game — the memory itself is the gift. Use emotion "remembering" and body "heart_glow" in this reply.]`);
         }

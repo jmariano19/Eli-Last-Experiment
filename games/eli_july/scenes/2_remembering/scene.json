@@ -1,0 +1,15 @@
+{
+  "id": "2_remembering",
+  "title": "2.Remembering",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "video_final_1.mp4": "video"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "3_the_memory_slips"
+  },
+  "ctaRoutes": []
+}

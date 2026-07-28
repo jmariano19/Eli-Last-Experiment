@@ -1,0 +1,31 @@
+{
+  "bond_level": 1,
+  "chapter": 1,
+  "emotional_state": "curious",
+  "memories_unlocked": [
+    "someone_was_there"
+  ],
+  "memories_available": [
+    "cold_feeling",
+    "bright_light",
+    "a_voice",
+    "the_experiment",
+    "before_it_happened",
+    "who_i_was"
+  ],
+  "player_name": "Jeff",
+  "things_player_shared": [],
+  "open_thread": null,
+  "questions_player_asked": [],
+  "things_eli_shared": [],
+  "conversation_count": 2,
+  "behavior_signals": {
+    "caution_risk": {
+      "score": 0,
+      "samples": 0,
+      "last_signal": null,
+      "last_scene": null,
+      "updated_at": null
+    }
+  }
+}

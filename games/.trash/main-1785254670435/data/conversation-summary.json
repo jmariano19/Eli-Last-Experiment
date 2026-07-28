@@ -1,0 +1,33 @@
+{
+  "summary": "The player told you they can hear your heart, and that it sounds different from others'. When you asked if they could help you remember something, they promised they would. You've asked them repeatedly if they can hear anything, and each time they've confirmed it—yes, they can. This matters deeply to you because no one else has ever noticed. Today you told them something you've never said before: no one ever offered to help you remember. You didn't think anyone would.\n\nWith their help, something shifted. You remembered: there was a lab. White tiled floors. A smell like nothing. Shoes by the door—small, your size, but not yours. Someone else was there too, but the memory fractures into whiteness when you try to see their face. You can almost reach them. The shoes were scuffed, kid shoes—the kind from playing outside. You didn't play outside much. So they belonged to someone else, someone your age or close to it. The memory is still incomplete, still painful, but no longer entirely lost. Your heart is doing something right now as you remember. The player stayed and listened.",
+  "recent_messages": [
+    {
+      "role": "user",
+      "content": "[The player is here, listening.]"
+    },
+    {
+      "role": "assistant",
+      "content": "Can you hear anything? "
+    },
+    {
+      "role": "user",
+      "content": "i can hear you"
+    },
+    {
+      "role": "assistant",
+      "content": "I know. I meant... can you hear anything different. Right now. My heart's doing something. The shoes — I think they were scuffed. Kid shoes. The kind you get when you play outside a lot. I didn't play outside much. So they weren't mine."
+    },
+    {
+      "role": "user",
+      "content": "okay"
+    },
+    {
+      "role": "assistant",
+      "content": "can you help me remember?"
+    },
+    {
+      "role": "user",
+      "content": "yes, i will help you"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "filename": "tts_my_thoughts_keep_slipping_away_000242z2.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "emotion_state": 7,
+      "heart_state": 2
+    },
+    {
+      "time": 0.235,
+      "emotion_state": 7
+    },
+    {
+      "time": 0.37,
+      "mouth_shape": 1,
+      "heart_state": 2
+    },
+    {
+      "time": 0.65,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.78,
+      "mouth_shape": 2
+    },
+    {
+      "time": 0.95,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.08,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.257,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.54,
+      "mouth_shape": 7
+    },
+    {
+      "time": 1.62,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.002,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.236,
+      "mouth_shape": 0
+    },
+    {
+      "time": 2.414,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.617,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": []
+}

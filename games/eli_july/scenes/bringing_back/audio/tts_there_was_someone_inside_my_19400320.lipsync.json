@@ -1,0 +1,110 @@
+{
+  "filename": "tts_there_was_someone_inside_my_19400320.m4a",
+  "markers": [
+    {
+      "time": 0.3,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.39,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.55,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.68,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.81,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.03,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.1,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.7,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.83,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.97,
+      "mouth_shape": 11
+    },
+    {
+      "time": 2.1,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.13,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.54,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.66,
+      "mouth_shape": 0
+    },
+    {
+      "time": 3.74,
+      "mouth_shape": 8
+    },
+    {
+      "time": 3.88,
+      "mouth_shape": 6
+    },
+    {
+      "time": 3.92,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.51,
+      "mouth_shape": 8
+    },
+    {
+      "time": 5.6,
+      "mouth_shape": 0
+    },
+    {
+      "time": 5.84,
+      "mouth_shape": 5
+    },
+    {
+      "time": 5.89,
+      "mouth_shape": 0
+    },
+    {
+      "time": 6.218,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.377,
+      "mouth_shape": 3
+    },
+    {
+      "time": 6.51,
+      "mouth_shape": 1
+    },
+    {
+      "time": 6.672,
+      "mouth_shape": 5
+    },
+    {
+      "time": 6.953,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": []
+}

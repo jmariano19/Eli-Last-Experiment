@@ -24,7 +24,7 @@
   "after": {
     "trigger": "never",
     "message": "",
-    "next": "2_something_is_missing"
+    "next": "3_mom"
   },
   "stateMachines": [
     "EliState",

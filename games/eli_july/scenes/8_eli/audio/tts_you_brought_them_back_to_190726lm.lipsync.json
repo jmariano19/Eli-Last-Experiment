@@ -1,0 +1,80 @@
+{
+  "filename": "tts_you_brought_them_back_to_190726lm.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 2,
+      "emotion_state": 10
+    },
+    {
+      "time": 0.32,
+      "mouth_shape": 5,
+      "emotion_state": 14
+    },
+    {
+      "time": 0.45,
+      "mouth_shape": 7
+    },
+    {
+      "time": 0.53,
+      "mouth_shape": 0
+    },
+    {
+      "time": 0.65,
+      "mouth_shape": 5
+    },
+    {
+      "time": 0.78,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.91,
+      "mouth_shape": 0
+    },
+    {
+      "time": 1.02,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.15,
+      "mouth_shape": 9
+    },
+    {
+      "time": 1.29,
+      "mouth_shape": 6
+    },
+    {
+      "time": 1.43,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.56,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.74,
+      "mouth_shape": 1
+    },
+    {
+      "time": 1.87,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.01,
+      "mouth_shape": 6
+    },
+    {
+      "time": 2.15,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.28,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.36,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": []
+}

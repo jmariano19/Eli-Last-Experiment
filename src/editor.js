@@ -438,11 +438,11 @@
   };
 
   const MOUTH_LABELS = ['Idle','A E I','B M P','C D G K','CH SH J','EE','F V','L','O','Q W','R','TH','U','Smile','Sad','Angry','Laugh','Surprised','Confused'];
-  // Eyes movements track — Rive state machine AyesMovements. Values 0–9 match
+  // Eye movements track — Rive state machine EyesMovements. Values 0–9 match
   // the original emotion set (existing markers + AI chat stay valid); 10–13
-  // are the gaze directions. Markers keep the emotion_state key, and both
+  // are gaze directions and 14 is Release. Markers keep the emotion_state key, and both
   // emotion_state and eyes_state inputs are driven, so either name works.
-  const EMOTION_LABELS = ['Idle','Sad','Smile','Angry','Surprised','Confused','Remembering','Scared','Tired','Eyes Closed','Look Up','Look Down','Look Left','Look Right'];
+  const EMOTION_LABELS = ['Idle','Sad','Smile','Angry','Surprised','Confused','Remembering','Scared','Tired','Eyes Closed','Look Up','Look Down','Look Left','Look Right','Release'];
   // Haptic presets — vibration patterns in ms [vibrate, pause, vibrate…]
   const HAPTIC_PRESETS = {
     tap:       { label: 'Tap',       pattern: [20],              hint: 'Tiny tick (20ms)' },
@@ -496,7 +496,7 @@
 
   // The server must speak the same API version — otherwise a stale server
   // process is running and everything would fail in confusing ways.
-  const REQUIRED_SERVER_VERSION = 7;
+  const REQUIRED_SERVER_VERSION = 8;
 
   async function ensureServerVersion() {
     let version = null;
@@ -1274,6 +1274,9 @@
       ` : type === 'words' ? `
         ${renderFilesSection(config)}
         ${renderWordsSection(config)}
+      ` : type === 'video' ? `
+        ${renderFilesSection(config)}
+        ${renderVideoCaptionsSection(config)}
       ` : `
         ${renderFilesSection(config)}
       `}
@@ -1664,7 +1667,7 @@
     }
     config.files[filename] = 'voice';
     const seg = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
-    if (seg && seg.type !== 'chat' && seg.type !== 'video' && !seg.voice) seg.voice = filename;
+    if (seg && !['chat', 'video', 'pause'].includes(seg.type) && !seg.voice) seg.voice = filename;
     st.dirty = true;
   }
 
@@ -1728,8 +1731,13 @@
       assignGeneratedVoice(config, data.filename);
       st.audioFilesOpen = true;
       await saveAll();
-      setTtsStatus('Generated voice. Opening lip sync...', 'success');
-      showToast(`Generated ${data.filename}`);
+      const durNote = Number.isFinite(data.duration) ? ` (${data.duration}s)` : '';
+      setTtsStatus(`Generated voice${durNote}. Opening lip sync...`, 'success');
+      if (Number.isFinite(data.duration) && data.duration > text.split(/\s+/).length * 0.55 + 8) {
+        showToast(`Generated ${data.filename}${durNote} — that's longer than expected for this line. Listen and regenerate if it wandered.`, true, 7000);
+      } else {
+        showToast(`Generated ${data.filename}${durNote}`);
+      }
       await loadVoiceFile(data.filename, config);
     } catch (err) {
       setTtsError(`Google voice failed. ${err.message}`);
@@ -1755,8 +1763,17 @@
       || (Array.isArray(config?.segments) && config.segments.length > 0);
   }
 
+  function audioDownloadUrl(sceneId, filename) {
+    return `/games/${encodeURIComponent(st.game)}/scenes/${encodeURIComponent(sceneId)}/audio/${encodeURIComponent(filename)}`;
+  }
+
+  function isAudioFile(filename) {
+    return /\.(?:aac|flac|m4a|mp3|oga|ogg|opus|wav|webm)$/i.test(filename || '');
+  }
+
   function renderFileRow(filename, role, sceneType, sceneId, defaultBgLoop = false, bgLoops = {}) {
     const isLipsyncable = sceneType === 'rive' && role === 'voice';
+    const canDownloadAudio = role !== 'video' && isAudioFile(filename);
     const hasLoopSetting = Object.prototype.hasOwnProperty.call(bgLoops || {}, filename);
     const bgLoopsEnabled = hasLoopSetting ? bgLoops[filename] === true : defaultBgLoop;
     const roleOptions = sceneType === 'video'
@@ -1764,7 +1781,7 @@
       : sceneType === 'pairs'
       ? [['card', 'Card image'], ['bg', 'Background']]
       : sceneType === 'jigsaw'
-      ? [['photo', 'Photo'], ['bg', 'Background']]
+      ? [['photo', 'Photo'], ['bg', 'Background'], ['win', 'Win audio']]
       : sceneType === 'thread'
       ? [['bg', 'Background']]
       : sceneType === 'words'
@@ -1783,6 +1800,7 @@
           <span>Loop</span>
         </label>` : ''}
         ${isLipsyncable ? `<button class="btn btn--edit-lipsync" data-lipsync-load="${esc(filename)}">Edit Lip Sync</button>` : ''}
+        ${canDownloadAudio ? `<a class="file-row__download btn--icon" href="${esc(audioDownloadUrl(sceneId, filename))}" download="${esc(filename)}" title="Download ${esc(filename)}" aria-label="Download ${esc(filename)}">⇩</a>` : ''}
         <button class="file-row__rename btn--icon" data-file-rename="${esc(filename)}" title="Rename">✎</button>
         <button class="file-row__delete btn--icon" data-file-delete="${esc(filename)}" title="Remove">×</button>
       </div>
@@ -1893,7 +1911,10 @@
     if (hasSegments) {
       const idx = Math.min(st.activeSegmentIndex, segments.length - 1);
       st.activeSegmentIndex = idx;
-      voiceFile = segments[idx]?.voice || '';
+      // Silence/chat/video segments have no spoken line — ignore a stray voice
+      // assignment so the pose/keyframe controls always render for them
+      const seg = segments[idx];
+      voiceFile = ['pause', 'chat', 'video'].includes(seg?.type) ? '' : (seg?.voice || '');
     } else {
       voiceFile = Object.keys(config.files || {}).find(f => config.files[f] === 'voice') || '';
     }
@@ -2157,6 +2178,7 @@
       <div class="panel-section panel-section--lipsync">
         <div class="panel-section__header">${hasSegments && ['chat', 'pause', 'video'].includes(segments[st.activeSegmentIndex]?.type) ? 'SEGMENTS' : 'LIP SYNC'}
           <span class="lipsync-file-name">${voiceFile ? esc(voiceFile) : ''}</span>
+          ${voiceFile && isAudioFile(voiceFile) ? `<a class="lipsync-download" href="${esc(audioDownloadUrl(config.id, voiceFile))}" download="${esc(voiceFile)}" title="Download ${esc(voiceFile)}">⇩ Download</a>` : ''}
         </div>
         ${toggleHtml}
         ${segmentPickerHtml}
@@ -2305,6 +2327,30 @@
   // Match-the-pairs board config. Winning unlocks the named memory fragment in
   // Eli's chat brain and follows FALLBACK. Cards use uploaded images with the
   // "Card image" role, or built-in symbols when there aren't enough.
+  // ─── Video captions section ──────────────────────────────────────────────────
+  function renderVideoCaptionsSection(config) {
+    const caps = Array.isArray(config.captions) ? config.captions : [];
+    return `
+      <div class="panel-section panel-section--captions">
+        <div class="panel-section__header">CAPTIONS</div>
+        <p class="panel-hint" style="padding:8px 14px 0">Text shown over the video at each time. Leave duration 0 to hold until the next caption.</p>
+        <div class="caption-rows">
+          ${caps.map((c, i) => `
+            <div class="caption-row" data-cap-row="${i}">
+              <input class="field-input caption-row__time" data-cap-field="t" data-cap-idx="${i}" type="number" min="0" step="0.5" value="${Number(c.t) || 0}" title="Show at (seconds)" />
+              <span class="caption-row__unit">s</span>
+              <input class="field-input caption-row__text" data-cap-field="text" data-cap-idx="${i}" type="text" maxlength="200" value="${esc(c.text || '')}" placeholder="Caption text…" />
+              <input class="field-input caption-row__dur" data-cap-field="d" data-cap-idx="${i}" type="number" min="0" step="0.5" value="${Number(c.d) || 0}" title="Duration (seconds) — 0 = until next caption" />
+              <button class="btn--icon caption-row__delete" data-cap-delete="${i}" title="Remove caption">×</button>
+            </div>`).join('')}
+        </div>
+        <div style="padding:8px 14px 12px">
+          <button class="btn btn--ghost btn--small" data-action="add-caption">+ Add caption</button>
+        </div>
+      </div>
+    `;
+  }
+
   function renderPairsSection(config) {
     const p = config.pairs || {};
     return `
@@ -3094,11 +3140,22 @@
     const btnSetStart = document.getElementById('btnSetStart');
     if (btnSetStart) {
       btnSetStart.addEventListener('click', async () => {
-        st.sequence.start = config.id;
-        await fetch('/api/sequence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...st.sequence, game: st.game }) });
-        renderSceneList();
-        renderPanel();
-        showToast(`The game now starts at "${config.title}".`);
+        const previousStart = st.sequence.start;
+        try {
+          const res = await fetch('/api/sequence', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...st.sequence, start: config.id, game: st.game }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          st.sequence.start = config.id;
+          renderSceneList();
+          renderPanel();
+          showToast(`The game now starts at "${config.title}".`);
+        } catch (err) {
+          st.sequence.start = previousStart;
+          showToast(`Could not change the start scene: ${err.message}`, true, 6000);
+        }
       });
     }
 
@@ -3118,9 +3175,15 @@
       fieldTitle.addEventListener('change', async () => {
         const newTitle = fieldTitle.value.trim();
         if (!newTitle || newTitle === config.title) return;
-        const res  = await fetch('/api/scenes/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: config.id, title: newTitle, game: st.game }) });
-        const data = await res.json();
-        if (data.ok) {
+        fieldTitle.disabled = true;
+        try {
+          const res = await fetch('/api/scenes/rename', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: config.id, title: newTitle, game: st.game }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
           const newId = data.id;
           // Update local state if id changed
           if (newId !== config.id) {
@@ -3136,9 +3199,12 @@
           }
           renderSceneList();
           renderPanel();
-        } else {
-          showToast(`Rename failed: ${data.error || 'unknown error'}`, true);
+        } catch (err) {
+          showToast(`Rename failed: ${err.message}`, true, 6000);
           fieldTitle.value = config.title || '';
+        } finally {
+          // renderPanel replaces this field after success.
+          if (fieldTitle.isConnected) fieldTitle.disabled = false;
         }
       });
     }
@@ -3328,6 +3394,8 @@
     const pauseTimeline = document.querySelector('[data-pause-timeline]');
     if (pauseTimeline) {
       pauseTimeline.addEventListener('click', (e) => {
+        // A drag that ends over the bar must not also add a new mark
+        if (Date.now() - (st._pauseDragEndAt || 0) < 300) return;
         const seg = config.segments?.[st.activeSegmentIndex];
         if (!seg) return;
         const rect = pauseTimeline.getBoundingClientRect();
@@ -3342,8 +3410,43 @@
         renderPanel();
       });
       document.querySelectorAll('[data-pause-mark]').forEach(dot => {
+        // Drag to move · click to select · right-click (or ✕ Remove) to delete
+        dot.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0) return;
+          const seg  = config.segments?.[st.activeSegmentIndex];
+          const mark = seg?.marks?.[Number(dot.dataset.pauseMark)];
+          if (!mark) return;
+          e.preventDefault();
+          const rect      = pauseTimeline.getBoundingClientRect();
+          const durationS = Math.max(Number(seg.duration) || 3, 0.1);
+          const startX    = e.clientX;
+          let dragged = false;
+          dot.setPointerCapture(e.pointerId);
+          const onMove = (ev) => {
+            if (!dragged && Math.abs(ev.clientX - startX) < 4) return;
+            dragged = true;
+            dot.classList.add('is-dragging');
+            const frac = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
+            mark.t = Math.round(frac * durationS * 10) / 10;
+            dot.style.left = `${Math.min(100, (mark.t / durationS) * 100)}%`;
+            dot.title = `${mark.t.toFixed(1)}s`;
+          };
+          const onUp = () => {
+            dot.removeEventListener('pointermove', onMove);
+            dot.removeEventListener('pointerup', onUp);
+            if (!dragged) return;
+            st._pauseDragEndAt = Date.now();
+            seg.marks.sort((a, b) => (Number(a.t) || 0) - (Number(b.t) || 0));
+            st.activePauseMark = seg.marks.indexOf(mark);
+            st.dirty = true;
+            renderPanel();
+          };
+          dot.addEventListener('pointermove', onMove);
+          dot.addEventListener('pointerup', onUp);
+        });
         dot.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (Date.now() - (st._pauseDragEndAt || 0) < 300) return;
           const seg = config.segments?.[st.activeSegmentIndex];
           const i = Number(dot.dataset.pauseMark);
           st.activePauseMark = st.activePauseMark === i ? null : i;
@@ -3353,6 +3456,19 @@
             for (const [k, v] of Object.entries(m)) if (k !== 't') previewPoseField(k, v);
           }
           renderPanel();
+        });
+        dot.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const seg = config.segments?.[st.activeSegmentIndex];
+          const i = Number(dot.dataset.pauseMark);
+          if (!seg?.marks?.[i]) return;
+          seg.marks.splice(i, 1);
+          if (st.activePauseMark === i) st.activePauseMark = null;
+          else if (st.activePauseMark > i) st.activePauseMark--;
+          st.dirty = true;
+          renderPanel();
+          showToast('Mark deleted.');
         });
       });
     }
@@ -3423,6 +3539,34 @@
       st.dirty = true;
       renderPanel();
     });
+    // Video captions — edit in place, add/remove rows
+    document.querySelectorAll('[data-cap-field]').forEach(el => {
+      el.addEventListener('input', () => {
+        const caps = config.captions;
+        const c = Array.isArray(caps) && caps[Number(el.dataset.capIdx)];
+        if (!c) return;
+        const f = el.dataset.capField;
+        c[f] = f === 'text' ? el.value : Math.max(0, Number(el.value) || 0);
+        st.dirty = true;
+      });
+    });
+    document.querySelectorAll('[data-cap-delete]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!Array.isArray(config.captions)) return;
+        config.captions.splice(Number(btn.dataset.capDelete), 1);
+        st.dirty = true;
+        renderPanel();
+      });
+    });
+    document.querySelector('[data-action="add-caption"]')?.addEventListener('click', () => {
+      config.captions = Array.isArray(config.captions) ? config.captions : [];
+      const last = config.captions[config.captions.length - 1];
+      config.captions.push({ t: last ? (Number(last.t) || 0) + 5 : 0, text: '', d: 0 });
+      st.dirty = true;
+      renderPanel();
+      document.querySelector(`[data-cap-idx="${config.captions.length - 1}"][data-cap-field="text"]`)?.focus();
+    });
+
     // Segment field inputs (selects, text, number)
     document.querySelectorAll('[data-seg-field]').forEach(el => {
       const evt = el.tagName === 'SELECT' ? 'change' : 'input';
@@ -3504,13 +3648,25 @@
         e.stopPropagation();
         const filename = btn.dataset.fileDelete;
         if (!confirm(`Remove "${filename}"?`)) return;
-        await fetch('/api/scene/delete-file', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: config.id, filename, game: st.game }) });
-        if (config.files) delete config.files[filename];
-        if (config.bgLoops) delete config.bgLoops[filename];
-        st.files[config.id] = (st.files[config.id] || []).filter(f => f !== filename);
-        if (st.activeVoiceFile === filename) { st.activeVoiceFile = ''; stopAudio(); }
-        renderPanel();
-        showToast('File removed.');
+        btn.disabled = true;
+        try {
+          const res = await fetch('/api/scene/delete-file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: config.id, filename, game: st.game }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          if (config.files) delete config.files[filename];
+          if (config.bgLoops) delete config.bgLoops[filename];
+          st.files[config.id] = (st.files[config.id] || []).filter(f => f !== filename);
+          if (st.activeVoiceFile === filename) { st.activeVoiceFile = ''; stopAudio(); }
+          renderPanel();
+          showToast('File removed.');
+        } catch (err) {
+          btn.disabled = false;
+          showToast(`Could not remove "${filename}": ${err.message}`, true, 6000);
+        }
       });
     });
 

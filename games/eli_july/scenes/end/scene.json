@@ -1,0 +1,19 @@
+{
+  "id": "end",
+  "title": "End",
+  "type": "rive",
+  "rive": "last.riv",
+  "files": {
+    "idoberg-creepy-halloween-bell-trap-melody-247720.mp3": "bg"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "artboard": "last"
+}

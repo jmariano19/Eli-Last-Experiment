@@ -1,0 +1,21 @@
+{
+  "id": "7_bring_back",
+  "title": "7.Bring back",
+  "type": "rive",
+  "rive": "words.riv",
+  "files": {},
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "cta": {
+    "label": "Bring them to Eli",
+    "next": "",
+    "hold": true
+  }
+}

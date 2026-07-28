@@ -1,0 +1,48 @@
+{
+  "id": "eli_s_diary",
+  "title": "Eli’s Diary",
+  "type": "rive",
+  "rive": "the_diary.riv",
+  "files": {
+    "relaxing.mp3": "bg",
+    "tts_today_someone_found_me_in_214302qr.m4a": "bg"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "dynamicDiary": {
+    "textRun": "DiaryText",
+    "overlayOnly": true,
+    "revealDurationMs": 30200
+  },
+  "ctaRoutes": [],
+  "bgLoops": {
+    "relaxing.mp3": true,
+    "tts_today_someone_found_me_in_214302qr.m4a": false
+  },
+  "segments": [
+    {
+      "voice": "",
+      "trigger": "ended",
+      "bgs": []
+    },
+    {
+      "voice": "",
+      "trigger": "ended",
+      "bgs": []
+    },
+    {
+      "voice": "",
+      "trigger": "ended",
+      "bgs": [
+        "relaxing.mp3",
+        "tts_today_someone_found_me_in_214302qr.m4a"
+      ]
+    }
+  ]
+}

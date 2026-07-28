@@ -1,0 +1,23 @@
+{
+  "id": "4_memory",
+  "title": "4.memory",
+  "type": "jigsaw",
+  "rive": null,
+  "files": {
+    "jisaw-memory.png": "photo",
+    "low.mp3": "bg"
+  },
+  "jigsaw": {
+    "pieces": 6,
+    "fragment": "",
+    "intro": "Put it back together...",
+    "winText": "The playground… I know this place.",
+    "daily": false
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "5_playground"
+  },
+  "ctaRoutes": []
+}

@@ -1,0 +1,55 @@
+{
+  "filename": "ha_you_stayed_16173151.m4a",
+  "markers": [
+    {
+      "time": 0,
+      "mouth_shape": 2,
+      "emotion_state": 14
+    },
+    {
+      "time": 1.002,
+      "mouth_shape": 8
+    },
+    {
+      "time": 1.332,
+      "mouth_shape": 2
+    },
+    {
+      "time": 2.212,
+      "mouth_shape": 12
+    },
+    {
+      "time": 2.39,
+      "mouth_shape": 7
+    },
+    {
+      "time": 2.467,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.641,
+      "mouth_shape": 5
+    },
+    {
+      "time": 2.699,
+      "mouth_shape": 1
+    },
+    {
+      "time": 2.991,
+      "mouth_shape": 11
+    },
+    {
+      "time": 3.145,
+      "mouth_shape": 3
+    },
+    {
+      "time": 3.283,
+      "mouth_shape": 1
+    },
+    {
+      "time": 3.434,
+      "mouth_shape": 2
+    }
+  ],
+  "textCues": []
+}

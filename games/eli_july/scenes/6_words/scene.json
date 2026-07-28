@@ -1,0 +1,41 @@
+{
+  "id": "6_words",
+  "title": "6.words",
+  "type": "words",
+  "rive": null,
+  "files": {},
+  "words": {
+    "intro": "His memories are hiding in the letters.",
+    "letters": "MOTHER",
+    "fragment": "someone_was_there",
+    "foundText": "You found the words he couldn’t hold on to.",
+    "carryText": "Take them back to Eli.",
+    "memories": [
+      {
+        "word": "HOME",
+        "reveal": "her warm hand tucked inside his",
+        "line": "Home wasn’t a place… It was wherever she held my hand.",
+        "voice": "tts_home_wasnt_a_place_it_183029j2.m4a"
+      },
+      {
+        "word": "OTHER",
+        "reveal": "empty swings moving in perfectly still air",
+        "line": "he voices weren’t coming from the playground",
+        "voice": "tts_he_voices_werent_coming_from_183937kg.m4a"
+      },
+      {
+        "word": "MOTHER",
+        "reveal": "her hands covering his eyes while someone counted",
+        "line": "My mother was hiding something from me.” Or… hiding me from them.",
+        "voice": "tts_my_mother_was_hiding_something_182839mf.m4a"
+      }
+    ],
+    "eliRive": "eli-square.riv"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "7_bring_back"
+  },
+  "ctaRoutes": []
+}
