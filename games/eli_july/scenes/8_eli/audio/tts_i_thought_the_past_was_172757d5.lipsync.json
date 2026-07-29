@@ -22,12 +22,8 @@
       "mouth_shape": 10
     },
     {
-      "time": 0.87,
+      "time": 0.902,
       "mouth_shape": 7
-    },
-    {
-      "time": 0.88,
-      "mouth_shape": 0
     },
     {
       "time": 1.15,
@@ -86,12 +82,12 @@
       "mouth_shape": 5
     },
     {
-      "time": 3.05,
-      "mouth_shape": 3
-    },
-    {
       "time": 3.08,
       "mouth_shape": 0
+    },
+    {
+      "time": 3.179,
+      "mouth_shape": 3
     },
     {
       "time": 3.93,
@@ -108,10 +104,6 @@
     {
       "time": 4.19,
       "mouth_shape": 5
-    },
-    {
-      "time": 4.25,
-      "mouth_shape": 0
     },
     {
       "time": 4.35,

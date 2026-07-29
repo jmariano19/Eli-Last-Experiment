@@ -122,12 +122,8 @@
       "mouth_shape": 0
     },
     {
-      "time": 6.33,
+      "time": 6.327,
       "mouth_shape": 1
-    },
-    {
-      "time": 6.35,
-      "mouth_shape": 0
     }
   ],
   "textCues": []

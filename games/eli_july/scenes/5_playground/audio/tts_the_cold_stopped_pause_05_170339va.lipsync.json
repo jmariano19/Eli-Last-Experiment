@@ -31,12 +31,8 @@
       "mouth_shape": 0
     },
     {
-      "time": 1.53,
-      "mouth_shape": 8
-    },
-    {
-      "time": 1.55,
-      "mouth_shape": 0
+      "time": 1.558,
+      "mouth_shape": 2
     },
     {
       "time": 3.17,
@@ -59,10 +55,6 @@
       "mouth_shape": 11
     },
     {
-      "time": 3.74,
-      "mouth_shape": 0
-    },
-    {
       "time": 3.92,
       "mouth_shape": 8
     },
@@ -79,16 +71,8 @@
       "mouth_shape": 0
     },
     {
-      "time": 4.26,
-      "mouth_shape": 8
-    },
-    {
       "time": 4.4,
       "mouth_shape": 6
-    },
-    {
-      "time": 4.46,
-      "mouth_shape": 0
     },
     {
       "time": 4.6,
@@ -107,10 +91,6 @@
       "mouth_shape": 11
     },
     {
-      "time": 4.99,
-      "mouth_shape": 0
-    },
-    {
       "time": 5.1,
       "mouth_shape": 8
     },
@@ -123,16 +103,12 @@
       "mouth_shape": 5
     },
     {
-      "time": 6.92,
+      "time": 6.882,
       "mouth_shape": 6
     },
     {
       "time": 7,
       "mouth_shape": 0
-    },
-    {
-      "time": 7.24,
-      "mouth_shape": 1
     },
     {
       "time": 7.37,
@@ -175,12 +151,8 @@
       "mouth_shape": 1
     },
     {
-      "time": 9.64,
-      "mouth_shape": 11
-    },
-    {
-      "time": 9.65,
-      "mouth_shape": 0
+      "time": 9.855,
+      "mouth_shape": 2
     }
   ],
   "textCues": []

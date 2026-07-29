@@ -30,7 +30,10 @@
   "segments": [
     {
       "voice": "tts_there_was_someone_inside_my_19400320.m4a",
-      "trigger": "ended"
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ]
     },
     {
       "voice": "tts_you_know_something_about_me_211106a0.m4a",

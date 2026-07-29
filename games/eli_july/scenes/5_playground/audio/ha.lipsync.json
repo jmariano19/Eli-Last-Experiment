@@ -17,6 +17,10 @@
     {
       "time": 0.532,
       "mouth_shape": 0
+    },
+    {
+      "time": 0.992,
+      "emotion_state": 14
     }
   ],
   "textCues": []

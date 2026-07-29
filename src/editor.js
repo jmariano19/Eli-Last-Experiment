@@ -442,7 +442,9 @@
   // the original emotion set (existing markers + AI chat stay valid); 10–13
   // are gaze directions and 14 is Release. Markers keep the emotion_state key, and both
   // emotion_state and eyes_state inputs are driven, so either name works.
-  const EMOTION_LABELS = ['Idle','Sad','Smile','Angry','Surprised','Confused','Remembering','Scared','Tired','Eyes Closed','Look Up','Look Down','Look Left','Look Right','Release'];
+  const EMOTION_LABELS = ['Idle','Sad','Smile','Angry','Surprised','Confused','Remembering','Scared','Tired','Eyes Closed','Look Up','Look Down','Look Left','Look Right','Release','Idle 1','Idle 2','Idle 3'];
+  // Display order for the Eyes button row — Idle 1/2/3 (values 15–17) sit next to Idle
+  const EMOTION_ORDER = [0,15,16,17,1,2,3,4,5,6,7,8,9,10,11,12,13,14];
   // Haptic presets — vibration patterns in ms [vibrate, pause, vibrate…]
   const HAPTIC_PRESETS = {
     tap:       { label: 'Tap',       pattern: [20],              hint: 'Tiny tick (20ms)' },
@@ -1859,7 +1861,7 @@
           </div>
           <div class="emotion-row">
             <span class="row-label">Eyes</span>
-            ${EMOTION_LABELS.map((l, i) => l ? `<button class="emotion-btn" data-emotion="${i}">${l}</button>` : '').join('')}
+            ${EMOTION_ORDER.map(i => EMOTION_LABELS[i] ? `<button class="emotion-btn" data-emotion="${i}">${EMOTION_LABELS[i]}</button>` : '').join('')}
           </div>
           <div class="body-grid">
             <span class="row-label">Body</span>
@@ -2193,7 +2195,7 @@
                 </div>
                 <div class="emotion-row">
                   <span class="row-label">Eyes</span>
-                  ${EMOTION_LABELS.map((l, i) => l ? `<button class="emotion-btn" data-emotion="${i}">${l}</button>` : '').join('')}
+                  ${EMOTION_ORDER.map(i => EMOTION_LABELS[i] ? `<button class="emotion-btn" data-emotion="${i}">${EMOTION_LABELS[i]}</button>` : '').join('')}
                 </div>
                 <div class="body-grid">
                   <span class="row-label">Body</span>
@@ -2247,7 +2249,7 @@
 
             <div class="emotion-row">
               <span class="row-label">Eyes</span>
-              ${EMOTION_LABELS.map((l, i) => l ? `<button class="emotion-btn" data-emotion="${i}">${l}</button>` : '').join('')}
+              ${EMOTION_ORDER.map(i => EMOTION_LABELS[i] ? `<button class="emotion-btn" data-emotion="${i}">${EMOTION_LABELS[i]}</button>` : '').join('')}
             </div>
 
             <div class="body-grid">
@@ -2649,7 +2651,7 @@
           </div>
           <div class="emotion-row">
             <span class="row-label">Eyes</span>
-            ${EMOTION_LABELS.map((l, i) => l ? `<button class="emotion-btn" data-emotion="${i}">${l}</button>` : '').join('')}
+            ${EMOTION_ORDER.map(i => EMOTION_LABELS[i] ? `<button class="emotion-btn" data-emotion="${i}">${EMOTION_LABELS[i]}</button>` : '').join('')}
           </div>
           <div class="body-grid">
             <span class="row-label">Body</span>

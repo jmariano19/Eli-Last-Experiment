@@ -86,11 +86,11 @@
       "mouth_shape": 0
     },
     {
-      "time": 3.95,
-      "mouth_shape": 5
+      "time": 3.98,
+      "mouth_shape": 0
     },
     {
-      "time": 3.98,
+      "time": 4.161,
       "mouth_shape": 0
     },
     {
@@ -166,11 +166,7 @@
       "mouth_shape": 6
     },
     {
-      "time": 7.93,
-      "mouth_shape": 7
-    },
-    {
-      "time": 7.98,
+      "time": 8.043,
       "mouth_shape": 0
     }
   ],

@@ -3,12 +3,7 @@
   "markers": [
     {
       "time": 0,
-      "head_movement": 0
-    },
-    {
-      "time": 0.25,
-      "mouth_shape": 1,
-      "emotion_state": 0
+      "emotion_state": 15
     },
     {
       "time": 0.38,

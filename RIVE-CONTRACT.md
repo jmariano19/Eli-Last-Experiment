@@ -22,7 +22,7 @@ Set on the state machines listed in the scene's `stateMachines` (scene.json).
 |------------|------|-----------|--------|
 | `mouth_shape` | Number | Lip-sync markers; reset to 0 when audio stops | 0 = Idle/closed … 18 (see mouth table below) |
 | `is_speaking` | Boolean | true while `mouth_shape` > 0 | — |
-| `emotion_state` | Number | Markers | 0 Neutral, 1 Sad, 2 Happy, 3 Angry, 4 Surprised, 5 Confused, 6 Remembering, 7 Scared, 8 Tired, 9 Eyes Closed |
+| `emotion_state` | Number | Markers | 0 Neutral, 1 Sad, 2 Happy, 3 Angry, 4 Surprised, 5 Confused, 6 Remembering, 7 Scared, 8 Tired, 9 Eyes Closed, 10 Look Up, 11 Look Down, 12 Look Left, 13 Look Right, 14 Release, 15 Idle 1, 16 Idle 2, 17 Idle 3 |
 | `body_movement` | Number | Markers (also mirrored into `nav_heart`) | see body table below |
 | `head_movement`, `head_state` | Number | Markers (same value sent to both) | see head table below |
 | `heart_state` | Number | Markers | see heart table below |

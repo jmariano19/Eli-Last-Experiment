@@ -746,7 +746,7 @@ function sanitizeMarkers(raw) {
     const s = { time: Math.max(0, Number(m.time)) };
     // Keep these caps in sync with MOUTH_LABELS / EMOTION_LABELS in editor.js
     if (Number.isFinite(m.mouth_shape))   s.mouth_shape   = Math.max(0, Math.min(18, Math.round(Number(m.mouth_shape))));
-    if (Number.isFinite(m.emotion_state)) s.emotion_state = Math.max(0, Math.min(14, Math.round(Number(m.emotion_state))));
+    if (Number.isFinite(m.emotion_state)) s.emotion_state = Math.max(0, Math.min(17, Math.round(Number(m.emotion_state))));
     if (Number.isFinite(m.body_movement)) s.body_movement = Math.max(0, Math.min(17, Math.round(Number(m.body_movement))));
     if (Number.isFinite(m.head_movement)) s.head_movement = Math.max(0, Math.min(8,  Math.round(Number(m.head_movement))));
     if (Number.isFinite(m.heart_state))   s.heart_state   = Math.max(0, Math.min(8,  Math.round(Number(m.heart_state))));
