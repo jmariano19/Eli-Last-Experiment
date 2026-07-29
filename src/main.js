@@ -4,6 +4,8 @@
   // ─── State ──────────────────────────────────────────────────────────────────
   const params    = new URLSearchParams(window.location.search);
   const startScene = params.get('scene') || null;
+  // ?restart — wipe saved progress and begin from the first scene
+  const freshStart = params.has('restart') || params.has('fresh');
   // ?segment=N — editor's per-segment ▶ test: start the scene at that segment
   const startSegment = params.get('segment');
   let startSegmentUsed = false;
@@ -537,8 +539,9 @@
     } catch { sequence = { scenes: [], start: null }; }
     applyMumbleTuning(sequence.mumble);
 
+    if (freshStart) { try { localStorage.removeItem(PROGRESS_KEY); } catch {} }
     let resume = null;
-    if (!devMode) { try { resume = localStorage.getItem(PROGRESS_KEY); } catch {} }
+    if (!devMode && !freshStart) { try { resume = localStorage.getItem(PROGRESS_KEY); } catch {} }
     if (resume && !(sequence.scenes || []).includes(resume)) resume = null;
 
     const first = startScene || resume || sequence.start || (sequence.scenes && sequence.scenes[0]) || null;

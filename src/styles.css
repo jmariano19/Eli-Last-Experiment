@@ -1093,19 +1093,33 @@ canvas {
   pointer-events: auto;
 }
 
+/* Same warm-gold pill language as the authored scene CTA (.scene-cta) */
 .segment-chat__continue {
   position: fixed;
   bottom: calc(var(--keyboard-offset) + max(90px, calc(var(--safe-bottom) + 78px)));
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(83, 238, 134, 0.15);
-  border: 1px solid rgba(83, 238, 134, 0.4);
-  border-radius: 20px;
-  color: #53ee86;
-  font-size: 13px;
-  padding: 8px 20px;
+  font-family: 'Schoolbell', cursive;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #e6d2a6;
+  background: rgba(56, 48, 36, 0.62);
+  border: 1px solid rgba(193, 163, 118, 0.22);
+  border-radius: 999px;
+  padding: 12px 28px;
   cursor: pointer;
   pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.25s, border-color 0.25s, color 0.25s;
+}
+.segment-chat__continue:hover {
+  background: rgba(66, 57, 43, 0.72);
+  border-color: rgba(193, 163, 118, 0.4);
+  color: #f2e2ba;
+}
+.segment-chat__continue:active {
+  transform: translateX(-50%) translateY(1px) scale(0.985);
 }
 
 .text-overlay {
@@ -1280,8 +1294,8 @@ canvas {
 
   .segment-chat__continue {
     bottom: calc(var(--keyboard-offset) + max(76px, calc(var(--safe-bottom) + 66px)));
-    font-size: 12px;
-    padding: 6px 16px;
+    font-size: 16px;
+    padding: 10px 22px;
   }
 }
 
