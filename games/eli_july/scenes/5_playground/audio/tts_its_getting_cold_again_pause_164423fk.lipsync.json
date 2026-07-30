@@ -115,5 +115,39 @@
       "mouth_shape": 0
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "It's getting cold again.",
+      "duration": 4.8,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 4.994,
+      "text": "Could you keep your hand here",
+      "duration": 2.7,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 8.038,
+      "text": "until it passes?",
+      "duration": 2.1,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

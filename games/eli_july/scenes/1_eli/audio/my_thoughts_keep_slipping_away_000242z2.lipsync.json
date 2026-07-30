@@ -1,10 +1,14 @@
 {
-  "filename": "tts_my_thoughts_keep_slipping_away_000242z2.m4a",
+  "filename": "my_thoughts_keep_slipping_away_000242z2.m4a",
   "markers": [
     {
       "time": 0,
       "emotion_state": 7,
       "heart_state": 2
+    },
+    {
+      "time": 0.168,
+      "emotion_state": 14
     },
     {
       "time": 0.235,
@@ -17,7 +21,8 @@
     },
     {
       "time": 0.65,
-      "mouth_shape": 8
+      "mouth_shape": 8,
+      "emotion_state": 0
     },
     {
       "time": 0.78,
@@ -60,5 +65,17 @@
       "mouth_shape": 0
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "My thoughts keep slipping away.",
+      "duration": 2.8,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

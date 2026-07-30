@@ -23,10 +23,6 @@
       "mouth_shape": 0
     },
     {
-      "time": 1.537,
-      "emotion_state": 14
-    },
-    {
       "time": 2.04,
       "mouth_shape": 8
     },
@@ -71,5 +67,17 @@
       "mouth_shape": 0
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 1.34,
+      "text": "You stayed.",
+      "duration": 2.7,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

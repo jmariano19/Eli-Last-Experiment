@@ -102,5 +102,39 @@
       "mouth_shape": 0
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "There was someone inside.",
+      "duration": 2.7,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 2.958,
+      "text": "My mother.",
+      "duration": 1.9,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 5.156,
+      "text": "She was waiting for me.",
+      "duration": 2.3,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

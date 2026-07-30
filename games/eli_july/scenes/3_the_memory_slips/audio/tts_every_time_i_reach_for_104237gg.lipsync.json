@@ -126,5 +126,28 @@
       "mouth_shape": 1
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "Every time I reach for her,",
+      "duration": 4.2,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 4.373,
+      "text": "the memory comes apart.",
+      "duration": 2.5,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

@@ -61,6 +61,8 @@ against the scene's config and flags missing names.
 ## Editor tips
 
 - **✨ Auto sync** generates mouth markers from the audio; fine-tune by hand.
+- **CC Auto captions** listens to the loaded voice line and creates timed,
+  editable captions on the same lip-sync timeline. Review the text, then Save.
 - **Cmd+Z** undoes marker/text-cue changes; **Space** holds to play.
 - **Cmd+S** saves; the Save button glows amber when there are unsaved changes.
 - Drag scenes in the sidebar to reorder; **⧉** duplicates a scene.

@@ -86,5 +86,17 @@
       "heart_state": 2
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "Could you keep your hand on my heart?",
+      "duration": 2.7,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

@@ -155,5 +155,50 @@
       "mouth_shape": 2
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "The cold stopped.",
+      "duration": 2.8,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 2.957,
+      "text": "Your warmth woke something up.",
+      "duration": 2.9,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 6.571,
+      "text": "Words...",
+      "duration": 1.5,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 8.311,
+      "text": "I can almost see them.",
+      "duration": 1.8,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

@@ -135,5 +135,28 @@
       "mouth_shape": 2
     }
   ],
-  "textCues": []
+  "textCues": [
+    {
+      "time": 0,
+      "text": "Something moved when you touched me.",
+      "duration": 4.4,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    },
+    {
+      "time": 4.614,
+      "text": "A memory.",
+      "duration": 1.5,
+      "fontSize": 24,
+      "color": "#C1A376",
+      "position": "caption",
+      "fontWeight": "700",
+      "speed": 1,
+      "lipSync": false
+    }
+  ]
 }

@@ -498,7 +498,7 @@
 
   // The server must speak the same API version — otherwise a stale server
   // process is running and everything would fail in confusing ways.
-  const REQUIRED_SERVER_VERSION = 8;
+  const REQUIRED_SERVER_VERSION = 9;
 
   async function ensureServerVersion() {
     let version = null;
@@ -2277,6 +2277,7 @@
                 <input class="field-input text-cue-input" id="textCueInput" type="text" placeholder="Type text to show on screen…" />
                 <input class="field-input text-cue-duration" id="textCueDuration" type="number" min="0.5" step="0.5" value="3" title="Duration (sec)" style="width:55px;flex:none" />
                 <button class="btn btn--ghost btn--small" id="btnAddTextCue">+ Text</button>
+                <button class="btn btn--ghost btn--small" id="btnAutoCaptions" title="Listen to this voice recording and create timed, editable captions">CC Auto captions</button>
               </div>
               <div class="text-cue-style-row">
                 <label class="text-cue-style-label">Size</label>
@@ -4277,6 +4278,64 @@
     showToast(`Generated ${markers.length} markers — scrub through and fine-tune, then Save.`);
   }
 
+  async function generateAutoCaptions(button) {
+    const config = st.configs[st.activeId];
+    if (!config || !st.activeVoiceFile) {
+      showToast('Load a voice recording first.', true);
+      return;
+    }
+    if (st.textCues.length && !confirm(`Replace ${st.textCues.length} existing caption${st.textCues.length === 1 ? '' : 's'} for this recording?`)) return;
+
+    const originalLabel = button?.textContent || 'CC Auto captions';
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Listening…';
+    }
+    showToast('Listening to the voice recording and timing the captions…', false, 12000);
+
+    try {
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          game: st.game,
+          id: config.id,
+          filename: st.activeVoiceFile,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      if (!Array.isArray(data.segments) || !data.segments.length) {
+        throw new Error('No understandable speech was found in this recording.');
+      }
+
+      pushHistory();
+      st.textCues = data.segments.map(segment => ({
+        time: Math.round(Math.max(0, Number(segment.start) || 0) * 1000) / 1000,
+        duration: Math.max(0.5, Math.round((Number(segment.end) - Number(segment.start)) * 10) / 10),
+        text: String(segment.text || '').trim(),
+        fontSize: 24,
+        color: '#C1A376',
+        position: 'caption',
+        fontWeight: '700',
+        speed: 1,
+        lipSync: false,
+      })).filter(cue => cue.text);
+      st.markersVersion++;
+      st.selectedTextCueIdx = -1;
+      st.dirty = true;
+      refreshLipSyncViews();
+      showToast(`Created ${st.textCues.length} timed caption${st.textCues.length === 1 ? '' : 's'}. Review them, then Save.`);
+    } catch (err) {
+      showToast(`Automatic captions failed: ${err.message}`, true, 9000);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = originalLabel;
+      }
+    }
+  }
+
   // ─── Lip sync: Rive preview sync ─────────────────────────────────────────────
   function syncRiveToTime(t) {
     if (!rivePreview || !st.markers.length) return;
@@ -4431,6 +4490,8 @@
 
     const btnAutoSync = document.getElementById('btnAutoSync');
     if (btnAutoSync) btnAutoSync.onclick = () => generateAutoLipSync();
+    const btnAutoCaptions = document.getElementById('btnAutoCaptions');
+    if (btnAutoCaptions) btnAutoCaptions.onclick = () => generateAutoCaptions(btnAutoCaptions);
     drawWaveform();
 
     renderTextCueList();

@@ -20,7 +20,7 @@ if (existsSync(envPath)) {
 
 // Bump when the editor/server API contract changes — the editor refuses to
 // run against a mismatched server instead of failing in confusing ways.
-const API_VERSION = 8;
+const API_VERSION = 9;
 
 const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
 const chatModel    = process.env.CHAT_MODEL || 'claude-sonnet-4-6';
@@ -770,6 +770,123 @@ async function saveLipSync(req, res) {
   const textCues = Array.isArray(body.textCues) ? body.textCues.filter(tc => tc && typeof tc.text === 'string' && tc.text.trim() && Number.isFinite(tc.time)).map(tc => ({ time: tc.time, text: tc.text.trim(), duration: Number(tc.duration) || 3, fontSize: Number(tc.fontSize) || 24, color: String(tc.color || '#C1A376'), position: String(tc.position || 'bottom'), fontWeight: String(tc.fontWeight || '700'), speed: Number(tc.speed) || 90, lipSync: tc.lipSync !== false })) : [];
   await writeFile(outPath, JSON.stringify({ filename, markers: sanitizeMarkers(body.markers || []), textCues }, null, 2), 'utf8');
   sendJson(res, 200, { ok: true });
+}
+
+function audioMimeType(filename) {
+  return ({
+    '.mp3': 'audio/mpeg',
+    '.m4a': 'audio/mp4',
+    '.wav': 'audio/wav',
+    '.ogg': 'audio/ogg',
+    '.opus': 'audio/ogg',
+  })[extname(filename).toLowerCase()] || '';
+}
+
+function parseGeminiJson(text) {
+  const cleaned = String(text || '').trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '');
+  try { return JSON.parse(cleaned); } catch {}
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch {}
+  }
+  return null;
+}
+
+async function handleTranscribe(req, res) {
+  const body = await readJsonBody(req);
+  const game = await resolveGame(body.game);
+  const id = cleanId(body.id);
+  const filename = cleanFilename(body.filename);
+  const mimeType = audioMimeType(filename);
+  if (!id || !filename || !mimeType) {
+    sendJson(res, 400, { error: 'Choose a supported voice recording first.' });
+    return;
+  }
+  if (!geminiKey) {
+    sendJson(res, 503, { error: 'Automatic captions need the Gemini key already used by Generate voice. Add GEMINI_API_KEY to .env, then restart the editor.' });
+    return;
+  }
+
+  const audioPath = join(gameDir(game), 'scenes', id, 'audio', filename);
+  const expectedDir = resolve(gameDir(game), 'scenes', id, 'audio');
+  if (!resolve(audioPath).startsWith(expectedDir + '/') || !existsSync(audioPath)) {
+    sendJson(res, 404, { error: `Voice recording "${filename}" was not found.` });
+    return;
+  }
+
+  const info = await stat(audioPath);
+  if (info.size > 18 * 1024 * 1024) {
+    sendJson(res, 413, { error: 'This recording is too large for automatic captions. Split it into shorter voice lines first.' });
+    return;
+  }
+
+  const audioData = (await readFile(audioPath)).toString('base64');
+  const prompt = `Transcribe this spoken English audio exactly and create accessible game captions.
+Return JSON only in this shape:
+{"language":"en","transcript":"complete verbatim transcript","segments":[{"start":0.0,"end":2.4,"text":"Caption text"}]}
+
+Rules:
+- Preserve the speaker's actual words. Do not rewrite, summarize, or add dialogue.
+- Omit non-speech background sound.
+- Use the audio timing for start and end seconds.
+- Break at natural phrase boundaries.
+- Aim for 1–5 seconds per caption and no more than about 84 characters.
+- Use normal punctuation and capitalization.
+- If there is no intelligible speech, return an empty transcript and empty segments.`;
+
+  let response;
+  try {
+    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType, data: audioData } },
+          ],
+        }],
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+  } catch (err) {
+    sendJson(res, 502, { error: `Could not reach the caption service: ${err.message}` });
+    return;
+  }
+
+  if (!response.ok) {
+    let message = `Caption service returned HTTP ${response.status}.`;
+    try { message = (await response.json()).error?.message || message; } catch {}
+    sendJson(res, response.status === 429 ? 429 : 502, { error: message });
+    return;
+  }
+
+  const payload = await response.json();
+  const responseText = payload.candidates?.[0]?.content?.parts?.find(part => part.text)?.text || '';
+  const parsed = parseGeminiJson(responseText);
+  if (!parsed) {
+    sendJson(res, 502, { error: 'The caption service returned an unreadable transcription. Please try again.' });
+    return;
+  }
+
+  const segments = (Array.isArray(parsed.segments) ? parsed.segments : [])
+    .map(segment => ({
+      start: Math.max(0, Number(segment?.start) || 0),
+      end: Math.max(0, Number(segment?.end) || 0),
+      text: cleanString(segment?.text).slice(0, 200),
+    }))
+    .filter(segment => segment.text && segment.end > segment.start)
+    .sort((a, b) => a.start - b.start)
+    .slice(0, 100);
+
+  const transcript = cleanString(parsed.transcript || segments.map(segment => segment.text).join(' '));
+  sendJson(res, 200, { ok: true, transcript, segments });
 }
 
 // ─── Chat (Eli AI) ────────────────────────────────────────────────────────────
@@ -1588,6 +1705,19 @@ async function handlePublish(res) {
     }
 
     branch = (await exec('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root })).stdout.trim() || 'main';
+    // The remote may have moved (e.g. a publish from another checkout of this
+    // repo) — rebase our commits on top so the push fast-forwards instead of
+    // failing with non-fast-forward.
+    try {
+      await exec('git', ['pull', '--rebase', 'origin', branch], { cwd: root });
+    } catch (rebaseErr) {
+      try { await exec('git', ['rebase', '--abort'], { cwd: root }); } catch {}
+      sendJson(res, 500, {
+        error: `The GitHub repo has changes that conflict with this folder's — they couldn't be merged automatically. In Terminal, run: git pull --rebase origin ${branch} (from the project folder), resolve any conflicts, then publish again. Detail: ${String(rebaseErr.stderr || rebaseErr.message || '').trim().slice(0, 200)}`,
+        pushed, branch,
+      });
+      return;
+    }
     await exec('git', ['push', 'origin', branch], { cwd: root });
     pushed = true;
   } catch (err) {
@@ -1673,6 +1803,7 @@ createServer(async (req, res) => {
     if (req.method === 'POST' && p === '/api/shared/upload')      { await uploadSharedFile(req, res, url);    return; }
 
     if (req.method === 'POST' && p === '/api/lipsync/save')       { await saveLipSync(req, res);              return; }
+    if (req.method === 'POST' && p === '/api/transcribe')         { await handleTranscribe(req, res);         return; }
 
     if (req.method === 'POST' && p === '/api/tts')                { await handleTts(req, res);                return; }
     if (req.method === 'GET'  && p === '/api/tts-status')         { await handleTtsStatus(res);               return; }

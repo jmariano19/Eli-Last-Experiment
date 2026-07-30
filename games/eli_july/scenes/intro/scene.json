@@ -2,7 +2,7 @@
   "id": "intro",
   "title": "Intro",
   "type": "rive",
-  "rive": "start_july.riv",
+  "rive": "start.riv",
   "files": {},
   "after": {
     "trigger": "never",
