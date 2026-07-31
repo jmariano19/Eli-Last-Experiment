@@ -312,6 +312,7 @@ canvas {
 .words-letter { position:absolute; width:var(--words-letter-size,52px); height:var(--words-letter-size,52px); transform:translate(-50%,-50%); border:1px solid rgba(193,163,118,.28); border-radius:50%; background:#17120e; color:#d8bd91; font:700 var(--words-letter-font,25px) 'Schoolbell',cursive; box-shadow:0 4px 16px rgba(0,0,0,.42); transition:background .2s,border-color .2s,transform .2s; }
 .words-letter.is-selected { background:#5c2b18; border-color:#edaa72; color:#ffe0b8; transform:translate(-50%,-50%) scale(1.08); }
 .words-screen__memory { min-height:24px; max-width:86%; margin-top:8px; color:rgba(225,209,183,.62); font-size:15px; text-align:center; }
+.words-screen__memory.is-hint { color:#e6bd82; text-shadow:0 0 12px rgba(210,129,66,.28); }
 .words-recovered {
   position:absolute;
   left:50%;

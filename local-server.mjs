@@ -1600,6 +1600,52 @@ async function handleResetNarrative(req, res) {
   sendJson(res, 200, { ok: true });
 }
 
+async function showTestingResetPage(res, url) {
+  const game = await resolveGame(url.searchParams.get('game'));
+  const safeGame = JSON.stringify(game).replace(/</g, '\\u003c');
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+  res.end(`<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reset Eli for testing</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0d0b09;color:#eadbc5;font:16px/1.5 system-ui,sans-serif;padding:24px}
+  main{width:min(100%,440px);padding:30px;border:1px solid #574431;border-radius:20px;background:#17120e;box-shadow:0 20px 70px #000}
+  h1{font-size:25px;margin:0 0 10px}p{color:#baa990}strong{color:#efd1a2}
+  button,a{display:block;width:100%;border:0;border-radius:12px;padding:14px 18px;font:700 16px system-ui;text-align:center;text-decoration:none}
+  button{margin-top:24px;background:#b86f3d;color:#fff;cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+  a{margin-top:12px;background:#292019;color:#e6d3ae}.status{min-height:24px;margin-top:16px;color:#e6bd82}
+</style>
+<main>
+  <h1>Reset Eli for the next tester</h1>
+  <p>This clears the remembered <strong>player name, conversations, bond, and unlocked memories</strong> in production.</p>
+  <p>Use it immediately before handing the game to a new participant. It affects the shared game memory for everyone.</p>
+  <button id="reset">Clear memory and start fresh</button>
+  <div class="status" id="status" role="status"></div>
+  <a href="/?fresh=1">Return to the game without resetting</a>
+</main>
+<script>
+  const game=${safeGame};
+  const button=document.getElementById('reset');
+  const status=document.getElementById('status');
+  button.onclick=async()=>{
+    if(!confirm("Clear Eli's remembered player and conversation history?"))return;
+    button.disabled=true;status.textContent='Clearing memory…';
+    try{
+      const response=await fetch('/api/narrative/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game})});
+      if(!response.ok)throw new Error('HTTP '+response.status);
+      localStorage.clear();
+      status.textContent='Fresh slate ready. Opening the game…';
+      setTimeout(()=>location.href='/?fresh=1',700);
+    }catch(error){
+      status.textContent='Could not reset: '+error.message;
+      button.disabled=false;
+    }
+  };
+</script>
+</html>`);
+}
+
 // The Anthropic API requires user/assistant roles to alternate and the first
 // message to be from the user. Stored history + a fresh segment (which opens
 // with an assistant line) can violate both, so normalize before sending.
@@ -1773,6 +1819,7 @@ createServer(async (req, res) => {
 
   try {
     if (req.method === 'GET'  && p === '/api/version')            { sendJson(res, 200, { version: API_VERSION }); return; }
+    if (req.method === 'GET'  && p === '/reset-testing')          { await showTestingResetPage(res, url);       return; }
 
     if (req.method === 'GET'  && p === '/api/games')              { await listGames(res);                     return; }
     if (req.method === 'POST' && p === '/api/games/create')       { await createGame(req, res);               return; }

@@ -2673,12 +2673,14 @@
     let selectedIndexes = new Set();
     let drawing = false;
     let complete = false;
+    let failedAttempts = 0;
 
     showMessage(''); clearTextOverlay(); syncViewportVars();
     wordsScreen.style.display = 'flex';
     wordsScreen.className = 'words-screen';
     wordsCaption.textContent = w.intro || 'His memories are hiding in the letters.';
     wordsReveal.textContent = 'swipe through the letters.';
+    wordsReveal.classList.remove('is-hint');
     wordsCurrent.textContent = '';
     wordsRecovered.classList.remove('is-visible');
     wordsRecovered.innerHTML = '';
@@ -2828,6 +2830,7 @@
       // travel forward into the next scene.
       wordsCaption.textContent = w.foundText || 'You found the words he could not say.';
       wordsReveal.textContent = w.carryText || 'Take them back to Eli.';
+      wordsReveal.classList.remove('is-hint');
       wordsRecovered.innerHTML = `
         <span class="words-recovered__core"></span>
         ${memories.map((memory, index) =>
@@ -2856,6 +2859,8 @@
       const word = selected.map(button => button.textContent).join('');
       const memory = memories.find(item => item.word === word);
       if (memory && !found.has(word)) {
+        failedAttempts = 0;
+        wordsReveal.classList.remove('is-hint');
         found.add(word); playHaptic('double'); wordsReveal.textContent = memory.reveal; renderMemorySlots(word);
         wordsScreen.classList.add('has-new-word'); later(() => wordsScreen.classList.remove('has-new-word'), 700);
         // Let the traced word swell gold and release before it clears —
@@ -2882,7 +2887,23 @@
         if (found.size === memories.length) later(finishGame, 850);
       } else {
         wordsCurrent.classList.add('is-dissolving');
-        wordsReveal.textContent = found.has(word) ? 'you already found that memory.' : 'the word slips away.';
+        if (found.has(word)) {
+          wordsReveal.classList.remove('is-hint');
+          wordsReveal.textContent = 'you already found that memory.';
+        } else {
+          failedAttempts++;
+          const hintAfter = Math.max(1, Number(w.hintAfter) || 3);
+          const remaining = memories.filter(item => !found.has(item.word));
+          if (failedAttempts >= hintAfter && remaining.length) {
+            const hintIndex = Math.floor((failedAttempts - hintAfter) / 2) % remaining.length;
+            const hintWord = remaining[hintIndex].word;
+            wordsReveal.classList.add('is-hint');
+            wordsReveal.textContent = `hint: one memory starts with “${hintWord.charAt(0)}” and has ${hintWord.length} letters.`;
+          } else {
+            wordsReveal.classList.remove('is-hint');
+            wordsReveal.textContent = 'the word slips away.';
+          }
+        }
         later(() => { wordsCurrent.classList.remove('is-dissolving'); clearSelection(); }, 450);
       }
     };

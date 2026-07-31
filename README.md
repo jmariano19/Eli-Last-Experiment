@@ -17,6 +17,8 @@ browser. The terminal also prints a LAN URL for testing on your phone.
 
 - Editor: http://localhost:4179/editor.html
 - Game:   http://localhost:4179/index.html
+- Testing reset: append `/reset-testing` to the deployed site address to clear
+  Eli's shared player memory and begin a fresh participant session.
 
 For AI chat scenes, create a `.env` file with `ANTHROPIC_API_KEY=sk-ant-...`
 (optional: `CHAT_MODEL=` to override the model).
