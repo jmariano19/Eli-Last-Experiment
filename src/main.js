@@ -17,7 +17,13 @@
 
   // ?shell=0 — strip the desktop phone frame so the game fills the real viewport.
   // Applied by the 📱 mobile test buttons and useful for responsive testing.
-  if (params.get('shell') === '0') {
+  // A phone can report a desktop-sized CSS viewport when "Request Desktop
+  // Website" is enabled.  Coarse touch detection keeps the decorative shell
+  // off real devices as well; transformed phone shells can black out an HTML
+  // video layer on mobile Chrome/Safari while its audio continues playing.
+  const isTouchDevice = navigator.maxTouchPoints > 0 &&
+    window.matchMedia?.('(pointer: coarse)').matches;
+  if (params.get('shell') === '0' || isTouchDevice) {
     document.documentElement.setAttribute('data-shell', 'none');
   }
 
@@ -717,7 +723,9 @@
       if (config.type === 'pairs') await playPairsScene(config);
       if (config.type === 'jigsaw') await playJigsawScene(config);
 
-      updateCtaButton(config);
+      // Segmented scenes own their CTA state. Calling the legacy scene CTA
+      // here would overwrite the CTA selected by playSegment().
+      if (!(Array.isArray(config.segments) && config.segments.length)) updateCtaButton(config);
       // Segment scenes install their own effective zone in playSegment().
       // Avoid replacing it with the legacy scene-level zone after loading.
       if (!(Array.isArray(config.segments) && config.segments.length)) setupHeartZone(config);
@@ -1265,6 +1273,8 @@
       return;
     }
 
+    if (trigger === 'never') return;
+
     if (seg.message) showMessage(seg.message, false);
 
     if (trigger === 'tap_heart') {
@@ -1278,6 +1288,10 @@
         return action && (action.heartState !== undefined || action.input || action.next);
       });
       if (hasHeartGesture) return;
+      // Video heart interactions are opt-in per segment. An explicitly empty
+      // or disabled zone must stay inert rather than turning the whole video
+      // into a legacy tap-anywhere advance target.
+      if (config.type === 'video') return;
       const tapTarget = getActiveTapTarget();
       const handler = () => advanceSegment(config, index);
       tapTarget.addEventListener('pointerup', handler, { once: true });
@@ -1322,6 +1336,12 @@
     sceneVideo.src = sceneAssetUrl(config.id, `audio/${videoFile}`);
     sceneVideo.load();
 
+    // loadScene() fades to an opaque overlay before changing scenes. Regular
+    // video scenes remove it in playVideoScene(), but segmented video scenes
+    // return through this function instead. Without this call the clip decodes
+    // and its audio plays behind a permanently black transition layer.
+    fadeIn();
+
     const skipBtn = document.getElementById('videoSkip');
     const showSkip = seg.skippable !== false;
     if (skipBtn) skipBtn.style.display = showSkip ? '' : 'none';
@@ -1337,6 +1357,20 @@
     };
     const finish = () => {
       if (finished) return;
+      if (seg.chat_enabled === true) {
+        // Keep the video's final frame visible and place the existing segment
+        // chat UI above it. The video is removed only when chat finishes or
+        // the player leaves this segment.
+        finished = true;
+        sceneVideo.onended = null;
+        if (skipBtn) skipBtn.onclick = null;
+        playChatSegment(config, index, { onTeardown: hideVideo });
+        return;
+      }
+      if (seg.trigger === 'tap_heart') {
+        waitForSegmentTrigger(config, index);
+        return;
+      }
       finished = true;
       hideVideo();
       if (isLast) {
@@ -1363,7 +1397,7 @@
   }
 
   // ─── Chat segment ───────────────────────────────────────────────────────────
-  async function playChatSegment(config, index) {
+  async function playChatSegment(config, index, options = {}) {
     const seg = config.segments[index];
     const isLast = index === config.segments.length - 1;
     const maxExchanges = seg.max_exchanges || 0;
@@ -1398,6 +1432,7 @@
       voiceCleanup();
       if (activeRecognition) { try { activeRecognition.stop(); } catch {} activeRecognition = null; }
       hideSegmentChat();
+      if (typeof options.onTeardown === 'function') options.onTeardown();
     }
 
     function finishChat() {
@@ -1655,13 +1690,13 @@
     }, cta.hold === true);
   }
 
-  // Called at the start of every segment. A segment's own CTA wins; without
-  // one the scene-level CTA (if any) applies.
+  // Called at the start of every segment. CTAs are opt-in per segment; a
+  // scene-level CTA must not leak onto every beat of a segmented story.
   function updateSegmentCta(config, index) {
     const seg = config.segments?.[index];
     if (!seg) return;
     const label = String(seg.cta_label || '').trim();
-    if (!label) { updateCtaButton(config); return; }
+    if (!label) { hideCta(); return; }
     showCta(label, () => {
       if (segmentCleanup) { segmentCleanup(); segmentCleanup = null; }
       if (activeLipSyncAudio) { activeLipSyncAudio.pause(); activeLipSyncAudio = null; }
@@ -1747,7 +1782,7 @@
       <span class="heart-gift-burst__spark"></span>
       <span class="heart-gift-burst__spark"></span>
       <span class="heart-gift-burst__spark"></span>`;
-    stage.appendChild(gift);
+    (heartZoneEl?.parentElement || stage).appendChild(gift);
     // Keep this timer independent from the gesture timers: a successful hold
     // can immediately advance the segment, but the gift bloom should finish.
     setTimeout(() => gift.remove(), 1150);
@@ -1755,7 +1790,7 @@
 
   function setupHeartZone(config, zone = config.heartZone) {
     clearHeartZone();
-    if (config.type !== 'rive') return;
+    if (config.type !== 'rive' && config.type !== 'video') return;
     const hz = zone;
     if (!hz) return;
     const gTap  = hz.tap && (hz.tap.heartState !== undefined || hz.tap.input || hz.tap.next) ? hz.tap : null;
@@ -1783,7 +1818,7 @@
     heartZoneEl.oncontextmenu = (e) => e.preventDefault();
     // ?zones=1 → draw the zone so it can be positioned precisely
     if (new URLSearchParams(location.search).get('zones') === '1') heartZoneEl.classList.add('heart-zone--debug');
-    stage.appendChild(heartZoneEl);
+    (config.type === 'video' ? videoScreen : stage).appendChild(heartZoneEl);
 
     let holdTimer = null;
     let holdStartedAt = 0;
@@ -1819,7 +1854,12 @@
           heartZoneEl?.classList.remove('is-holding');
           heartZoneEl?.classList.add('is-received');
           showHeartGift(x, y, size);
-          fireHeartAction(gHold, config);
+          // A video reached from a timer is not considered user-initiated on
+          // iOS, so its audible play() is blocked. For video scenes, mark the
+          // hold complete now and navigate from pointerup below, while the
+          // release is still a trusted user gesture. Rive holds retain their
+          // existing fire-at-duration behaviour.
+          if (config.type !== 'video') fireHeartAction(gHold, config);
           // fireHeartAction includes a generic tap tick. Set the authored
           // hold-complete pattern afterward so it remains the final haptic.
           if (navigator.vibrate) { try { navigator.vibrate([42, 70, 78]); } catch {} }
@@ -1847,7 +1887,10 @@
       cancelHold();
       try { heartZoneEl.releasePointerCapture(e.pointerId); } catch {}
       activePointerId = null;
-      if (held) return;
+      if (held) {
+        if (config.type === 'video') fireHeartAction(gHold, config);
+        return;
+      }
       const now = performance.now();
       if (gDbl && now - lastTapAt < 340) {
         if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
@@ -1861,6 +1904,16 @@
           // wait long enough to be sure it isn't the first half of a double-tap
           tapTimer = setTimeout(() => { tapTimer = null; fireHeartAction(gTap, config); }, 350);
           heartZoneTimers.push(tapTimer);
+        } else if (config.type === 'video') {
+          if (heartZoneEl?.dataset.transitioning === '1') return;
+          if (heartZoneEl) heartZoneEl.dataset.transitioning = '1';
+          heartZoneEl?.classList.add('is-received');
+          showHeartGift(x, y, size);
+          // Start the next clip inside the pointer event call stack. iOS
+          // Safari blocks audible video started later from a timer because it
+          // no longer counts as user-initiated. The gift bloom is independent
+          // and remains over the video screen while the next clip begins.
+          fireHeartAction(gTap, config);
         } else {
           fireHeartAction(gTap, config);
         }
@@ -3337,6 +3390,20 @@
   // ─── Video scene ─────────────────────────────────────────────────────────────
   async function playVideoScene(config) {
     clearTextOverlay();
+    if (Array.isArray(config.segments) && config.segments.length) {
+      segmentsDone = false;
+      // Honor the editor's per-segment ▶ test URL for video scenes too. Voice
+      // scenes already supported this, but video scenes always restarted at 0,
+      // which made a selected segment appear to follow stale transition rules.
+      let startIndex = 0;
+      if (devMode && startSegment !== null && !startSegmentUsed && config.id === startScene) {
+        startSegmentUsed = true;
+        const n = Number(startSegment);
+        if (Number.isFinite(n)) startIndex = Math.max(0, Math.min(config.segments.length - 1, n));
+      }
+      await playSegment(config, startIndex);
+      return;
+    }
     videoScreen.style.display = 'flex';
     const files = config.files || {};
     const videoFile = Object.keys(files).find(f => files[f] === 'video') || null;
@@ -3377,18 +3444,19 @@
       showTextOverlay(c.text, holdFor, { fontSize: 22, color: '#e6d3ae', position: 'bottom', fontWeight: '700', lipSync: false });
     } : null;
 
-    const skipNext = () => {
+    const goNext = () => {
       sceneVideo.pause();
       sceneVideo.ontimeupdate = null;
       clearTextOverlay();
       const after = config.after || {};
-      if (after.next) loadScene(after.next);
+      const destination = after.next || nextInSequence(config.id);
+      if (destination) loadScene(destination);
     };
 
-    sceneVideo.onended = skipNext;
+    sceneVideo.onended = goNext;
 
     const skipBtn = document.getElementById('videoSkip');
-    if (skipBtn) skipBtn.onclick = skipNext;
+    if (skipBtn) skipBtn.onclick = goNext;
 
     fadeIn();
     try {

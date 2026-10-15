@@ -1,0 +1,68 @@
+{
+  "id": "playground",
+  "title": "Playground",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "4.make_sense.mp4": "video",
+    "low.mp3": "bg",
+    "00_resting_pose.mp4": "video",
+    "4.playground.mp4": "video",
+    "6_cold.mp4": "video",
+    "7_warm.mp4": "video",
+    "medium.mp3": "bg"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "words"
+  },
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "type": "video",
+      "video": "4.make_sense.mp4",
+      "trigger": "ended",
+      "skippable": false,
+      "heartZone": null,
+      "chat_enabled": true,
+      "max_exchanges": 1,
+      "opening": "What did you noticed in the playground?",
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "video",
+      "video": "6_cold.mp4",
+      "trigger": "tap_heart",
+      "skippable": false,
+      "heartZone": {
+        "x": 50,
+        "y": 51,
+        "size": 24,
+        "tap": {
+          "next": "@segment:next"
+        },
+        "hold": {
+          "next": "@segment:next",
+          "duration": 3.5
+        }
+      },
+      "bgs": [
+        "medium.mp3"
+      ]
+    },
+    {
+      "type": "video",
+      "video": "7_warm.mp4",
+      "trigger": "ended",
+      "skippable": false,
+      "heartZone": null,
+      "cta_next": "words",
+      "bgs": [
+        "low.mp3"
+      ]
+    }
+  ]
+}

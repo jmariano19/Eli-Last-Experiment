@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "title": "Prototype_10",
+  "start": "start",
+  "scenes": [
+    "start",
+    "enter",
+    "game",
+    "playground",
+    "words",
+    "know_you_better",
+    "diary",
+    "the_voice",
+    "last"
+  ]
+}

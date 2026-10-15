@@ -1,0 +1,36 @@
+{
+  "id": "the_voice",
+  "title": "the voice",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "9_not_alone.mp4": "video",
+    "low.mp3": "bg"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": null
+  },
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "type": "video",
+      "video": "9_not_alone.mp4",
+      "trigger": "tap_heart",
+      "skippable": false,
+      "heartZone": {
+        "x": 50,
+        "y": 62,
+        "size": 24,
+        "tap": {
+          "next": "@segment:next"
+        }
+      },
+      "bgs": [
+        "low.mp3"
+      ],
+      "cta_next": "last"
+    }
+  ]
+}

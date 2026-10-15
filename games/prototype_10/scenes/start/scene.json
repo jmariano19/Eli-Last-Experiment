@@ -1,0 +1,19 @@
+{
+  "id": "start",
+  "title": "Start",
+  "type": "rive",
+  "rive": "start.riv",
+  "files": {},
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "routes": {
+    "next": "enter"
+  }
+}

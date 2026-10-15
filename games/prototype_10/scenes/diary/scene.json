@@ -1,0 +1,23 @@
+{
+  "id": "diary",
+  "title": "diary",
+  "type": "rive",
+  "rive": "the_diary.riv",
+  "files": {
+    "relaxing.mp3": "bg",
+    "tts_today_someone_found_me_in_1740531h.m4a": "voice"
+  },
+  "after": {
+    "trigger": "never",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "State Machine 1"
+  ],
+  "ctaRoutes": [],
+  "artboard": "The Diary",
+  "routes": {
+    "next": "the_voice"
+  }
+}

@@ -33,6 +33,8 @@ const mime = {
   '.json': 'application/json',
   '.riv':  'application/octet-stream',
   '.mp3':  'audio/mpeg',
+  '.aac':  'audio/aac',
+  '.flac': 'audio/flac',
   '.m4a':  'audio/mp4',
   '.wav':  'audio/wav',
   '.ogg':  'audio/ogg',
@@ -50,7 +52,7 @@ const mime = {
   '.gif':  'image/gif',
 };
 
-const MEDIA_EXTS = new Set(['.riv', '.mp3', '.m4a', '.wav', '.ogg', '.opus', '.mp4', '.webm', '.mov', '.m4v', '.ogv', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif']);
+const MEDIA_EXTS = new Set(['.riv', '.mp3', '.aac', '.flac', '.m4a', '.wav', '.ogg', '.opus', '.mp4', '.webm', '.mov', '.m4v', '.ogv', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif']);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -650,7 +652,8 @@ async function uploadSceneFile(req, res, url) {
   const isRiv = filename.toLowerCase().endsWith('.riv');
   const dir   = isRiv ? join(gameDir(game), 'scenes', id) : join(gameDir(game), 'scenes', id, 'audio');
   await mkdir(dir, { recursive: true });
-  await writeFile(join(dir, filename), buf);
+  const uploadedPath = join(dir, filename);
+  await writeFile(uploadedPath, buf);
 
   // For .riv uploads, also return the detected names so the editor can auto-fill
   if (isRiv) {
@@ -1223,7 +1226,7 @@ const TTS_GEMINI_VOICE_INFO = {
 };
 const TTS_GEMINI_VOICES = Object.keys(TTS_GEMINI_VOICE_INFO);
 const TTS_ELI_GEMINI_VOICE = 'Leda';
-const TTS_ELI_GEMINI_STYLE = 'An incredibly delicate, sleepy, and dreamy 21-year-old young adult gentleman. He speaks with slow, quiet bedside whispering, a soft tired voice, high tenderness, and very slow speech pauses, sounding deeply sleepy and quiet.';
+const TTS_ELI_GEMINI_STYLE = 'A delicate, sleepy, and dreamy 21-year-old young adult gentleman. Use a clear, natural, fully voiced conversational delivery with crisp articulation, steady vocal support, and consistent audible volume from the beginning to the end of every sentence. He sounds intelligent, mysterious, slightly unsettling, tired, and tender. Build suspense through deliberate pacing, thoughtful silence, and subtle emotional restraint. Keep every word present and easy to understand.';
 const TTS_ELI_EMOTION_DIRECTIONS = {
   vulnerable: 'He is emotionally exposed and unsure whether it is safe to speak. Let small hesitations and restrained need show through, without crying or melodrama.',
   frightened: 'Fear is close to the surface. His breath catches before difficult words and his certainty briefly falters, but he is trying hard not to panic.',
@@ -1326,12 +1329,13 @@ function buildGeminiTtsPrompt(style, text) {
     'Perform only the transcript below. Do not add, remove, or explain words.',
     'Treat [short pause] tags and ellipses as silent hesitation, not spoken text.',
     'Treat words wrapped in asterisks as soft acting emphasis, not spoken punctuation.',
-    'Keep the delivery intimate and realistic, with natural breathiness and gentle pauses.',
+    'Keep the delivery intimate and realistic through emotional restraint and gentle pauses while maintaining a clear, fully voiced tone.',
+    'Maintain steady vocal presence and conversational volume from the first word through the end of each sentence.',
     'Each [short pause] is a brief beat of about one second — never stretch any single pause beyond two seconds.',
     'Begin speaking immediately and end right after the last word — no long silence at the start or end.',
     'Avoid announcer energy, theatrical projection, or a cartoon voice.',
     '',
-    `Transcript: [whispering, very slow, sleepy] "${transcript}"`,
+    `Transcript: [clear, fully voiced, intimate, slow, sleepy, consistently audible] "${transcript}"`,
   ].join('\n');
 }
 
@@ -1716,6 +1720,49 @@ function handleRivWatch(req, res) {
 
 // ─── Publish ──────────────────────────────────────────────────────────────────
 
+// A publish that adds new scene media ships hundreds of MB of .mp4/.riv blobs.
+// GitHub's smart-HTTP endpoint drops those oversized requests, and because curl
+// can't rewind an already-streamed body the push dies with
+// "unable to rewind rpc post data" / "RPC failed; HTTP 400". Buffering the whole
+// request and forcing HTTP/1.1 makes the upload survive; the generous low-speed
+// window keeps git from giving up on a slow residential uplink.
+const PUSH_CONFIG = [
+  ['http.postBuffer', '524288000'],
+  ['http.version', 'HTTP/1.1'],
+  ['http.lowSpeedLimit', '0'],
+  ['http.lowSpeedTime', '999999'],
+];
+
+async function ensurePushConfig(exec, cwd) {
+  for (const [key, value] of PUSH_CONFIG) {
+    try {
+      const current = (await exec('git', ['config', '--local', '--get', key], { cwd })).stdout.trim();
+      if (current === value) continue;
+    } catch {}
+    try { await exec('git', ['config', '--local', key, value], { cwd }); } catch {}
+  }
+}
+
+// Transport-level failures — the payload was too big or the connection died —
+// as opposed to a rejected push (non-fast-forward, auth, protected branch),
+// which retrying differently will never fix.
+const PUSH_TRANSPORT_FAILURE =
+  /rewind rpc post data|RPC failed|HTTP 40[08]|HTTP 413|curl 5[56]|early EOF|remote end hung up|SSL_read|unexpected disconnect/i;
+
+// Fallback for an oversized push: send the unpushed commits one at a time so
+// each request only carries that commit's objects instead of the whole backlog.
+async function pushCommitsIndividually(exec, cwd, branch) {
+  const opts = { cwd, maxBuffer: 1 << 24 };
+  const listed = (await exec('git', ['rev-list', '--reverse', `origin/${branch}..HEAD`], opts)).stdout.trim();
+  const commits = listed ? listed.split('\n') : [];
+  // With a single commit there's nothing to split — the payload is what it is.
+  if (commits.length < 2) return false;
+  for (const sha of commits) {
+    await exec('git', ['push', 'origin', `${sha}:refs/heads/${branch}`], opts);
+  }
+  return true;
+}
+
 async function handlePublish(res) {
   const { execFile } = await import('node:child_process');
   const { promisify } = await import('node:util');
@@ -1764,7 +1811,28 @@ async function handlePublish(res) {
       });
       return;
     }
-    await exec('git', ['push', 'origin', branch], { cwd: root });
+    await ensurePushConfig(exec, root);
+    try {
+      await exec('git', ['push', 'origin', branch], { cwd: root, maxBuffer: 1 << 24 });
+    } catch (pushErr) {
+      const detail = `${pushErr.stderr || pushErr.message || ''}`;
+      if (!PUSH_TRANSPORT_FAILURE.test(detail)) throw pushErr;
+      let split = false;
+      let chunkErr = pushErr;
+      try {
+        split = await pushCommitsIndividually(exec, root, branch);
+      } catch (err2) {
+        chunkErr = err2;
+      }
+      if (!split) {
+        const remote = String(chunkErr.stderr || chunkErr.message || '').trim().slice(0, 200);
+        sendJson(res, 500, {
+          error: `GitHub dropped the upload partway. This publish adds a large amount of video/.riv data, which the HTTPS endpoint often refuses in one request. Try Publish again — it may get through. If it keeps failing, switch the repo to SSH in Terminal: git remote set-url origin git@github.com:USER/REPO.git (use the SSH URL from your repo's Code button). Detail: ${remote}`,
+          pushed, branch,
+        });
+        return;
+      }
+    }
     pushed = true;
   } catch (err) {
     const msg = `${err.stderr || err.message || ''}`;

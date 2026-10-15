@@ -943,6 +943,13 @@ html, body {
   height: 300px;
 }
 
+.panel-section--video-preview { overflow: hidden; }
+.video-editor-preview { position: relative; min-height: 320px; max-height: 62vh; display: flex; align-items: center; justify-content: center; background: #030604; overflow: hidden; }
+.video-editor-preview video { width: 100%; height: min(62vh,680px); object-fit: contain; background: #000; }
+.video-editor-preview__empty { color: var(--text-dim); font-size: 12px; padding: 80px 20px; }
+.video-editor-heart-zone{position:absolute;transform:translate(-50%,-50%);aspect-ratio:1;border:0;border-radius:50%;background:transparent;z-index:4;cursor:pointer}.video-editor-heart-zone span{position:absolute;left:50%;top:50%;width:20%;aspect-ratio:1;border-radius:50%;background:#ff5365;box-shadow:0 0 15px rgba(255,93,105,.95),0 0 38px rgba(255,16,48,.7);opacity:0;transform:translate(-50%,-50%) scale(.35)}.video-editor-heart-zone i{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#ff4058;opacity:0}.video-editor-heart-zone.is-touching span{opacity:.85;animation:editorHeartBloom .52s ease-out}.video-editor-heart-zone.is-touching i{animation:editorHeartSpark .52s ease-out}.video-editor-heart-zone.is-touching i:nth-of-type(1){--x:0px;--y:-58px}.video-editor-heart-zone.is-touching i:nth-of-type(2){--x:50px;--y:-28px}.video-editor-heart-zone.is-touching i:nth-of-type(3){--x:48px;--y:35px}.video-editor-heart-zone.is-touching i:nth-of-type(4){--x:-3px;--y:58px}.video-editor-heart-zone.is-touching i:nth-of-type(5){--x:-50px;--y:30px}.video-editor-heart-zone.is-touching i:nth-of-type(6){--x:-48px;--y:-30px}@keyframes editorHeartBloom{0%{transform:translate(-50%,-50%) scale(.25)}60%{transform:translate(-50%,-50%) scale(1.25)}100%{transform:translate(-50%,-50%) scale(.7);opacity:0}}@keyframes editorHeartSpark{0%{opacity:0;transform:translate(0,0) scale(.4)}35%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(0)}}
+.video-segments-empty{padding:18px;display:flex;align-items:center;justify-content:space-between;gap:16px}.video-segments-empty p{color:var(--text-dim);font-size:11px}.video-segment-picker{padding:12px 12px 4px}.panel-section--video-segments>.panel-section--heart-touch{margin:12px;border:1px solid var(--border)}
+
 .scene-preview--testing {
   height: 70vh;
   max-height: 760px;

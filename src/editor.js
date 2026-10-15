@@ -290,6 +290,12 @@
     selectScene(sceneId);
   }
 
+  function nextInEditorSequence(sceneId) {
+    const scenes = st.sequence?.scenes || [];
+    const index = scenes.indexOf(sceneId);
+    return index >= 0 && index < scenes.length - 1 ? scenes[index + 1] : null;
+  }
+
   function setPreviewInput(name, value) {
     const input = riveInputMap.get(name);
     if (!input) return;
@@ -1277,7 +1283,9 @@
         ${renderFilesSection(config)}
         ${renderWordsSection(config)}
       ` : type === 'video' ? `
+        ${renderVideoPreviewSection(config)}
         ${renderFilesSection(config)}
+        ${renderVideoSegmentsSection(config)}
         ${renderVideoCaptionsSection(config)}
       ` : `
         ${renderFilesSection(config)}
@@ -1461,8 +1469,8 @@
     const files = st.files[config.id] || [];
     const roles = config.files || {};
     const audioFiles = files.filter(f => !f.endsWith('.lipsync.json') && !/\.riv$/i.test(f));
-    const label = type === 'video' ? 'VIDEO FILE' : type === 'pairs' ? 'CARD IMAGES & AUDIO' : type === 'jigsaw' ? 'PHOTO & AUDIO' : (type === 'thread' || type === 'words') ? 'BACKGROUND AUDIO' : 'AUDIO & VIDEO FILES';
-    const accept = type === 'video' ? 'video/*' : (type === 'pairs' || type === 'jigsaw') ? 'image/*,audio/*' : 'audio/*,video/*';
+    const label = type === 'video' ? 'VIDEO & BACKGROUND AUDIO' : type === 'pairs' ? 'CARD IMAGES & AUDIO' : type === 'jigsaw' ? 'PHOTO & AUDIO' : (type === 'thread' || type === 'words') ? 'BACKGROUND AUDIO' : 'AUDIO & VIDEO FILES';
+    const accept = type === 'video' ? 'video/*,audio/*' : (type === 'pairs' || type === 'jigsaw') ? 'image/*,audio/*' : 'audio/*,video/*';
 
     const rowsHtml = audioFiles.map(f => renderFileRow(
       f,
@@ -1504,7 +1512,7 @@
         <div class="panel-section__header">${label}</div>
         ${listHtml}
         <label class="upload-zone" id="uploadZone">
-          <span class="upload-zone__text">↑ Upload ${type === 'video' ? 'video' : (type === 'pairs' || type === 'jigsaw') ? 'images or audio' : 'audio or video'}</span>
+          <span class="upload-zone__text">↑ Upload ${type === 'video' ? 'video or background audio' : (type === 'pairs' || type === 'jigsaw') ? 'images or audio' : 'audio or video'}</span>
           <input type="file" id="fileUpload" accept="${accept}" multiple hidden />
         </label>
         ${(type !== 'video' && type !== 'pairs' && type !== 'jigsaw' && type !== 'thread' && type !== 'words') ? renderTtsBlock() : ''}
@@ -1765,6 +1773,12 @@
       || (Array.isArray(config?.segments) && config.segments.length > 0);
   }
 
+  function shouldEditorBgLoop(config, filename) {
+    return Object.prototype.hasOwnProperty.call(config?.bgLoops || {}, filename)
+      ? config.bgLoops[filename] === true
+      : backgroundLoopsByDefault(config);
+  }
+
   function audioDownloadUrl(sceneId, filename) {
     return `/games/${encodeURIComponent(st.game)}/scenes/${encodeURIComponent(sceneId)}/audio/${encodeURIComponent(filename)}`;
   }
@@ -1779,7 +1793,7 @@
     const hasLoopSetting = Object.prototype.hasOwnProperty.call(bgLoops || {}, filename);
     const bgLoopsEnabled = hasLoopSetting ? bgLoops[filename] === true : defaultBgLoop;
     const roleOptions = sceneType === 'video'
-      ? [['video', 'Video']]
+      ? (isAudioFile(filename) ? [['bg', 'Background']] : [['video', 'Video']])
       : sceneType === 'pairs'
       ? [['card', 'Card image'], ['bg', 'Background']]
       : sceneType === 'jigsaw'
@@ -1849,6 +1863,82 @@
         <div class="preview-resize-handle" id="previewResizeHandle" title="Drag to resize the preview"></div>
       </div>
     `;
+  }
+
+  function renderVideoPreviewSection(config) {
+    const activeSegment = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
+    const filename = activeSegment?.video || Object.keys(config.files || {}).find(name => config.files[name] === 'video');
+    const backgroundFiles = activeSegment
+      ? (Array.isArray(activeSegment.bgs) ? activeSegment.bgs : (activeSegment.bg ? [activeSegment.bg] : []))
+      : Object.keys(config.files || {}).filter(name => config.files[name] === 'bg');
+    const zone = activeSegment && Object.prototype.hasOwnProperty.call(activeSegment, 'heartZone') ? activeSegment.heartZone : config.heartZone;
+    const src = filename ? `/games/${st.game}/scenes/${config.id}/audio/${encodeURIComponent(filename)}` : '';
+    return `
+      <div class="panel-section panel-section--video-preview">
+        <div class="panel-section__header">INTERACTIVE VIDEO PREVIEW
+          <span class="connections-hint-inline">${activeSegment ? `segment ${st.activeSegmentIndex + 1} · ` : ''}tap directly over Eli's heart</span>
+        </div>
+        <div class="video-editor-preview" id="videoEditorPreview">
+          ${src ? `<video id="videoPreviewPlayer" src="${src}" controls playsinline></video>` : '<div class="video-editor-preview__empty">Upload a video to preview this scene.</div>'}
+          ${backgroundFiles.map(file => `<audio class="video-editor-bg" src="/games/${st.game}/scenes/${config.id}/audio/${encodeURIComponent(file)}" preload="auto" ${shouldEditorBgLoop(config, file) ? 'loop' : ''}></audio>`).join('')}
+          ${zone?.tap ? `<button type="button" class="video-editor-heart-zone" id="videoEditorHeart" style="left:${Number(zone.x)||50}%;top:${Number(zone.y)||62}%;width:${Number(zone.size)||24}%" aria-label="Invisible heart touch zone"><span></span>${'<i></i>'.repeat(6)}</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderVideoSegmentsSection(config) {
+    const segments = Array.isArray(config.segments) ? config.segments : [];
+    const files = (st.files[config.id] || []).filter(name => /\.(mp4|webm|mov|m4v|ogv)$/i.test(name));
+    const audioFiles = (st.files[config.id] || []).filter(name => isAudioFile(name));
+    if (!segments.length) return `<div class="panel-section panel-section--video-segments"><div class="panel-section__header">VIDEO SEGMENTS <span class="connections-hint-inline">build one scene from several micro-videos</span></div><div class="video-segments-empty"><p>Turn this video scene into a sequence. The current clip becomes segment 1.</p><button class="btn btn--save" data-action="enable-segments">Enable video segments</button></div></div>`;
+    const active = segments[Math.min(st.activeSegmentIndex, segments.length - 1)] || {};
+    return `<div class="panel-section panel-section--video-segments">
+      <div class="panel-section__header">VIDEO SEGMENTS <span class="connections-hint-inline">choose how each clip moves to the next segment</span></div>
+      <div class="segment-picker video-segment-picker">${segments.map((seg,index)=>`<button class="segment-tab segment-tab--video ${index===st.activeSegmentIndex?'is-active':''}" data-seg-idx="${index}" draggable="true"><span class="segment-tab__play" data-seg-play="${index}">▶</span><span class="segment-tab__num">${index+1}</span><span class="segment-tab__file">${esc(seg.video||'(no video)')}</span><span class="segment-tab__trigger">${seg.chat_enabled ? 'chat' : seg.trigger === 'ended' || seg.trigger === 'auto' ? 'auto next' : seg.heartZone && ['tap','doubleTap','hold'].some(key => seg.heartZone[key]) ? 'heart touch' : 'stays'}${seg.cta_label ? ' · CTA' : ''}</span><span class="segment-tab__delete" data-seg-delete="${index}">×</span></button>`).join('')}<button class="segment-tab segment-tab--add segment-tab--video-add" data-action="add-video-segment">+ Video</button></div>
+      <div class="segment-editor segment-editor--video">
+        <div class="segment-editor__row"><label class="segment-editor__label">Video</label><select class="field-select" data-seg-field="video"><option value="">— none —</option>${files.map(file=>`<option value="${esc(file)}" ${active.video===file?'selected':''}>${esc(file)}</option>`).join('')}</select></div>
+        <div class="segment-editor__row"><label class="segment-editor__label">Skip button</label><input type="checkbox" data-seg-field="skippable" ${active.skippable===true?'checked':''}/><span class="connections-hint-inline">off by default</span></div>
+        <div class="segment-editor__row">
+          <label class="segment-editor__label">When video ends</label>
+          <select class="field-select" data-seg-field="trigger">
+            <option value="ended" ${active.trigger === 'ended' || active.trigger === 'auto' ? 'selected' : ''}>Play next segment automatically</option>
+            <option value="tap_heart" ${active.trigger === 'tap_heart' ? 'selected' : ''}>Wait for this segment's Heart Touch</option>
+            <option value="never" ${active.trigger === 'never' ? 'selected' : ''}>Stay on final frame</option>
+          </select>
+        </div>
+        <div class="segment-editor__row segment-editor__row--full">
+          <label class="segment-editor__label">Background audio <span style="opacity:.5;font-size:11px">(select one or more)</span></label>
+          ${audioFiles.length ? `<div class="bg-checklist" data-seg-bgs="1">
+            ${audioFiles.map(file => {
+              const checked = (Array.isArray(active.bgs) ? active.bgs : (active.bg ? [active.bg] : [])).includes(file);
+              return `<label class="bg-check-item"><input type="checkbox" class="bg-check" value="${esc(file)}" ${checked ? 'checked' : ''} />${esc(file)}</label>`;
+            }).join('')}
+          </div>` : `<span class="connections-hint-inline">Upload an MP3, M4A, WAV, OGG, Opus, AAC, FLAC, or WebM audio file above.</span>`}
+        </div>
+        <div class="segment-editor__row segment-editor__row--full"><span class="connections-hint-inline">Heart Touch is configured separately for this selected segment below.</span></div>
+        <div class="segment-editor__row segment-editor__row--full">
+          <label class="segment-editor__label">Chat over video</label>
+          <label class="bg-check-item"><input type="checkbox" data-seg-field="chat_enabled" ${active.chat_enabled === true ? 'checked' : ''} />Enable after this clip ends</label>
+          <span class="connections-hint-inline">keeps the final frame visible while the player responds</span>
+        </div>
+        ${active.chat_enabled === true ? `
+        <div class="segment-editor__row segment-editor__row--full">
+          <label class="segment-editor__label">Question</label>
+          <input class="field-input" data-seg-field="opening" type="text" value="${esc(active.opening || '')}" placeholder="e.g. What do you remember about this moment?" />
+        </div>
+        <div class="segment-editor__row">
+          <label class="segment-editor__label">Replies</label>
+          <input class="field-input" data-seg-field="max_exchanges" type="number" value="${active.max_exchanges || 1}" min="1" max="10" style="width:80px" />
+          <span class="connections-hint-inline">before Continue appears</span>
+        </div>
+        <div class="segment-editor__row segment-editor__row--full">
+          <label class="segment-editor__label">AI guidance</label>
+          <input class="field-input" data-seg-field="context_hint" type="text" value="${esc(active.context_hint || '')}" placeholder="Optional context for Eli's response" />
+        </div>` : ''}
+        ${renderSegmentCtaRows(config, active)}
+      </div>
+      ${renderHeartTouchSection(config)}
+    </div>`;
   }
 
   function renderExpressionPreviewControls(message = "No voice audio yet — use these controls to pose Eli's face in the preview.") {
@@ -2825,6 +2915,7 @@
   function renderAfterSection(config) {
     const after   = config.after || {};
     const scenes  = st.sequence.scenes || [];
+    const segmentMode = Array.isArray(config.segments) && config.segments.length > 0;
 
     return `
       <details class="panel-section panel-section--after panel-section--collapsible" data-collapse="fallback" ${st.sectionOpen.fallback ? 'open' : ''}>
@@ -2857,7 +2948,7 @@
           <input class="field-input" id="fieldMessage" type="text" value="${esc(after.message || '')}" placeholder="Optional overlay text shown to player" />
         </div>
       </details>
-      <details class="panel-section panel-section--cta panel-section--collapsible" data-collapse="cta" ${st.sectionOpen.cta ? 'open' : ''}>
+      <details class="panel-section panel-section--cta panel-section--collapsible" data-collapse="cta" ${st.sectionOpen.cta ? 'open' : ''} style="${segmentMode ? 'display:none' : ''}">
         <summary class="panel-section__header panel-section__header--summary">
           <span class="rive-setup__chev" aria-hidden="true">▸</span>
           CTA BUTTON
@@ -2929,6 +3020,7 @@
         </div>`;
 
     const activeGestures = ['tap', 'doubleTap', 'hold'].filter(k => hz[k]).length;
+    const segmentHeartEnabled = Boolean(activeSegment && activeGestures);
     // When segments exist, edits apply to the selected segment only. Show
     // which segment is being edited and whether it inherits the scene zone.
     const segBadge = activeSegment
@@ -2943,9 +3035,9 @@
           HEART TOUCH
           <span class="connections-hint-inline">${segBadge ? `${segBadge} — ` : ''}${activeGestures ? `${activeGestures} gesture${activeGestures > 1 ? 's' : ''} active` : 'invisible gesture zone over Eli\'s heart — leave a row empty to disable it'}</span>
         </summary>
-        ${hasSegmentZone ? `<div class="field-row">
-          <span class="connections-hint-inline">These gestures fire only during segment ${st.activeSegmentIndex + 1}.</span>
-          <button class="btn btn--ghost btn--small" data-action="hz-reset-segment" title="Remove this segment's override and use the scene's heart zone" style="margin-left:auto">↺ Use scene zone</button>
+        ${activeSegment ? `<div class="field-row">
+          <span class="connections-hint-inline">Heart Touch is ${segmentHeartEnabled ? 'enabled only' : 'disabled'} for segment ${st.activeSegmentIndex + 1}.</span>
+          <button class="btn btn--ghost btn--small" data-action="hz-toggle-segment" style="margin-left:auto">${segmentHeartEnabled ? 'Disable for this segment' : 'Enable for this segment'}</button>
         </div>` : ''}
         <div class="field-row">
           <label class="field-label">Zone</label>
@@ -3111,6 +3203,30 @@
 
   // ─── Panel event binding ──────────────────────────────────────────────────────
   function bindPanelEvents(config) {
+    const videoPreview = document.getElementById('videoPreviewPlayer');
+    const videoPreviewBgs = [...document.querySelectorAll('.video-editor-bg')];
+    if (videoPreview && videoPreviewBgs.length) {
+      videoPreview.addEventListener('play', () => {
+        videoPreviewBgs.forEach(audio => {
+          audio.currentTime = videoPreview.currentTime;
+          audio.volume = 0.5;
+          audio.play().catch(() => {});
+        });
+      });
+      videoPreview.addEventListener('pause', () => videoPreviewBgs.forEach(audio => audio.pause()));
+      videoPreview.addEventListener('seeking', () => videoPreviewBgs.forEach(audio => { audio.currentTime = videoPreview.currentTime; }));
+      videoPreview.addEventListener('ended', () => videoPreviewBgs.forEach(audio => audio.pause()));
+    }
+    document.getElementById('videoEditorHeart')?.addEventListener('click', () => {
+      const heart = document.getElementById('videoEditorHeart');
+      heart?.classList.add('is-touching');
+      setTimeout(() => {
+        if (Array.isArray(config.segments) && st.activeSegmentIndex < config.segments.length - 1) {
+          st.activeSegmentIndex += 1;
+          renderPanel();
+        } else showToast('This is the final video segment. FALLBACK controls the next scene.');
+      }, 520);
+    });
     // Preview mode: Canvas (pose/scrub) ↔ Player (real game in an iframe)
     document.querySelectorAll('#previewModeCtl .preview-mode__btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3385,7 +3501,8 @@
     document.querySelector('[data-action="add-video-segment"]')?.addEventListener('click', () => {
       if (!config.segments) config.segments = [];
       const firstVideo = (st.files[config.id] || []).find(f => f.match(/\.(mp4|webm|mov|m4v|ogv)$/i)) || '';
-      config.segments.push({ type: 'video', video: firstVideo, trigger: 'ended' });
+      config.segments.push({ type: 'video', video: firstVideo, trigger: 'ended', skippable: false,
+        ...(config.type === 'video' ? { heartZone: null } : {}) });
       st.activeSegmentIndex = config.segments.length - 1;
       st.activeVoiceFile = '';
       st.activePauseMark = null;
@@ -3536,6 +3653,14 @@
     });
     // Enable segments
     document.querySelector('[data-action="enable-segments"]')?.addEventListener('click', () => {
+      if (config.type === 'video') {
+        const existingVideo = Object.keys(config.files || {}).find(f => config.files[f] === 'video') || (st.files[config.id] || []).find(f => /\.(mp4|webm|mov|m4v|ogv)$/i.test(f)) || '';
+        config.segments = [{ type: 'video', video: existingVideo, trigger: 'tap_heart', skippable: false, heartZone: { x: 50, y: 62, size: 24, tap: { next: '@segment:next' } } }];
+        st.activeSegmentIndex = 0;
+        st.dirty = true;
+        renderPanel();
+        return;
+      }
       const existingVoice = Object.keys(config.files || {}).find(f => config.files[f] === 'voice');
       config.segments = [{ voice: existingVoice || '', trigger: 'ended' }];
       st.activeSegmentIndex = 0;
@@ -3601,9 +3726,22 @@
           renderPanel();
           return;
         }
+        if (field === 'chat_enabled') {
+          const segment = config.segments[st.activeSegmentIndex];
+          if (val && !Number(segment.max_exchanges)) segment.max_exchanges = 1;
+          renderPanel();
+          return;
+        }
         if (field === 'trigger') {
-          const tab = document.querySelector(`[data-seg-idx="${st.activeSegmentIndex}"] .segment-tab__trigger`);
-          if (tab) tab.textContent = this.value;
+          const segment = config.segments[st.activeSegmentIndex];
+          if (val === 'tap_heart') {
+            const zone = segment.heartZone;
+            const hasGesture = zone && ['tap', 'doubleTap', 'hold'].some(key => zone[key]);
+            if (!hasGesture) segment.heartZone = { x: 50, y: 62, size: 24, tap: { next: '@segment:next' } };
+          } else {
+            segment.heartZone = null;
+          }
+          renderPanel();
         }
       });
     });
@@ -3615,7 +3753,10 @@
         const checked = [...cb.closest('[data-seg-bgs]').querySelectorAll('.bg-check:checked')].map(c => c.value);
         config.segments[st.activeSegmentIndex].bgs = checked;
         delete config.segments[st.activeSegmentIndex].bg; // migrate away from old single field
+        config.files = config.files || {};
+        checked.forEach(filename => { config.files[filename] = 'bg'; });
         st.dirty = true;
+        if (config.type === 'video') renderPanel();
       });
     });
 
@@ -3827,6 +3968,18 @@
     for (const el of hzEls) {
       el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', applyHeartZone);
     }
+    document.querySelector('[data-action="hz-toggle-segment"]')?.addEventListener('click', () => {
+      const activeSegment = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
+      if (!activeSegment) return;
+      const zone = activeSegment.heartZone;
+      const enabled = zone && ['tap', 'doubleTap', 'hold'].some(key => zone[key]);
+      activeSegment.heartZone = enabled
+        ? null
+        : { x: 50, y: 62, size: 24, tap: { next: '@segment:next' } };
+      activeSegment.trigger = 'tap_heart';
+      st.dirty = true;
+      renderPanel();
+    });
     // Remove the active segment's heart-zone override → back to scene zone
     document.querySelector('[data-action="hz-reset-segment"]')?.addEventListener('click', () => {
       const activeSegment = Array.isArray(config.segments) ? config.segments[st.activeSegmentIndex] : null;
@@ -4030,7 +4183,7 @@
         // manually picks a role and loads it themselves.
         if (config.type === 'video') {
           config.files = config.files || {};
-          config.files[data.filename] = 'video';
+          config.files[data.filename] = isAudioFile(data.filename) ? 'bg' : 'video';
           st.dirty = true;
         } else if (config.type === 'pairs') {
           // Images become cards, audio becomes background — no voice role here

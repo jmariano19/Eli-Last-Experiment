@@ -1,0 +1,36 @@
+{
+  "id": "know_you_better",
+  "title": "know you better",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "8_bring_back_1.mp4": "video",
+    "low.mp3": "bg"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "diary"
+  },
+  "ctaRoutes": [],
+  "segments": [
+    {
+      "type": "video",
+      "video": "8_bring_back_1.mp4",
+      "trigger": "tap_heart",
+      "skippable": false,
+      "heartZone": {
+        "x": 50,
+        "y": 62,
+        "size": 24,
+        "tap": {
+          "next": "@segment:next"
+        }
+      },
+      "chat_enabled": true,
+      "max_exchanges": 1,
+      "opening": "What should I call you? ",
+      "context_hint": "make sure to repeat what they say. For example, if they say their name say, \"jeff\" I'll write it down [pause: 1.0] so this moment has somewhere to live."
+    }
+  ]
+}

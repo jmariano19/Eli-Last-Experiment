@@ -1,0 +1,34 @@
+{
+  "filename": "tts_there_you_are_124459v9.m4a",
+  "markers": [
+    {
+      "time": 0.35,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.49,
+      "mouth_shape": 8
+    },
+    {
+      "time": 0.62,
+      "mouth_shape": 1
+    },
+    {
+      "time": 0.75,
+      "mouth_shape": 10
+    },
+    {
+      "time": 0.88,
+      "mouth_shape": 5
+    },
+    {
+      "time": 1.01,
+      "mouth_shape": 2
+    },
+    {
+      "time": 1.11,
+      "mouth_shape": 0
+    }
+  ],
+  "textCues": []
+}

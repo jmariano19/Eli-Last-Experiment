@@ -1,0 +1,38 @@
+{
+  "id": "words",
+  "title": "words",
+  "type": "words",
+  "rive": null,
+  "files": {},
+  "words": {
+    "intro": "His memories are hiding in the letters.",
+    "letters": "MOTHER",
+    "fragment": "someone_was_there",
+    "foundText": "you found the word he could not say.",
+    "carryText": "take it back to him.",
+    "memories": [
+      {
+        "word": "HOME",
+        "reveal": "wet shoes beside the door",
+        "line": "Thank you",
+        "voice": "tts_thank_you_150950ra.m4a"
+      },
+      {
+        "word": "OTHER",
+        "reveal": "a voice in the next room",
+        "line": "You got it"
+      },
+      {
+        "word": "MOTHER",
+        "reveal": "someone saying his name softly"
+      }
+    ],
+    "eliRive": "eli-square.riv"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "know_you_better"
+  },
+  "ctaRoutes": []
+}

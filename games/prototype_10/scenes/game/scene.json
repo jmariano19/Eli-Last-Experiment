@@ -1,0 +1,23 @@
+{
+  "id": "game",
+  "title": "game",
+  "type": "jigsaw",
+  "rive": null,
+  "files": {
+    "jigsaw.png": "photo",
+    "low.mp3": "bg"
+  },
+  "jigsaw": {
+    "pieces": 9,
+    "fragment": "",
+    "intro": "Put it back together...",
+    "winText": "I remember this...",
+    "daily": false
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "playground"
+  },
+  "ctaRoutes": []
+}

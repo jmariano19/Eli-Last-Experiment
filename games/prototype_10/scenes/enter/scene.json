@@ -1,0 +1,91 @@
+{
+  "id": "enter",
+  "title": "enter",
+  "type": "video",
+  "rive": null,
+  "files": {
+    "1.Elia_scenes_1.mp4": "video",
+    "low.mp3": "bg",
+    "2.Thankful.mp4": "video",
+    "video_final_1.mp4": "video",
+    "3.help_remember.mp4": "video",
+    "00_resting_pose.mp4": "video",
+    "1.Game_enter.mp4": "video"
+  },
+  "after": {
+    "trigger": "ended",
+    "message": "",
+    "next": "game"
+  },
+  "ctaRoutes": [],
+  "captions": [],
+  "segments": [
+    {
+      "type": "video",
+      "video": "1.Elia_scenes_1.mp4",
+      "trigger": "tap_heart",
+      "skippable": false,
+      "heartZone": {
+        "x": 50,
+        "y": 52,
+        "size": 24,
+        "tap": {
+          "next": "@segment:next"
+        },
+        "hold": {
+          "next": "@segment:1",
+          "duration": 3
+        }
+      },
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "video",
+      "video": "2.Thankful.mp4",
+      "trigger": "ended",
+      "skippable": false,
+      "heartZone": null,
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "video",
+      "video": "1.Game_enter.mp4",
+      "trigger": "ended",
+      "skippable": true,
+      "heartZone": null,
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "video",
+      "video": "3.help_remember.mp4",
+      "trigger": "ended",
+      "skippable": false,
+      "heartZone": null,
+      "cta_label": "",
+      "cta_next": "",
+      "cta_hold": false,
+      "bgs": [
+        "low.mp3"
+      ]
+    },
+    {
+      "type": "video",
+      "video": "00_resting_pose.mp4",
+      "trigger": "never",
+      "skippable": false,
+      "heartZone": null,
+      "cta_label": "Remember",
+      "cta_next": "game",
+      "cta_hold": true,
+      "bgs": [
+        "low.mp3"
+      ]
+    }
+  ]
+}

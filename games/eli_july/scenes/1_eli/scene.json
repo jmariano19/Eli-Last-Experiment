@@ -5,14 +5,15 @@
   "rive": "shared",
   "files": {
     "low.mp3": "bg",
-    "there_you_are.m4a": "voice",
-    "i_thought_i_was_alone.m4a": "voice",
     "medium.mp3": "bg",
-    "ha_you_stayed_16173151.m4a": "voice",
-    "my_thoughts_keep_slipping_away_000242z2.m4a": "voice",
-    "could_you_keep_your_hand_011822n5.m4a": "voice",
     "ha.mp3": "voice",
-    "tts_something_moved_when_you_touched_161210qv.m4a": "voice"
+    "happy.mp4": "video",
+    "tts_there_you_are_124459v9.m4a": "voice",
+    "tts_i_thought_pause_10_i_12463018.m4a": "voice",
+    "tts_my_thoughts_keep_slipping_away_124806cp.m4a": "voice",
+    "tts_could_you_keep_your_hand_124904y1.m4a": "voice",
+    "tts_you_stayed_125103e7.m4a": "voice",
+    "tts_something_moved_when_you_touched_125228my.m4a": "voice"
   },
   "after": {
     "trigger": "auto",
@@ -29,8 +30,7 @@
   ],
   "ctaRoutes": [],
   "bgLoops": {
-    "low.mp3": true,
-    "there_you_are.m4a": false
+    "low.mp3": true
   },
   "segments": [
     {
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "voice": "there_you_are.m4a",
+      "voice": "tts_there_you_are_124459v9.m4a",
       "trigger": "ended",
       "bgs": [
         "low.mp3"
@@ -54,7 +54,7 @@
       "delay": 1.5
     },
     {
-      "voice": "i_thought_i_was_alone.m4a",
+      "voice": "tts_i_thought_pause_10_i_12463018.m4a",
       "trigger": "ended",
       "bgs": [
         "low.mp3"
@@ -62,14 +62,14 @@
       "delay": 2.5
     },
     {
-      "voice": "my_thoughts_keep_slipping_away_000242z2.m4a",
+      "voice": "tts_my_thoughts_keep_slipping_away_124806cp.m4a",
       "trigger": "ended",
       "bgs": [
         "medium.mp3"
       ]
     },
     {
-      "voice": "could_you_keep_your_hand_011822n5.m4a",
+      "voice": "tts_could_you_keep_your_hand_124904y1.m4a",
       "trigger": "tap_heart",
       "bgs": [
         "medium.mp3"
@@ -86,14 +86,6 @@
       }
     },
     {
-      "voice": "ha_you_stayed_16173151.m4a",
-      "trigger": "ended",
-      "bgs": [
-        "low.mp3"
-      ],
-      "delay": 0
-    },
-    {
       "voice": "ha.mp3",
       "trigger": "ended",
       "bgs": [
@@ -101,7 +93,15 @@
       ]
     },
     {
-      "voice": "tts_something_moved_when_you_touched_161210qv.m4a",
+      "voice": "tts_you_stayed_125103e7.m4a",
+      "trigger": "ended",
+      "bgs": [
+        "low.mp3"
+      ],
+      "delay": 2
+    },
+    {
+      "voice": "tts_something_moved_when_you_touched_125228my.m4a",
       "trigger": "ended",
       "bgs": [
         "low.mp3"

@@ -1,0 +1,23 @@
+{
+  "id": "audio",
+  "title": "audio",
+  "type": "rive",
+  "rive": "shared",
+  "files": {
+    "tts_this_is_an_example_of_1514536o.m4a": "voice"
+  },
+  "after": {
+    "trigger": "tap_heart",
+    "message": "",
+    "next": null
+  },
+  "stateMachines": [
+    "EliState",
+    "FacialState",
+    "HeadState",
+    "HeartState",
+    "EliBody",
+    "EmotionState"
+  ],
+  "ctaRoutes": []
+}
